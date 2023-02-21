@@ -1,6 +1,8 @@
 use std::fs::File;
 use std::io::{self, Read};
 
+use crate::solution::*;
+
 pub struct AoC2015_01 {
     input: Vec<char>,
 }
@@ -11,15 +13,23 @@ impl AoC2015_01 {
         Ok(Self { input })
     }
 
-    pub fn part1(&self) {
-        let result: isize = self
-            .input
+    fn load_input() -> io::Result<Vec<char>> {
+        let mut file = File::open("input/aoc2015_01")?;
+        let mut buffer = Vec::new();
+        file.read_to_end(&mut buffer)?;
+        Ok(buffer.iter().map(|val| *val as char).collect())
+    }
+}
+
+impl Solution for AoC2015_01 {
+    fn part_one(&self) -> String {
+        self.input
             .iter()
-            .fold(0isize, |acc, val| acc + if *val == '(' { 1 } else { -1 });
-        println!("Result pt1: {result}")
+            .fold(0isize, |acc, val| acc + if *val == '(' { 1 } else { -1 })
+            .to_string()
     }
 
-    pub fn part2(&self) {
+    fn part_two(&self) -> String {
         let mut level = 0isize;
         let mut index: Option<usize> = None;
         for i in 0..self.input.len() {
@@ -29,13 +39,14 @@ impl AoC2015_01 {
                 break;
             }
         }
-        println!("Result pt2: {:?}", index);
+        if let Some(index) = index {
+            index.to_string()
+        } else {
+            "Not found".to_string()
+        }
     }
 
-    fn load_input() -> io::Result<Vec<char>> {
-        let mut file = File::open("input/aoc2015_01")?;
-        let mut buffer = Vec::new();
-        file.read_to_end(&mut buffer)?;
-        Ok(buffer.iter().map(|val| *val as char).collect())
+    fn description(&self) -> String {
+        "AoC 2015/Day 1".to_string()
     }
 }
