@@ -60,14 +60,14 @@ impl Solution for AoC2015_02 {
     fn part_one(&self) -> String {
         self.items.iter()
         .map(|pack| pack.wrap_size())
-        .fold(0, |acc, v| acc + v)
+        .sum::<i32>()
         .to_string()
     }
 
     fn part_two(&self) -> String {
         self.items.iter()
         .map(|pack| pack.ribbon_len())
-        .fold(0, |acc, v| acc + v)
+        .sum::<i32>()
         .to_string()        
     }
 }
