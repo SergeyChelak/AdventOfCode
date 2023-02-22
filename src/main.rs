@@ -7,7 +7,7 @@ use solution::Solution;
 
 fn main() -> io::Result<()> {
     println!("Advent of Code");
-    let solution = AoC2015_02::new();
+    let solution = AoC2015_02::new()?;
     execute(&solution);
     Ok(())
 }
