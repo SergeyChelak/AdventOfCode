@@ -3,7 +3,7 @@ use std::io::{self, BufRead};
 
 use crate::solution::*;
 
-pub struct Pack(i32, i32, i32); // l - w - h
+struct Pack(i32, i32, i32); // l - w - h
 
 impl Pack {
     fn from_string(line: &String) -> Self {
@@ -13,12 +13,19 @@ impl Pack {
         Self(list[0], list[1], list[2])
     }
 
-    fn value(&self) -> i32 {
+    fn wrap_size(&self) -> i32 {
         let sq1 = self.0 * self.1;
         let sq2 = self.1 * self.2;
         let sq3 = self.0 * self.2;
-        let extra = i32::min(i32::min(sq1, sq2), sq3);
+        let extra = sq1.min(sq2).min(sq3);
         2 * (sq1 + sq2 + sq3) + extra
+    }
+
+    fn ribbon_len(&self) -> i32 {
+        let p1 = self.0 + self.1;
+        let p2 = self.1 + self.2;
+        let p3 = self.0 + self.2;
+        2 * (p1.min(p2).min(p3))  + self.0 * self.1 * self.2
     }
 }
 
@@ -52,14 +59,17 @@ impl Solution for AoC2015_02 {
 
     fn part_one(&self) -> String {
         self.items.iter()
-        .map(|pack| pack.value())
+        .map(|pack| pack.wrap_size())
         .fold(0, |acc, v| acc + v)
         .to_string()
     }
 
-    // fn part_two(&self) -> String {
-        
-    // }
+    fn part_two(&self) -> String {
+        self.items.iter()
+        .map(|pack| pack.ribbon_len())
+        .fold(0, |acc, v| acc + v)
+        .to_string()        
+    }
 }
 
 #[cfg(test)]
@@ -67,11 +77,20 @@ mod tests {
     use super::*;
 
     #[test]
-    fn aoc2015_02_box_test() {
+    fn aoc2015_02_wrap_test() {
         let pack = Pack(2, 3, 4);
-        assert_eq!(pack.value(), 58);
+        assert_eq!(pack.wrap_size(), 58);
 
         let pack = Pack(1, 1, 10);
-        assert_eq!(pack.value(), 43);
+        assert_eq!(pack.wrap_size(), 43);
+    }
+
+    #[test]
+    fn aoc2015_02_ribbon_test() {
+        let pack = Pack(2, 3, 4);
+        assert_eq!(pack.ribbon_len(), 34);
+
+        let pack = Pack(1, 1, 10);
+        assert_eq!(pack.ribbon_len(), 14);
     }
 }

@@ -7,12 +7,15 @@ use solution::Solution;
 
 fn main() -> io::Result<()> {
     println!("Advent of Code");
-    let solution = AoC2015_02::new()?;
-    execute(&solution);
+    let mut days: Vec<Box<dyn Solution>> = Vec::new();
+    days.push(Box::new(AoC2015_01::new()?));
+    days.push(Box::new(AoC2015_02::new()?));
+    days.iter()
+        .for_each(|s| execute(s));
     Ok(())
 }
 
-fn execute(solution: &impl Solution) {
+fn execute(solution: &Box<dyn Solution>) {
     println!();
     println!("{}", solution.description());
     println!("\tPart 1: {}", solution.part_one());
