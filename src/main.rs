@@ -7,9 +7,10 @@ use solution::Solution;
 
 fn main() -> io::Result<()> {
     println!("Advent of Code");
-    let mut days: Vec<Box<dyn Solution>> = Vec::new();
-    days.push(Box::new(AoC2015_01::new()?));
-    days.push(Box::new(AoC2015_02::new()?));
+    let days: Vec<Box<dyn Solution>> = vec![
+        Box::new(AoC2015_01::new()?),
+        Box::new(AoC2015_02::new()?),
+    ];
     days.iter()
         .for_each(|s| execute(s));
     Ok(())
