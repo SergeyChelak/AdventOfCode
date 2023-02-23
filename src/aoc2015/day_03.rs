@@ -3,6 +3,8 @@ use crate::file_utils::*;
 
 use std::io;
 
+use std::collections::HashSet;
+
 pub struct AoC2015_03 {
     input: Vec<char>,
 }
@@ -17,7 +19,26 @@ impl AoC2015_03 {
 
 impl Solution for AoC2015_03 {
     fn part_one(&self) -> String {
-        "Part #1 isn't implemented yet".to_string()
+        let mut coord = (0i32, 0i32);
+        let mut set: HashSet<(i32, i32)> = HashSet::new();
+        set.insert(coord);
+        for ch in self.input.iter() {
+            let mut x = 0;
+            let mut y = 0;
+            match ch {
+                '>' => x = 1,
+                '<' => x = -1,
+                '^' => y = 1,
+                'v' => y = -1,
+                _ => panic!("unexpected value {ch}")
+            };
+            coord.0 += x;
+            coord.1 += y;
+            if !set.contains(&coord) {
+                set.insert(coord);
+            }
+        }
+        set.len().to_string()
     }
 
     fn part_two(&self) -> String {
