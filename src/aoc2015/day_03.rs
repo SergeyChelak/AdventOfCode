@@ -42,7 +42,26 @@ impl Solution for AoC2015_03 {
     }
 
     fn part_two(&self) -> String {
-        "Part #2 isn't implemented yet".to_string()
+        let mut pos_santa = (0i32, 0i32);
+        let mut pos_robo = pos_santa.clone();
+        let mut set: HashSet<(i32, i32)> = HashSet::new();
+        set.insert(pos_santa);
+        let mut is_santa = true;
+        for ch in self.input.iter() {
+            let mut coord = if is_santa { &mut pos_santa } else { &mut pos_robo };
+            match ch {
+                '>' => coord.0 += 1,
+                '<' => coord.0 -= 1,
+                '^' => coord.1 += 1,
+                'v' => coord.1 -= 1,
+                _ => panic!("unexpected value {ch}")
+            };
+            if !set.contains(&coord) {
+                set.insert(*coord);
+            }
+            is_santa = !is_santa;
+        }
+        set.len().to_string()
     }
 
     fn description(&self) -> String {
@@ -83,5 +102,13 @@ mod tests {
             input: vec!['^', 'v', '^', 'v', '^', 'v', '^', 'v', '^', 'v']
         }.part_one();
         assert_eq!(result, "2");
+    }
+
+    #[test]
+    fn aoc2015_03_correctness() -> io::Result<()> {
+        let sol = AoC2015_03::new()?;
+        assert_eq!(sol.part_one(), "2081".to_string());
+        assert_eq!(sol.part_two(), "2341".to_string());
+        Ok(())
     }
 }
