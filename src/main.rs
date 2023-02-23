@@ -10,6 +10,7 @@ fn main() -> io::Result<()> {
     let days: Vec<Box<dyn Solution>> = vec![
         Box::new(AoC2015_01::new()?),
         Box::new(AoC2015_02::new()?),
+        Box::new(AoC2015_03::new()?),
     ];
     days.iter()
         .for_each(|s| execute(s));
