@@ -34,9 +34,7 @@ impl Solution for AoC2015_03 {
             };
             coord.0 += x;
             coord.1 += y;
-            if !set.contains(&coord) {
-                set.insert(coord);
-            }
+            set.insert(coord);
         }
         set.len().to_string()
     }
@@ -56,9 +54,7 @@ impl Solution for AoC2015_03 {
                 'v' => coord.1 -= 1,
                 _ => panic!("unexpected value {ch}")
             };
-            if !set.contains(&coord) {
-                set.insert(*coord);
-            }
+            set.insert(*coord);
             is_santa = !is_santa;
         }
         set.len().to_string()
