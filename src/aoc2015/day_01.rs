@@ -1,7 +1,7 @@
-use std::fs::File;
-use std::io::{self, Read};
+use std::io;
 
 use crate::solution::*;
+use crate::file_utils::*;
 
 pub struct AoC2015_01 {
     input: Vec<char>,
@@ -9,15 +9,8 @@ pub struct AoC2015_01 {
 
 impl AoC2015_01 {
     pub fn new() -> io::Result<Self> {
-        let input = Self::load_input()?;
+        let input = read_file_as_chars("input/aoc2015_01")?;
         Ok(Self { input })
-    }
-
-    fn load_input() -> io::Result<Vec<char>> {
-        let mut file = File::open("input/aoc2015_01")?;
-        let mut buffer = Vec::new();
-        file.read_to_end(&mut buffer)?;
-        Ok(buffer.iter().map(|val| *val as char).collect())
     }
 }
 
