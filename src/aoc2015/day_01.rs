@@ -50,3 +50,16 @@ impl Solution for AoC2015_01 {
         "AoC 2015/Day 1".to_string()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn aoc2015_01_correctness() -> io::Result<()> {
+        let sol = AoC2015_01::new()?;
+        assert_eq!(sol.part_one(), "138".to_string());
+        assert_eq!(sol.part_two(), "1771".to_string());
+        Ok(())
+    }
+}

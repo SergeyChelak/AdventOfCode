@@ -93,4 +93,12 @@ mod tests {
         let pack = Pack(1, 1, 10);
         assert_eq!(pack.ribbon_len(), 14);
     }
+
+    #[test]
+    fn aoc2015_02_correctness() -> io::Result<()> {
+        let sol = AoC2015_02::new()?;
+        assert_eq!(sol.part_one(), "1598415".to_string());
+        assert_eq!(sol.part_two(), "3812909".to_string());
+        Ok(())
+    }
 }
