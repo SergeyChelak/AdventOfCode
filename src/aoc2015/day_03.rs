@@ -39,4 +39,28 @@ mod tests {
         assert!(sol.input.len() > 0);
         Ok(())
     }
+
+    #[test]
+    fn aoc2015_03_pt1_case1() {
+        let result = AoC2015_03 {
+            input: vec!['>']
+        }.part_one();
+        assert_eq!(result, "2");
+    }
+
+    #[test]
+    fn aoc2015_03_pt1_case2() {
+        let result = AoC2015_03 {
+            input: vec!['^', '>', 'v', '<']
+        }.part_one();
+        assert_eq!(result, "4");
+    }
+
+    #[test]
+    fn aoc2015_03_pt1_case3() {
+        let result = AoC2015_03 {
+            input: vec!['^', 'v', '^', 'v', '^', 'v', '^', 'v', '^', 'v']
+        }.part_one();
+        assert_eq!(result, "2");
+    }
 }
