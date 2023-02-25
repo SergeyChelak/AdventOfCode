@@ -15,7 +15,7 @@ impl AoC2015_05 {
         })
     }
 
-    fn is_good_str(s: &str) -> bool {
+    fn is_nice_str_pt1(s: &str) -> bool {
         for sub_str in vec!["ab", "cd", "pq", "xy"] {
             if s.contains(sub_str) {
                 return false;
@@ -34,22 +34,31 @@ impl AoC2015_05 {
         }
         vovel_count > 2 && has_rep
     }
+
+    fn is_nice_str_pt2(s: &str) -> bool {
+        todo!()
+    }
+
+    fn count_nice_strings<C>(&self, criteria: C) -> String where C: Fn(&str) -> bool {
+        self.input.iter()
+            .filter(|v| criteria(*v))
+            .count()
+            .to_string()
+    }
 }
 
 impl Solution for AoC2015_05 {
     fn part_one(&self) -> String {
-        self.input.iter()
-            .filter(|v| Self::is_good_str(*v))
-            .count()
-            .to_string()
+        self.count_nice_strings(Self::is_nice_str_pt1)
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        self.count_nice_strings(Self::is_nice_str_pt2)
+    }
 
-    // fn description(&self) -> String {
-    // "".to_string()
-    // }
+    fn description(&self) -> String {
+    "AoC 2015/Day 5".to_string()
+    }
 }
 
 #[cfg(test)]
@@ -64,12 +73,20 @@ mod test {
     }
 
     #[test]
-    fn aoc2015_05_is_good_str_test() {
-        assert!(AoC2015_05::is_good_str("ugknbfddgicrmopn"));
-        assert!(AoC2015_05::is_good_str("aaa"));
-        assert!(!AoC2015_05::is_good_str("jchzalrnumimnmhp"));
-        assert!(!AoC2015_05::is_good_str("haegwjzuvuyypxyu"));
-        assert!(!AoC2015_05::is_good_str("dvszwmarrgswjxmb"));
+    fn aoc2015_05_is_nice_str_p1_test() {
+        assert!(AoC2015_05::is_nice_str_pt1("ugknbfddgicrmopn"));
+        assert!(AoC2015_05::is_nice_str_pt1("aaa"));
+        assert!(!AoC2015_05::is_nice_str_pt1("jchzalrnumimnmhp"));
+        assert!(!AoC2015_05::is_nice_str_pt1("haegwjzuvuyypxyu"));
+        assert!(!AoC2015_05::is_nice_str_pt1("dvszwmarrgswjxmb"));
+    }
+
+    #[test]
+    fn aoc2015_05_is_nice_str_p2_test() {
+        assert!(AoC2015_05::is_nice_str_pt2("qjhvhtzxzqqjkmpb"));
+        assert!(AoC2015_05::is_nice_str_pt2("xxyxx"));
+        assert!(!AoC2015_05::is_nice_str_pt2("uurcxstgmygtbstg"));
+        assert!(!AoC2015_05::is_nice_str_pt2("ieodomkazucvgmuy"));
     }
 
     #[test]
