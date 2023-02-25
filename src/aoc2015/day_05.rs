@@ -36,7 +36,29 @@ impl AoC2015_05 {
     }
 
     fn is_nice_str_pt2(s: &str) -> bool {
-        todo!()
+        let chars: Vec<char> = s.chars().collect();
+        {
+            let mut crit_2 = false;
+            for i in 0..(chars.len() - 2) {
+                crit_2 = crit_2 || chars[i] == chars[i + 2];
+                if crit_2 {
+                    break;
+                }
+            }
+            if !crit_2 {
+                return false;
+            }
+        }
+        {
+            for i in 0..(chars.len() - 2) {
+                let pair = &s[i..=(i+1)];
+                let substr = &s[(i+2)..];
+                if substr.contains(pair) {
+                    return true;
+                }
+            }
+        }
+        false
     }
 
     fn count_nice_strings<C>(&self, criteria: C) -> String where C: Fn(&str) -> bool {
@@ -57,7 +79,7 @@ impl Solution for AoC2015_05 {
     }
 
     fn description(&self) -> String {
-    "AoC 2015/Day 5".to_string()
+        "AoC 2015/Day 5".to_string()
     }
 }
 
@@ -92,6 +114,7 @@ mod test {
     #[test]
     fn aoc2015_05_correctness() -> io::Result<()> {
         assert_eq!(AoC2015_05::new()?.part_one(), "255");
+        assert_eq!(AoC2015_05::new()?.part_two(), "55");
         Ok(())
     }
 }
