@@ -1,6 +1,6 @@
-use std::fs::File;
-use std::io::{self, BufRead};
+use std::io;
 
+use crate::file_utils::read_file_as_lines;
 use crate::solution::*;
 
 struct Pack(i32, i32, i32); // l - w - h
@@ -41,14 +41,11 @@ impl AoC2015_02 {
     }
 
     fn load_input() -> io::Result<Vec<Pack>> {
-        let mut list = Vec::<Pack>::new();
-        let file = File::open("input/aoc2015_02")?;
-        let lines = io::BufReader::new(file).lines();
-        for line in lines {
-            let box_dims = Pack::from_string(&line?);
-            list.push(box_dims);
-        }
-        Ok(list)
+        let input = read_file_as_lines("input/aoc2015_02")?
+                            .iter()
+                            .map(|line| Pack::from_string(line))
+                            .collect();
+        Ok(input)
     }
 }
 
