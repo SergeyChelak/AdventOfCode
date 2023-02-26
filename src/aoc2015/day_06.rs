@@ -55,7 +55,7 @@ impl Instruction {
     }
 }
 
-type Matrix = Vec<Vec<bool>>;
+type Matrix = Vec<Vec<i32>>;
 
 pub struct AoC2015_06 {
     input: Vec<Instruction>,
@@ -81,7 +81,7 @@ impl AoC2015_06 {
         let dim = 1000usize;
         let mut matrix = Matrix::with_capacity(dim);
         for _ in 0..dim {
-            let row = vec![false; dim];
+            let row = vec![0i32; dim];
             matrix.push(row);
         }
         matrix
@@ -91,7 +91,7 @@ impl AoC2015_06 {
         matrix.iter()
             .map(|v| {
                 v.iter()
-                 .map(|u| *u as usize)
+                 .map(|u| if *u > 0 { *u } else { 0 } as usize)
                  .sum::<usize>()
             })
             .sum()
@@ -106,9 +106,9 @@ impl Solution for AoC2015_06 {
             for row in from.0..=to.0 {
                 for col in from.1..=to.1 {
                     matrix[row][col] = match &cmd.command {
-                      Command::TurnOn => true,
-                      Command::TurnOff => false,
-                      Command::Toggle => !matrix[row][col],
+                      Command::TurnOn => 1,
+                      Command::TurnOff => 0,
+                      Command::Toggle => 1 - matrix[row][col],
                     };
                 }
             }
@@ -116,8 +116,24 @@ impl Solution for AoC2015_06 {
         Self::get_lit_count(&matrix).to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut matrix = Self::create_matrix();
+        for cmd in &self.input {
+            let from = &cmd.from;
+            let to = &cmd.to;
+            for row in from.0..=to.0 {
+                for col in from.1..=to.1 {
+                    matrix[row][col] += match &cmd.command {
+                      Command::TurnOn => 1,
+                      Command::TurnOff => -1,
+                      Command::Toggle => 2,
+                    };
+                    matrix[row][col] = matrix[row][col].max(0);
+                }
+            }
+        }
+        Self::get_lit_count(&matrix).to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2015/Day 6: Probably a Fire Hazard".to_string()
@@ -138,6 +154,7 @@ mod test {
     fn aoc2015_06_correctness() -> io::Result<()> {
         let sol = AoC2015_06::new()?;
         assert_eq!(sol.part_one(), "377891");
+        assert_eq!(sol.part_two(), "14110788");
         Ok(())
     }
 }
