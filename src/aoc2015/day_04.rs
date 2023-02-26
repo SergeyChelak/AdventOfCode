@@ -36,7 +36,7 @@ impl Solution for AoC2015_04 {
     }
 
     fn description(&self) -> String {
-        "AoC 2015/Day 4".to_string()
+        "AoC 2015/Day 4: The Ideal Stocking Stuffer".to_string()
     }
 }
 

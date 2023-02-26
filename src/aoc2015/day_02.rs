@@ -51,7 +51,7 @@ impl AoC2015_02 {
 
 impl Solution for AoC2015_02 {
     fn description(&self) -> String {
-        "AoC 2015/Day 2".to_string()
+        "AoC 2015/Day 2: I Was Told There Would Be No Math".to_string()
     }
 
     fn part_one(&self) -> String {

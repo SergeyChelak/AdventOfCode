@@ -61,7 +61,7 @@ impl Solution for AoC2015_03 {
     }
 
     fn description(&self) -> String {
-        "AoC 2015/Day 3".to_string()
+        "AoC 2015/Day 3: Perfectly Spherical Houses in a Vacuum".to_string()
     }
 }
 

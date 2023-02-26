@@ -40,7 +40,7 @@ impl Solution for AoC2015_01 {
     }
 
     fn description(&self) -> String {
-        "AoC 2015/Day 1".to_string()
+        "AoC 2015/Day 1: Not Quite Lisp".to_string()
     }
 }
 

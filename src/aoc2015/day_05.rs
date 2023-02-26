@@ -79,7 +79,7 @@ impl Solution for AoC2015_05 {
     }
 
     fn description(&self) -> String {
-        "AoC 2015/Day 5".to_string()
+        "AoC 2015/Day 5: Doesn't He Have Intern-Elves For This?".to_string()
     }
 }
 

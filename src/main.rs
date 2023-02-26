@@ -9,11 +9,11 @@ use solution::Solution;
 fn main() -> io::Result<()> {
     println!("Advent of Code");
     let days: Vec<Box<dyn Solution>> = vec![
-        // Box::new(AoC2015_01::new()?),
-        // Box::new(AoC2015_02::new()?),
-        // Box::new(AoC2015_03::new()?),
-        // Box::new(AoC2015_04::new()?),
-        // Box::new(AoC2015_05::new()?),
+        Box::new(AoC2015_01::new()?),
+        Box::new(AoC2015_02::new()?),
+        Box::new(AoC2015_03::new()?),
+        Box::new(AoC2015_04::new()?),
+        Box::new(AoC2015_05::new()?),
         Box::new(AoC2015_06::new()?),
     ];
     days.iter()
