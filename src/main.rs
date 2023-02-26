@@ -16,8 +16,11 @@ fn main() -> io::Result<()> {
         Box::new(AoC2015_05::new()?),
         Box::new(AoC2015_06::new()?),
     ];
-    days.iter()
-        .for_each(execute);
+    // days.iter()
+    //     .for_each(execute);
+    if let Some(day) = days.last() {
+        execute(day);
+    }
     Ok(())
 }
 
