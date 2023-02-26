@@ -27,7 +27,7 @@ struct Coordinate(usize, usize);
 
 impl Coordinate {
     fn parse(s: &str) -> Self {
-        let items: Vec<&str> = s.split(",").collect();
+        let items: Vec<&str> = s.split(',').collect();
         let x = items[0].parse::<usize>()
                 .expect("Wrong x value, expected usize");
         let y = items[1].parse::<usize>()
@@ -44,7 +44,7 @@ struct Instruction {
 
 impl Instruction {
     fn from_str(s: &str) -> Self {
-        let tokens: Vec<&str> = s.split(" ").collect();
+        let tokens: Vec<&str> = s.split(' ').collect();
         let from_str = tokens[tokens.len() - 3];
         let to_str = tokens[tokens.len() - 1];
         Self {
@@ -79,12 +79,7 @@ impl AoC2015_06 {
 
     fn create_matrix() -> Matrix {
         let dim = 1000usize;
-        let mut matrix = Matrix::with_capacity(dim);
-        for _ in 0..dim {
-            let row = vec![0i32; dim];
-            matrix.push(row);
-        }
-        matrix
+        vec![vec![0; dim]; dim]
     }
 
     fn get_lit_count(matrix: &Matrix) -> usize {

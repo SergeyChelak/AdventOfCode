@@ -41,7 +41,7 @@ impl Solution for AoC2015_03 {
 
     fn part_two(&self) -> String {
         let mut pos_santa = (0i32, 0i32);
-        let mut pos_robo = pos_santa.clone();
+        let mut pos_robo = pos_santa;
         let mut set: HashSet<(i32, i32)> = HashSet::new();
         set.insert(pos_santa);
         let mut is_santa = true;

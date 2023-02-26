@@ -16,7 +16,7 @@ impl AoC2015_05 {
     }
 
     fn is_nice_str_pt1(s: &str) -> bool {
-        for sub_str in vec!["ab", "cd", "pq", "xy"] {
+        for sub_str in &["ab", "cd", "pq", "xy"] {
             if s.contains(sub_str) {
                 return false;
             }
@@ -63,7 +63,7 @@ impl AoC2015_05 {
 
     fn count_nice_strings<C>(&self, criteria: C) -> String where C: Fn(&str) -> bool {
         self.input.iter()
-            .filter(|v| criteria(*v))
+            .filter(|v| criteria(v))
             .count()
             .to_string()
     }

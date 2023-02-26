@@ -6,8 +6,8 @@ use crate::solution::*;
 struct Pack(i32, i32, i32); // l - w - h
 
 impl Pack {
-    fn from_string(line: &String) -> Self {
-        let list: Vec<i32> = line.split("x")
+    fn from_string(line: &str) -> Self {
+        let list: Vec<i32> = line.split('x')
         .map(|s| s.parse::<i32>().unwrap())
         .collect();
         Self(list[0], list[1], list[2])
