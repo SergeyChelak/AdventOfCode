@@ -13,8 +13,8 @@ impl AoC2015_06 {
             // initialize solution
         })
     }
-}
 
+}
 impl Solution for AoC2015_06 {
     // fn part_one(&self) -> String {
     // }
@@ -23,7 +23,7 @@ impl Solution for AoC2015_06 {
     // }
 
     fn description(&self) -> String {
-        "AoC 2015/Day 6".to_string()
+        "AoC 2015/Day 6: Probably a Fire Hazard".to_string()
     }
 }
 
@@ -32,12 +32,12 @@ mod test {
     use super::*;
 
     #[test]
-    fn AoC2015_06_input_load_test() -> io::Result<()> {
+    fn aoc015_06_input_load_test() -> io::Result<()> {
         Ok(())
     }
 
     #[test]
-    fn AoC2015_06_correctness() -> io::Result<()> {
+    fn aoc2015_06_correctness() -> io::Result<()> {
         Ok(())
     }
 }
