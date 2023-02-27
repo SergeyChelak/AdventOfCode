@@ -29,23 +29,18 @@ enum Token {
     Function(String, Vec<Argument>)
 }
 
-pub struct AoC2015_07 {
-    tokens: HashMap<String, Token>,
+struct Interpreter {
+    tokens: HashMap<String, Token>
 }
 
-impl AoC2015_07 {
-    pub fn new() -> io::Result<Self> { 
-        Ok(Self {
-            tokens: Self::parse_input()?
-        })
+impl Interpreter {
+    fn with_commands(lines: &Vec<String>) -> Self {
+        Self {
+            tokens: Self::parse_lines(lines),
+        }
     }
 
-    fn parse_input() -> io::Result<HashMap<String, Token>> {
-        let lines = read_file_as_lines("input/aoc2015_07")?;
-        Ok(Self::parse_input_from_lines(&lines))
-    }
-
-    fn parse_input_from_lines(lines: &Vec<String>) -> HashMap<String, Token> {
+    fn parse_lines(lines: &Vec<String>) -> HashMap<String, Token> {
         lines
             .iter()
             .map(|line| Self::parse_line(line))
@@ -84,6 +79,11 @@ impl AoC2015_07 {
         let fn_name = comp[1].to_string();
         let arg2 = Argument::from_str(comp[2]);
         Token::Function(fn_name, vec![arg1, arg2])
+    }
+
+    pub fn get_signal(&self, wire: &str) -> Int {
+        let mut memo: Memo = HashMap::new();
+        self.eval(wire, &mut memo)
     }
 
     fn eval(&self, name: &str, memo: &mut Memo) -> Int {
@@ -127,10 +127,23 @@ impl AoC2015_07 {
     }
 }
 
+pub struct AoC2015_07 {
+    // tokens: HashMap<String, Token>,
+    lines: Vec<String>
+}
+
+impl AoC2015_07 {
+    pub fn new() -> io::Result<Self> { 
+        Ok(Self {
+            lines: read_file_as_lines("input/aoc2015_07")?,
+        })
+    }
+}
+
 impl Solution for AoC2015_07 {
     fn part_one(&self) -> String {
-        let mut memo: Memo = HashMap::new();
-        self.eval("a", &mut memo)
+        let interp = Interpreter::with_commands(&self.lines);
+        interp.get_signal("a")
             .to_string()
     }
 
@@ -149,7 +162,7 @@ mod test {
     #[test]
     fn aoc2015_07_input_load_test() -> io::Result<()> {
         let solution = AoC2015_07::new()?;
-        assert!(solution.tokens.len() > 0);
+        assert_eq!(solution.lines.len(), 339);
         Ok(())
     }
 
@@ -173,18 +186,14 @@ mod test {
             "NOT x -> h",
             "NOT y -> i"
         ].iter().map(|x| x.to_string()).collect();
-        let tokens = AoC2015_07::parse_input_from_lines(&input);
-        let solution = AoC2015_07 {
-            tokens,
-        };
-        let mut memo: Memo = HashMap::new();
-        assert_eq!(solution.eval("d", &mut memo), 72);
-        assert_eq!(solution.eval("e", &mut memo), 507);
-        assert_eq!(solution.eval("f", &mut memo), 492);
-        assert_eq!(solution.eval("g", &mut memo), 114);
-        assert_eq!(solution.eval("h", &mut memo), 65412);
-        assert_eq!(solution.eval("i", &mut memo), 65079);
-        assert_eq!(solution.eval("x", &mut memo), 123);
-        assert_eq!(solution.eval("y", &mut memo), 456);
+        let interpreter = Interpreter::with_commands(&input);        
+        assert_eq!(interpreter.get_signal("d"), 72);
+        assert_eq!(interpreter.get_signal("e"), 507);
+        assert_eq!(interpreter.get_signal("f"), 492);
+        assert_eq!(interpreter.get_signal("g"), 114);
+        assert_eq!(interpreter.get_signal("h"), 65412);
+        assert_eq!(interpreter.get_signal("i"), 65079);
+        assert_eq!(interpreter.get_signal("x"), 123);
+        assert_eq!(interpreter.get_signal("y"), 456);
     }
 }
