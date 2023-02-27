@@ -147,8 +147,14 @@ impl Solution for AoC2015_07 {
             .to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let interp = Interpreter::with_commands(&self.lines);
+        let signal = interp.get_signal("a");
+        let mut interp = Interpreter::with_commands(&self.lines);
+        interp.tokens.insert("b".to_string(), Token::Value(Argument::Const(signal)));
+        interp.get_signal("a")
+            .to_string()
+    }
 
     fn description(&self) -> String {
     	"AoC 2015/Day 7: Some Assembly Required".to_string()
