@@ -4,8 +4,10 @@ use crate::file_utils::*;
 use std::io;
 use std::collections::HashMap;
 
-type Int = usize;
+type Int = u16;
+type Memo = HashMap<String, Int>;
 
+#[derive(Clone, Debug)]
 enum Argument {
     Const(Int),
     Token(String),
@@ -21,14 +23,10 @@ impl Argument {
     }
 }
 
-enum Expression {
-    Unary(String, Argument),
-    Binary(String, Argument, Argument),
-}
-
+#[derive(Clone, Debug)]
 enum Token {
     Value(Argument),
-    Expression(Expression)
+    Function(String, Vec<Argument>)
 }
 
 pub struct AoC2015_07 {
@@ -43,15 +41,18 @@ impl AoC2015_07 {
     }
 
     fn parse_input() -> io::Result<HashMap<String, Token>> {
-        let tokens = read_file_as_lines("input/aoc2015_07")?
+        let lines = read_file_as_lines("input/aoc2015_07")?;
+        Ok(Self::parse_input_from_lines(&lines))
+    }
+
+    fn parse_input_from_lines(lines: &Vec<String>) -> HashMap<String, Token> {
+        lines
             .iter()
             .map(|line| Self::parse_line(line))
-            .collect::<HashMap<String, Token>>();
-        Ok(tokens)
+            .collect::<HashMap<String, Token>>()
     }
 
     fn parse_line(line: &str) -> (String, Token) {
-        println!("{line}");
         let components = line.split(' ').collect::<Vec<&str>>();
         let count = components.len();
         if count < 2 || components[count - 2] != "->" {
@@ -75,22 +76,63 @@ impl AoC2015_07 {
     fn parse_unary(comp: &Vec<&str>) -> Token {
         let fn_name = comp[0].to_string();
         let arg = Argument::from_str(comp[1]);
-        let expr = Expression::Unary(fn_name, arg);
-        Token::Expression(expr)
+        Token::Function(fn_name, vec![arg])
     }
 
     fn parse_binary(comp: &Vec<&str>) -> Token {
         let arg1 = Argument::from_str(comp[0]);
         let fn_name = comp[1].to_string();
         let arg2 = Argument::from_str(comp[2]);
-        let expr = Expression::Binary(fn_name, arg1, arg2);
-        Token::Expression(expr)
+        Token::Function(fn_name, vec![arg1, arg2])
+    }
+
+    fn eval(&self, name: &str, memo: &mut Memo) -> Int {
+        if let Some(value) = memo.get(name) {
+            return *value;
+        }
+        let Some(token) = self.tokens.get(name) else {
+            panic!("Token '{name}' not found")
+        };
+        let value = match token {
+            Token::Value(arg) => {
+                self.eval_arg(arg, memo)
+            },
+            Token::Function(fn_name, args) => {
+                let params = args.iter()
+                    .map(|arg| self.eval_arg(arg, memo))
+                    .collect::<Vec<Int>>();
+                Self::compute(fn_name, &params)
+            },
+        };
+        memo.insert(name.to_string(), value);
+        value
+    }
+
+    fn eval_arg(&self, arg: &Argument, memo: &mut Memo) -> Int {
+        match arg {
+            Argument::Const(v) => *v,
+            Argument::Token(other) => self.eval(other, memo),
+        }
+    }
+
+    fn compute(fn_name: &str, params: &Vec<Int>) -> Int {
+        match fn_name {
+            "AND" => params[0] & params[1],
+            "OR" => params[0] | params[1],
+            "NOT" => !params[0],
+            "RSHIFT" => params[0] >> params[1],
+            "LSHIFT" => params[0] << params[1],
+            _ => panic!("Unknown function '{fn_name}")
+        }
     }
 }
 
 impl Solution for AoC2015_07 {
-    // fn part_one(&self) -> String {
-    // }
+    fn part_one(&self) -> String {
+        let mut memo: Memo = HashMap::new();
+        self.eval("a", &mut memo)
+            .to_string()
+    }
 
     // fn part_two(&self) -> String {
     // }
@@ -113,6 +155,36 @@ mod test {
 
     #[test]
     fn aoc2015_07_correctness() -> io::Result<()> {
+        let sol = AoC2015_07::new()?;
+        assert_eq!(sol.part_one(), "3176");
+        // assert_eq!(sol.part_two(), "");
         Ok(())
+    }
+
+    #[test]
+    fn aoc2015_07_case1() {
+        let input = vec![
+            "123 -> x",
+            "456 -> y",
+            "x AND y -> d",
+            "x OR y -> e",
+            "x LSHIFT 2 -> f",
+            "y RSHIFT 2 -> g",
+            "NOT x -> h",
+            "NOT y -> i"
+        ].iter().map(|x| x.to_string()).collect();
+        let tokens = AoC2015_07::parse_input_from_lines(&input);
+        let solution = AoC2015_07 {
+            tokens,
+        };
+        let mut memo: Memo = HashMap::new();
+        assert_eq!(solution.eval("d", &mut memo), 72);
+        assert_eq!(solution.eval("e", &mut memo), 507);
+        assert_eq!(solution.eval("f", &mut memo), 492);
+        assert_eq!(solution.eval("g", &mut memo), 114);
+        assert_eq!(solution.eval("h", &mut memo), 65412);
+        assert_eq!(solution.eval("i", &mut memo), 65079);
+        assert_eq!(solution.eval("x", &mut memo), 123);
+        assert_eq!(solution.eval("y", &mut memo), 456);
     }
 }
