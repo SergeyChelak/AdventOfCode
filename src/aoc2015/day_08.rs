@@ -13,11 +13,43 @@ impl AoC2015_08 {
             input: read_file_as_lines("input/aoc2015_08")?
         })
     }
+
+    fn unescaped_len(s: &str) -> usize {
+        let chars = s.chars().collect::<Vec<char>>();
+        let mut len = chars.len();
+        let count = len - 1;
+        assert!(len > 1, "String is too short");
+        if chars[0] == '\"' && chars[len-1] == '\"' {
+            len -= 2;
+        } else {
+            panic!("String isn't wrapped with quotes")
+        }
+        let mut pos = 1usize;
+        while pos < count {
+            let ch = chars[pos];
+            if ch == '\\' {
+                if chars[pos + 1] == 'x' {
+                    len -= 3;
+                    pos += 3;
+                } else {
+                    len -= 1;
+                    pos += 2;
+                }
+            } else {
+                pos += 1;
+            }
+        }
+        len
+    }
 }
 
 impl Solution for AoC2015_08 {
-    // fn part_one(&self) -> String {
-    // }
+    fn part_one(&self) -> String {
+        self.input.iter()
+            .map(|s| s.len() - Self::unescaped_len(s))
+            .sum::<usize>()
+            .to_string()
+    }
 
     // fn part_two(&self) -> String {
     // }
@@ -36,6 +68,14 @@ mod test {
         let sol = AoC2015_08::new()?;
         assert_eq!(sol.input.len(), 300);
         Ok(())
+    }
+
+    #[test]
+    fn aoc2015_08_unescaped_len() {
+        assert_eq!(AoC2015_08::unescaped_len("\"\""), 0);
+        assert_eq!(AoC2015_08::unescaped_len("\"abc\""), 3);
+        assert_eq!(AoC2015_08::unescaped_len("\"aaa\\\"aaa\\\""), 7);
+        assert_eq!(AoC2015_08::unescaped_len("\"\\x27\""), 1);
     }
 
     #[test]
