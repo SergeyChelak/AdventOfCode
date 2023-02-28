@@ -7,7 +7,6 @@ use std::collections::HashMap;
 type Int = u16;
 type Memo = HashMap<String, Int>;
 
-#[derive(Clone, Debug)]
 enum Argument {
     Const(Int),
     Token(String),
@@ -23,7 +22,6 @@ impl Argument {
     }
 }
 
-#[derive(Clone, Debug)]
 enum Token {
     Value(Argument),
     Function(String, Vec<Argument>)
@@ -128,7 +126,6 @@ impl Interpreter {
 }
 
 pub struct AoC2015_07 {
-    // tokens: HashMap<String, Token>,
     lines: Vec<String>
 }
 
@@ -176,7 +173,7 @@ mod test {
     fn aoc2015_07_correctness() -> io::Result<()> {
         let sol = AoC2015_07::new()?;
         assert_eq!(sol.part_one(), "3176");
-        // assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "14710");
         Ok(())
     }
 

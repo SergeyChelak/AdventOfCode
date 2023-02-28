@@ -46,8 +46,9 @@ mod test {
 
     #[test]
     fn aoc2015_04_correctness() -> io::Result<()> {
-        assert_eq!(AoC2015_04::new()?.part_one(), "254575");
-        assert_eq!(AoC2015_04::new()?.part_two(), "1038736");
+        let sol = AoC2015_04::new()?;
+        assert_eq!(sol.part_one(), "254575");
+        assert_eq!(sol.part_two(), "1038736");
         Ok(())
     }
 }
