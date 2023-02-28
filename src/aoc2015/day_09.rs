@@ -59,11 +59,63 @@ impl AoC2015_09 {
             next_id
         }
     }
+
+    fn permute(&self, nums: &mut Vec<usize>, pos: usize, min_dist: &mut Option<usize>) {
+        fn restore(nums: &mut Vec<usize>, pos: usize) {
+            for i in pos..nums.len() - 1 {
+                let v = nums[i];
+                nums[i] = nums[i + 1];
+                nums[i + 1] = v;
+            }
+        }
+
+        if pos == nums.len() - 1 {
+            if let Some(new) = self.calc_distance(nums) {
+                let val = if let Some(old) = min_dist {
+                    new.min(*old)
+                } else {
+                    new
+                };
+                *min_dist = Some(val);
+            }
+        }
+        for i in pos..nums.len() {
+            let v = nums[pos];
+            nums[pos] = nums[i];
+            nums[i] = v;
+            self.permute(nums, pos + 1, min_dist);
+            restore(nums, pos + 1);
+        }
+    }
+
+    fn calc_distance(&self, nums: &Vec<usize>) -> Option<usize> {
+        let mut sum = 0usize;
+        for i in 0..nums.len() - 1 {
+            if let Some(dist) = self.graph.get(&(nums[i], nums[i + 1])) {
+                sum += dist;
+            } else {
+                return None;
+            }
+        }
+        Some(sum)
+    }
 }
 
 impl Solution for AoC2015_09 {
-    // fn part_one(&self) -> String {
-    // }
+    fn part_one(&self) -> String {
+        let len = self.cities.len();
+        let mut order = vec![0usize; len];
+        for i in 0..len {
+            order[i] = i;
+        }
+        let mut distance = None;
+        self.permute(&mut order, 0, &mut distance);
+        if let Some(v) = distance {
+            v.to_string()
+        } else {
+            "Not found".to_string()
+        }
+    }
 
     // fn part_two(&self) -> String {
     // }
@@ -88,7 +140,7 @@ mod test {
     #[test]
     fn aoc2015_09_correctness() -> io::Result<()> {
         let sol = AoC2015_09::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "141");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
