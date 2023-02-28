@@ -1,5 +1,4 @@
 use crate::solution::Solution;
-use crate::file_utils::*;
 
 use std::io;
 
@@ -15,9 +14,33 @@ impl AoC2015_10 {
     }
 }
 
+fn look_say(s: &str) -> String {
+    let mut prev = '\0';
+    let mut count = 0usize;
+    let mut buffer = Vec::new();
+    let mut chars = s.chars().collect::<Vec<char>>();
+    chars.push(prev);
+    for ch in chars {
+        if ch == prev {
+            count += 1;
+        } else {
+            buffer.push(count.to_string());
+            buffer.push(prev.to_string());
+            prev = ch;
+            count = 1;            
+        }
+    }
+    buffer[2..].join("")
+}
+
 impl Solution for AoC2015_10 {
-    // fn part_one(&self) -> String {
-    // }
+    fn part_one(&self) -> String {
+        let mut s = self.input.clone();
+        for _ in 0..40 {
+            s = look_say(&s);
+        }
+        s.len().to_string()
+    }
 
     // fn part_two(&self) -> String {
     // }
@@ -32,9 +55,18 @@ mod test {
     use super::*;
 
     #[test]
+    fn aoc2015_10_look_say_test() {
+        assert_eq!(look_say("1"), "11");
+        assert_eq!(look_say("11"), "21");
+        assert_eq!(look_say("21"), "1211");
+        assert_eq!(look_say("1211"), "111221");
+        assert_eq!(look_say("111221"), "312211");
+    }
+
+    #[test]
     fn aoc2015_10_correctness() -> io::Result<()> {
         let sol = AoC2015_10::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "329356");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
