@@ -7,6 +7,7 @@ use std::io;
 struct Distance(String, String, usize);
 type CityId = HashMap<String, usize>;
 type Graph = HashMap<(usize, usize), usize>;
+type Criteria = dyn Fn(&Option<usize>, &Option<usize>) -> Option<usize>;
 
 pub struct AoC2015_09 {
     cities: CityId,
@@ -60,7 +61,7 @@ impl AoC2015_09 {
         }
     }
 
-    fn permute(&self, nums: &mut Vec<usize>, pos: usize, min_dist: &mut Option<usize>) {
+    fn permute(&self, nums: &mut Vec<usize>, pos: usize, dist: &mut Option<usize>, criteria: &Criteria) {
         fn restore(nums: &mut Vec<usize>, pos: usize) {
             for i in pos..nums.len() - 1 {
                 let v = nums[i];
@@ -70,20 +71,13 @@ impl AoC2015_09 {
         }
 
         if pos == nums.len() - 1 {
-            if let Some(new) = self.calc_distance(nums) {
-                let val = if let Some(old) = min_dist {
-                    new.min(*old)
-                } else {
-                    new
-                };
-                *min_dist = Some(val);
-            }
+            *dist = criteria(&self.calc_distance(nums), dist);
         }
         for i in pos..nums.len() {
             let v = nums[pos];
             nums[pos] = nums[i];
             nums[i] = v;
-            self.permute(nums, pos + 1, min_dist);
+            self.permute(nums, pos + 1, dist, criteria);
             restore(nums, pos + 1);
         }
     }
@@ -99,26 +93,57 @@ impl AoC2015_09 {
         }
         Some(sum)
     }
-}
 
-impl Solution for AoC2015_09 {
-    fn part_one(&self) -> String {
+    fn find_path(&self, criteria: &Criteria) -> String {
         let len = self.cities.len();
         let mut order = vec![0usize; len];
         for i in 0..len {
             order[i] = i;
         }
         let mut distance = None;
-        self.permute(&mut order, 0, &mut distance);
+        self.permute(&mut order, 0, &mut distance, criteria);
         if let Some(v) = distance {
             v.to_string()
         } else {
             "Not found".to_string()
         }
     }
+}
 
-    // fn part_two(&self) -> String {
-    // }
+fn min_path(new_value: &Option<usize>, old_value: &Option<usize>) -> Option<usize> {
+    if let Some(val) = new_value {
+        let result = if let Some(old) = old_value {
+            val.min(old)
+        } else {
+            val
+        };
+        Some(*result)
+    } else {
+        *old_value
+    }
+}
+
+fn max_path(new_value: &Option<usize>, old_value: &Option<usize>) -> Option<usize> {
+    if let Some(val) = new_value {
+        let result = if let Some(old) = old_value {
+            val.max(old)
+        } else {
+            val
+        };
+        Some(*result)
+    } else {
+        *old_value
+    }
+}
+
+impl Solution for AoC2015_09 {
+    fn part_one(&self) -> String {
+        self.find_path(&min_path)
+    }
+
+    fn part_two(&self) -> String {
+        self.find_path(&max_path)
+    }
 
     fn description(&self) -> String {
     	"AoC 2015/Day 9: All in a Single Night".to_string()
@@ -141,7 +166,7 @@ mod test {
     fn aoc2015_09_correctness() -> io::Result<()> {
         let sol = AoC2015_09::new()?;
         assert_eq!(sol.part_one(), "141");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "736");
         Ok(())
     }
 }
