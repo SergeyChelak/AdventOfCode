@@ -33,17 +33,22 @@ fn look_say(s: &str) -> String {
     buffer[2..].join("")
 }
 
+fn play_look_say(times: usize, initial: &str) -> String {
+    let mut s = initial.to_string();
+    for _ in 0..times {
+        s = look_say(&s);
+    }
+    s.len().to_string()
+}
+
 impl Solution for AoC2015_10 {
     fn part_one(&self) -> String {
-        let mut s = self.input.clone();
-        for _ in 0..40 {
-            s = look_say(&s);
-        }
-        s.len().to_string()
+        play_look_say(40, &self.input)
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        play_look_say(50, &self.input)
+    }
 
     fn description(&self) -> String {
     	"AoC 2015/Day 10: Elves Look, Elves Say".to_string()
@@ -67,7 +72,7 @@ mod test {
     fn aoc2015_10_correctness() -> io::Result<()> {
         let sol = AoC2015_10::new()?;
         assert_eq!(sol.part_one(), "329356");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "4666278");
         Ok(())
     }
 }
