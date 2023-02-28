@@ -41,6 +41,16 @@ impl AoC2015_08 {
         }
         len
     }
+
+    fn escaped_len(s: &str) -> usize {
+        s.chars().fold(2usize, |acc, ch| {
+            acc + match ch {
+                '\"' | '\\' => 2,
+                '\'' => 3,
+                _ => 1,
+            }
+        })
+    }
 }
 
 impl Solution for AoC2015_08 {
@@ -51,8 +61,12 @@ impl Solution for AoC2015_08 {
             .to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        self.input.iter()
+            .map(|s| Self::escaped_len(s) - s.len())
+            .sum::<usize>()
+            .to_string()
+    }
 
     fn description(&self) -> String {
     	"AoC 2015/Day 8: Matchsticks".to_string()
@@ -74,15 +88,23 @@ mod test {
     fn aoc2015_08_unescaped_len() {
         assert_eq!(AoC2015_08::unescaped_len("\"\""), 0);
         assert_eq!(AoC2015_08::unescaped_len("\"abc\""), 3);
-        assert_eq!(AoC2015_08::unescaped_len("\"aaa\\\"aaa\\\""), 7);
+        assert_eq!(AoC2015_08::unescaped_len("\"aaa\\\"aaa\""), 7);
         assert_eq!(AoC2015_08::unescaped_len("\"\\x27\""), 1);
+    }
+
+    #[test]
+    fn aoc2015_08_escaped_len() {
+        assert_eq!(AoC2015_08::escaped_len("\"\""), 6);
+        assert_eq!(AoC2015_08::escaped_len("\"abc\""), 9);
+        assert_eq!(AoC2015_08::escaped_len("\"aaa\\\"aaa\""), 16);
+        assert_eq!(AoC2015_08::escaped_len("\"\\x27\""), 11);
     }
 
     #[test]
     fn aoc2015_08_correctness() -> io::Result<()> {
         let sol = AoC2015_08::new()?;
-        assert_eq!(sol.part_one(), "");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_one(), "1350");
+        assert_eq!(sol.part_two(), "2085");
         Ok(())
     }
 }
