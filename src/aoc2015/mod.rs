@@ -24,3 +24,6 @@ pub use day_08::*;
 
 pub mod day_09;
 pub use day_09::*;
+
+pub mod day_10;
+pub use day_10::*;
