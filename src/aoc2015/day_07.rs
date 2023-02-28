@@ -32,7 +32,7 @@ struct Interpreter {
 }
 
 impl Interpreter {
-    fn with_commands(lines: &Vec<String>) -> Self {
+    pub fn with_commands(lines: &Vec<String>) -> Self {
         Self {
             tokens: Self::parse_lines(lines),
         }
