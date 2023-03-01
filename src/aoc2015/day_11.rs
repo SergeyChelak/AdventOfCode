@@ -31,12 +31,10 @@ mod test {
     use super::*;
 
     #[test]
-    fn aoc2015_11_input_load_test() -> io::Result<()> {
-        Ok(())
-    }
-
-    #[test]
     fn aoc2015_11_correctness() -> io::Result<()> {
+        let sol = AoC2015_11::new()?;
+        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_two(), "");
         Ok(())
     }
 }
