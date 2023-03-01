@@ -111,28 +111,18 @@ impl AoC2015_09 {
 }
 
 fn min_path(new_value: &Option<usize>, old_value: &Option<usize>) -> Option<usize> {
-    if let Some(val) = new_value {
-        let result = if let Some(old) = old_value {
-            val.min(old)
-        } else {
-            val
-        };
-        Some(*result)
-    } else {
-        *old_value
+    match (new_value, old_value) {
+        (Some(new), Some(old)) => Some(*new.min(old)),
+        (Some(val), None) | (None, Some(val)) => Some(*val),
+        _ => None
     }
 }
 
 fn max_path(new_value: &Option<usize>, old_value: &Option<usize>) -> Option<usize> {
-    if let Some(val) = new_value {
-        let result = if let Some(old) = old_value {
-            val.max(old)
-        } else {
-            val
-        };
-        Some(*result)
-    } else {
-        *old_value
+    match (new_value, old_value) {
+        (Some(new), Some(old)) => Some(*new.max(old)),
+        (Some(val), None) | (None, Some(val)) => Some(*val),
+        _ => None
     }
 }
 
