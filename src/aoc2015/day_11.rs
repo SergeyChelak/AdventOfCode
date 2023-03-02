@@ -3,11 +3,58 @@ use crate::solution::Solution;
 use std::io;
 
 fn increment(s: &str) -> String {
-    todo!()
+    let offset = 'a' as u8;
+    let mut carry = 1;
+    let mut chars = s.chars().collect::<Vec<char>>();
+    for ch in chars.iter_mut().rev() {
+        let val = *ch as u8 - offset + carry;
+        carry = val / 26;
+        *ch = (val % 26 + offset) as char;
+        if carry == 0 {
+            break;
+        }
+    }
+    chars.into_iter().collect()
 }
 
 fn is_valid(s: &str) -> bool {
-    todo!()
+    let chars = s.chars().collect::<Vec<char>>();
+    let has_forbidden_chars = ['i', 'o', 'l']
+        .iter()
+        .fold(false, |acc, ch| acc || chars.contains(ch));
+    if has_forbidden_chars {
+        return false;
+    }
+
+    let mut has_sequence = false;
+    for i in 0..chars.len() - 2 {
+        let a = chars[i] as u8 as i32;
+        let b = chars[i + 1] as u8 as i32;
+        let c = chars[i + 2] as u8 as i32;
+        if b - a == 1 && c - b == 1 {
+            has_sequence = true;
+            break;
+        }
+    }
+    if !has_sequence {
+        return false;
+    }
+    
+    let mut prev = '\0';
+    let mut count = 0;
+    let mut is_group = false;
+    for ch in chars {
+        if ch == prev {
+            if !is_group {
+                count += 1;
+            }
+            is_group = true;
+        } else {
+            is_group = false;
+        }
+        prev = ch;
+    }
+    count > 1
 }
 
 pub struct AoC2015_11 {
@@ -65,7 +112,7 @@ mod test {
     #[test]
     fn aoc2015_11_correctness() -> io::Result<()> {
         let sol = AoC2015_11::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "vzbxxyzz");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
