@@ -57,6 +57,16 @@ fn is_valid(s: &str) -> bool {
     count > 1
 }
 
+fn next_valid_password(s: &str) -> String {
+    let mut pass = s.to_string();
+    loop {
+        pass = increment(&pass);
+        if is_valid(&pass) {
+            break pass;
+        }
+    }
+}
+
 pub struct AoC2015_11 {
     input: String
 }
@@ -71,17 +81,12 @@ impl AoC2015_11 {
 
 impl Solution for AoC2015_11 {
     fn part_one(&self) -> String {
-        let mut pass = self.input.clone();
-        loop {
-            pass = increment(&pass);
-            if is_valid(&pass) {
-                break pass;
-            }
-        }
+        next_valid_password(&self.input)
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        next_valid_password(&next_valid_password(&self.input))
+    }
 
     fn description(&self) -> String {
     	"AoC 2015/Day 11: Corporate Policy".to_string()
