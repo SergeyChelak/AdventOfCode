@@ -10,7 +10,7 @@ type Graph = HashMap<(usize, usize), usize>;
 type Criteria = dyn Fn(&Option<usize>, &Option<usize>) -> Option<usize>;
 
 pub struct AoC2015_09 {
-    cities: CityId,
+    cities_count: usize,
     graph: Graph,
 }
 
@@ -19,12 +19,12 @@ impl AoC2015_09 {
         let lines = read_file_as_lines("input/aoc2015_09")?;
         let input = Self::parse_input(&lines);
         Ok(Self {
-            cities: input.0,
+            cities_count: input.0,
             graph: input.1,
         })
     }
 
-    fn parse_input(lines: &Vec<String>) -> (CityId, Graph) {
+    fn parse_input(lines: &Vec<String>) -> (usize, Graph) {
         let distances = lines.iter()
             .map(|s| Self::parse_line(&s))
             .collect::<Vec<Distance>>();
@@ -36,7 +36,7 @@ impl AoC2015_09 {
             graph.insert((from, to), dist.2);
             graph.insert((to, from), dist.2);
         }
-        (cities, graph)
+        (cities.len(), graph)
     }
 
     fn parse_line(s: &str) -> Distance {
@@ -95,9 +95,8 @@ impl AoC2015_09 {
     }
 
     fn find_path(&self, criteria: &Criteria) -> String {
-        let len = self.cities.len();
-        let mut order = vec![0usize; len];
-        for i in 0..len {
+        let mut order = vec![0usize; self.cities_count];
+        for i in 0..self.cities_count {
             order[i] = i;
         }
         let mut distance = None;
@@ -147,7 +146,7 @@ mod test {
     #[test]
     fn aoc2015_09_input_load_test() -> io::Result<()> {
         let sol = AoC2015_09::new()?;
-        assert!(sol.cities.len() > 0, "Cities mapping not loaded");
+        assert!(sol.cities_count > 0, "Cities mapping not loaded");
         assert!(sol.graph.len() > 0, "Graph is empty");
         Ok(())
     }
