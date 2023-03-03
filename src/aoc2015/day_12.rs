@@ -3,21 +3,43 @@ use crate::file_utils::*;
 
 use std::io;
 
+use serde_json::*;
+
+type Json = Map<String, Value>;
+
+fn sum_in_object(json: &Json) -> i64 {
+    json.iter()
+        .fold(0, |acc, (_, value)| acc + sum_in_value(value))
+}
+
+
+fn sum_in_value(value: &Value) -> i64 {
+    match value {
+        Value::Number(number) => number.as_i64().unwrap_or(0),
+        Value::Object(map) => sum_in_object(map),
+        Value::Array(items) => items.iter().fold(0, |acc, v| acc + sum_in_value(v)),
+        _ => 0
+    }
+}
 pub struct AoC2015_12 {
-    // place required fields here
+    json: Json,
 }
 
 impl AoC2015_12 {
     pub fn new() -> io::Result<Self> {
+        let json_str = read_file_as_lines("input/aoc2015_12")?;
+        let json: Json = serde_json::from_str(&json_str[0])?;
         Ok(Self {
-            // initialize solution
+            json
         })
     }
 }
 
 impl Solution for AoC2015_12 {
-    // fn part_one(&self) -> String {
-    // }
+    fn part_one(&self) -> String {
+        sum_in_object(&self.json)
+            .to_string()
+    }
 
     // fn part_two(&self) -> String {
     // }
@@ -33,13 +55,15 @@ mod test {
 
     #[test]
     fn aoc2015_12_input_load_test() -> io::Result<()> {
+        let sol = AoC2015_12::new()?;
+        assert!(sol.json.len() > 0);
         Ok(())
     }
 
     #[test]
     fn aoc2015_12_correctness() -> io::Result<()> {
         let sol = AoC2015_12::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "111754");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
