@@ -109,29 +109,13 @@ impl AoC2015_09 {
     }
 }
 
-fn min_path(new_value: &Option<usize>, old_value: &Option<usize>) -> Option<usize> {
-    match (new_value, old_value) {
-        (Some(new), Some(old)) => Some(*new.min(old)),
-        (Some(val), None) | (None, Some(val)) => Some(*val),
-        _ => None
-    }
-}
-
-fn max_path(new_value: &Option<usize>, old_value: &Option<usize>) -> Option<usize> {
-    match (new_value, old_value) {
-        (Some(new), Some(old)) => Some(*new.max(old)),
-        (Some(val), None) | (None, Some(val)) => Some(*val),
-        _ => None
-    }
-}
-
 impl Solution for AoC2015_09 {
     fn part_one(&self) -> String {
-        self.find_path(&min_path)
+        self.find_path(&less_option)
     }
 
     fn part_two(&self) -> String {
-        self.find_path(&max_path)
+        self.find_path(&bigger_option)
     }
 
     fn description(&self) -> String {
