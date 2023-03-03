@@ -5,7 +5,6 @@ use std::collections::HashMap;
 use std::io;
 
 struct Distance(String, String, usize);
-type CityId = HashMap<String, usize>;
 type Graph = HashMap<(usize, usize), usize>;
 type Criteria = dyn Fn(&Option<usize>, &Option<usize>) -> Option<usize>;
 
@@ -28,11 +27,11 @@ impl AoC2015_09 {
         let distances = lines.iter()
             .map(|s| Self::parse_line(&s))
             .collect::<Vec<Distance>>();
-        let mut cities = CityId::new();
+        let mut cities = String2IdMapper::new();
         let mut graph = Graph::new();
         for dist in distances {
-            let from = Self::get_city_id(&dist.0, &mut cities);
-            let to = Self::get_city_id(&dist.1, &mut cities);
+            let from = cities.get_id(&dist.0);
+            let to = cities.get_id(&dist.1);
             graph.insert((from, to), dist.2);
             graph.insert((to, from), dist.2);
         }
@@ -49,16 +48,6 @@ impl AoC2015_09 {
         let cities = equation[0].split(" to ").collect::<Vec<&str>>();
         assert_eq!(cities.len(), 2, "Incorrect input string");
         Distance(cities[0].to_string(), cities[1].to_string(), weight)
-    }
-
-    fn get_city_id(city: &str, map: &mut CityId) -> usize {
-        let next_id = map.len();
-        if let Some(id) = map.get(city) {
-            *id
-        } else {
-            map.insert(city.to_string(), next_id);
-            next_id
-        }
     }
 
     fn permute(&self, nums: &mut Vec<usize>, pos: usize, dist: &mut Option<usize>, criteria: &Criteria) {
