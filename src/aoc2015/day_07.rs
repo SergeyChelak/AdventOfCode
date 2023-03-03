@@ -1,5 +1,5 @@
 use crate::solution::Solution;
-use crate::file_utils::*;
+use crate::utils::*;
 
 use std::io;
 use std::collections::HashMap;

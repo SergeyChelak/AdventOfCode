@@ -1,6 +1,6 @@
 use std::io;
 
-use crate::file_utils::read_file_as_lines;
+use crate::utils::read_file_as_lines;
 use crate::solution::*;
 
 struct Pack(i32, i32, i32); // l - w - h

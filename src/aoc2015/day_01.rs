@@ -1,7 +1,7 @@
 use std::io;
 
 use crate::solution::*;
-use crate::file_utils::*;
+use crate::utils::*;
 
 pub struct AoC2015_01 {
     input: Vec<char>,
