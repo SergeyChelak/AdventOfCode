@@ -20,7 +20,6 @@ fn sum_in_object(json: &Json, skip: &str) -> i64 {
     }
 }
 
-
 fn sum_in_value(value: &Value, skip: &str) -> i64 {
     match value {
         Value::Number(number) => number.as_i64().unwrap_or(0),
