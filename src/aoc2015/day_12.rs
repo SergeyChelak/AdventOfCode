@@ -1,6 +1,5 @@
 use crate::solution::Solution;
-use crate::file_utils::*;
-
+use std::fs::read_to_string;
 use std::io;
 
 use serde_json::*;
@@ -34,8 +33,8 @@ pub struct AoC2015_12 {
 
 impl AoC2015_12 {
     pub fn new() -> io::Result<Self> {
-        let json_str = read_file_as_lines("input/aoc2015_12")?;
-        let json: Json = serde_json::from_str(&json_str[0])?;
+        let json_str = read_to_string("input/aoc2015_12")?;
+        let json: Json = serde_json::from_str(&json_str)?;
         Ok(Self {
             json
         })
