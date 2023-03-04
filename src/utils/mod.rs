@@ -6,3 +6,6 @@ pub use options::*;
 
 pub mod string2id;
 pub use string2id::*;
+
+pub mod permutations;
+pub use permutations::*;
