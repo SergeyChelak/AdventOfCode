@@ -1,12 +1,13 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
+use std::collections::HashMap;
 use std::io;
 use std::str::FromStr;
 use std::num::ParseIntError;
 
 struct Reindeer {
-    //name: String,
+    name: String,
     speed: i32,
     fly_time: i32,
     rest_time: i32
@@ -27,13 +28,13 @@ impl FromStr for Reindeer {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let items = s.split(" ").collect::<Vec<&str>>();
-        // let name = items[0].to_string();
+        let name = items[0].to_string();
         let speed = items[3].parse::<i32>()?;
         let fly_time = items[6].parse::<i32>()?;
         let rest_time = items[items.len() - 2].parse::<i32>()?;
         Ok(
             Self {
-                //name,
+                name,
                 speed,
                 fly_time,
                 rest_time,
@@ -44,6 +45,7 @@ impl FromStr for Reindeer {
 
 pub struct AoC2015_14 {
     reindeers: Vec<Reindeer>,
+    duration: i32,
 }
 
 impl AoC2015_14 {
@@ -56,6 +58,7 @@ impl AoC2015_14 {
             reindeers.push(item)
         }
         Ok(Self {
+            duration: 2503,
             reindeers
         })
     }
@@ -63,16 +66,39 @@ impl AoC2015_14 {
 
 impl Solution for AoC2015_14 {
     fn part_one(&self) -> String {
-        let time = 2503;
         self.reindeers.iter()
-            .map(|r| r.distance(time))
+            .map(|r| r.distance(self.duration))
             .max()
             .expect("Not found")
             .to_string()
     }
 
     fn part_two(&self) -> String {
-        todo!()
+        let mut scores: HashMap<String, usize> = HashMap::new();
+        for i in 1..=self.duration {
+            let mut score = 0;
+            let mut best: Vec<String> = Vec::new();
+            for reindeer in self.reindeers.iter() {
+                let distance = reindeer.distance(i);
+                if distance > score {
+                    best.clear();
+                    score = distance;
+                    best.push(reindeer.name.clone());
+                } else if distance == score {
+                    best.push(reindeer.name.clone());
+                }
+            }
+            for name in best.iter() {
+                let total = scores.get(name).unwrap_or(&0);
+                let total = 1 + *total;
+                scores.insert(name.clone(), total);
+            }
+        }
+        scores.iter()
+            .map(|(_, v)| v)
+            .max()
+            .expect("value")
+            .to_string()
     }
 
     fn description(&self) -> String {
@@ -95,13 +121,14 @@ mod test {
     fn aoc2015_14_correctness() -> io::Result<()> {
         let sol = AoC2015_14::new()?;
         assert_eq!(sol.part_one(), "2655");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "1059");
         Ok(())
     }
 
     #[test]
     fn aoc2015_14_distance_case1() {
         let reindeer = Reindeer {
+            name: String::from(""),
             speed: 8,
             fly_time: 8,
             rest_time: 53
@@ -117,6 +144,7 @@ mod test {
     #[test]
     fn aoc2015_14_distance_case2() {
         let reindeer = Reindeer {
+            name: String::from(""),
             speed: 14,
             fly_time: 10,
             rest_time: 127
@@ -130,6 +158,7 @@ mod test {
     #[test]
     fn aoc2015_14_distance_case3() {
         let reindeer = Reindeer {
+            name: String::from(""),
             speed: 16,
             fly_time: 11,
             rest_time: 162
