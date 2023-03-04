@@ -50,27 +50,6 @@ impl AoC2015_09 {
         Distance(cities[0].to_string(), cities[1].to_string(), weight)
     }
 
-    fn permute(&self, nums: &mut Vec<usize>, pos: usize, dist: &mut Option<usize>, criteria: &Criteria) {
-        fn restore(nums: &mut Vec<usize>, pos: usize) {
-            for i in pos..nums.len() - 1 {
-                let v = nums[i];
-                nums[i] = nums[i + 1];
-                nums[i + 1] = v;
-            }
-        }
-
-        if pos == nums.len() - 1 {
-            *dist = criteria(&self.calc_distance(nums), dist);
-        }
-        for i in pos..nums.len() {
-            let v = nums[pos];
-            nums[pos] = nums[i];
-            nums[i] = v;
-            self.permute(nums, pos + 1, dist, criteria);
-            restore(nums, pos + 1);
-        }
-    }
-
     fn calc_distance(&self, nums: &Vec<usize>) -> Option<usize> {
         let mut sum = 0usize;
         for i in 0..nums.len() - 1 {
@@ -88,8 +67,10 @@ impl AoC2015_09 {
         for i in 0..self.cities_count {
             order[i] = i;
         }
-        let mut distance = None;
-        self.permute(&mut order, 0, &mut distance, criteria);
+        let distance = order.permut_iter()
+            .map(|v| self.calc_distance(&v))
+            .fold(None, |acc, val| criteria(&acc, &val));
+
         if let Some(v) = distance {
             v.to_string()
         } else {
