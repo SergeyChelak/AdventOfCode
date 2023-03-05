@@ -39,9 +39,9 @@ impl FromStr for Ingredient {
     }
 }
 
-fn scores(amount: &Vec<i32>, ingredients: &Vec<Ingredient>) -> i64 {
+fn scores(amount: &Vec<i32>, ingredients: &Vec<Ingredient>, fields: &Vec<usize>) -> i64 {
     let mut result = 1i64;
-    for field in 0..4 {
+    for field in fields {
         let value = amount.iter().zip(ingredients.iter()
             .map(|i| {
                 match field {
@@ -88,13 +88,13 @@ impl Solution for AoC2015_15 {
         let size = self.ingredients.len();
         let mut counters = vec![1i32; size];
         let max = (100 - size) as i32 + 1;
+        let fieds = vec![0usize, 1, 2, 3];
         counters[size - 1] = max;
         let mut best = 0i64;
         loop {
-            // println!("{:?}", counters);
             let sum = counters.iter().sum::<i32>();
             if sum == 100 {
-                let val = scores(&counters, &self.ingredients) as i64;
+                let val = scores(&counters, &self.ingredients, &fieds) as i64;
                 best = best.max(val);
             }
             let mut carry = 1;
@@ -162,7 +162,7 @@ mod test {
             .parse::<Ingredient>()?;
         let i2 = "Cinnamon: capacity 2, durability 3, flavor -2, texture -1, calories 3"
             .parse::<Ingredient>()?;
-        assert_eq!(scores(&vec![44, 56], &vec![i1, i2]), 62842880);
+        assert_eq!(scores(&vec![44, 56], &vec![i1, i2], &vec![0, 1, 2, 3]), 62842880);
         Ok(())
     }
 }
