@@ -39,6 +39,28 @@ impl FromStr for Ingredient {
     }
 }
 
+fn scores(amount: &Vec<i32>, ingredients: &Vec<Ingredient>) -> i64 {
+    let mut result = 1i64;
+    for field in 0..4 {
+        let value = amount.iter().zip(ingredients.iter()
+            .map(|i| {
+                match field {
+                    0 => i.capacity,
+                    1 => i.durability,
+                    2 => i.flavor,
+                    3 => i.texture,
+                    _ => panic!("field id isn't supported")
+                }
+            }))
+            .map(|(a, v)| *a * v)
+            .sum::<i32>();
+        if value > 0 {
+            result *= value as i64;
+        }
+    }
+    result
+}
+
 pub struct AoC2015_15 {
     ingredients: Vec<Ingredient>,
 }
@@ -99,6 +121,16 @@ mod test {
         assert_eq!(item.flavor, 0);
         assert_eq!(item.texture, -3);
         assert_eq!(item.calories, 2);
+        Ok(())
+    }
+
+    #[test]
+    fn aoc2015_15_calc_scores() -> Result<(), ParseIntError> {
+        let i1 = "Butterscotch: capacity -1, durability -2, flavor 6, texture 3, calories 8"
+            .parse::<Ingredient>()?;
+        let i2 = "Cinnamon: capacity 2, durability 3, flavor -2, texture -1, calories 3"
+            .parse::<Ingredient>()?;
+        assert_eq!(scores(&vec![44, 56], &vec![i1, i2]), 62842880);
         Ok(())
     }
 }
