@@ -116,8 +116,40 @@ impl Solution for AoC2015_15 {
         best.to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let size = self.ingredients.len();
+        let mut counters = vec![1i32; size];
+        let max = (100 - size) as i32 + 1;
+        let fieds = vec![0usize, 1, 2, 3];
+        counters[size - 1] = max;
+        let mut best = 0i64;
+        loop {
+            let sum = counters.iter().sum::<i32>();
+            if sum == 100 {
+                let cals = scores(&counters, &self.ingredients, &vec![4]) as i64;
+                if cals == 500 {
+                    let val = scores(&counters, &self.ingredients, &fieds) as i64;
+                    best = best.max(val);
+                }
+            }
+            let mut carry = 1;
+            for val in counters.iter_mut().rev() {
+                let next = *val + carry;
+                if next > max {
+                    carry = 1;
+                    *val = 1;
+                } else {
+                    carry = 0;
+                    *val = next;
+                    break;
+                }
+            }
+            if carry == 1 {
+                break;
+            }
+        }
+        best.to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2015/Day 15: Science for Hungry People".to_string()
@@ -139,7 +171,7 @@ mod test {
     fn aoc2015_15_correctness() -> io::Result<()> {
         let sol = AoC2015_15::new()?;
         assert_eq!(sol.part_one(), "222870");
-        //assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "117936");
         Ok(())
     }
 
