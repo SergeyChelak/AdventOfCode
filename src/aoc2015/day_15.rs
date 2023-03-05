@@ -53,10 +53,8 @@ fn scores(amount: &Vec<i32>, ingredients: &Vec<Ingredient>) -> i64 {
                 }
             }))
             .map(|(a, v)| *a * v)
-            .sum::<i32>();
-        if value > 0 {
-            result *= value as i64;
-        }
+            .sum::<i32>().max(0);
+        result *= value as i64;
     }
     result
 }
