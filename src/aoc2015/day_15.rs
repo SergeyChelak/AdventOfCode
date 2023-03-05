@@ -49,12 +49,17 @@ fn scores(amount: &Vec<i32>, ingredients: &Vec<Ingredient>) -> i64 {
                     1 => i.durability,
                     2 => i.flavor,
                     3 => i.texture,
+                    4 => i.calories,
                     _ => panic!("field id isn't supported")
                 }
             }))
             .map(|(a, v)| *a * v)
-            .sum::<i32>().max(0);
-        result *= value as i64;
+            .sum::<i32>();
+        if value > 0 {
+            result *= value as i64;
+        } else {
+            return 0;
+        }
     }
     result
 }
@@ -79,8 +84,37 @@ impl AoC2015_15 {
 }
 
 impl Solution for AoC2015_15 {
-    // fn part_one(&self) -> String {
-    // }
+    fn part_one(&self) -> String {
+        let size = self.ingredients.len();
+        let mut counters = vec![1i32; size];
+        let max = (100 - size) as i32 + 1;
+        counters[size - 1] = max;
+        let mut best = 0i64;
+        loop {
+            // println!("{:?}", counters);
+            let sum = counters.iter().sum::<i32>();
+            if sum == 100 {
+                let val = scores(&counters, &self.ingredients) as i64;
+                best = best.max(val);
+            }
+            let mut carry = 1;
+            for val in counters.iter_mut().rev() {
+                let next = *val + carry;
+                if next > max {
+                    carry = 1;
+                    *val = 1;
+                } else {
+                    carry = 0;
+                    *val = next;
+                    break;
+                }
+            }
+            if carry == 1 {
+                break;
+            }
+        }
+        best.to_string()
+    }
 
     // fn part_two(&self) -> String {
     // }
@@ -104,8 +138,8 @@ mod test {
     #[test]
     fn aoc2015_15_correctness() -> io::Result<()> {
         let sol = AoC2015_15::new()?;
-        assert_eq!(sol.part_one(), "");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_one(), "222870");
+        //assert_eq!(sol.part_two(), "");
         Ok(())
     }
 
