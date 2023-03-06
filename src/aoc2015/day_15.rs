@@ -6,12 +6,7 @@ use std::str::FromStr;
 use std::num::ParseIntError;
 
 struct Ingredient {
-    name: String,
-    capacity: i32,
-    durability: i32,
-    flavor: i32,
-    texture: i32,
-    calories: i32
+    components: Vec<i32>
 }
 
 impl FromStr for Ingredient {
@@ -19,7 +14,6 @@ impl FromStr for Ingredient {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let elems = s.split(": ").collect::<Vec<&str>>();
-        let name = elems[0].to_string();
         let elems = elems[1].split(", ").collect::<Vec<&str>>();
         let values = elems.iter()
             .map(|item| {
@@ -29,31 +23,17 @@ impl FromStr for Ingredient {
             })
             .collect::<Vec<i32>>();
         Ok(Self {
-            name,
-            capacity: values[0],
-            durability: values[1],
-            flavor: values[2],
-            texture: values[3],
-            calories: values[4]
+            components: values
         })
     }
 }
 
-fn scores(amount: &Vec<i32>, ingredients: &Vec<Ingredient>, fields: &Vec<usize>) -> i64 {
+fn scores(amount: &Vec<usize>, ingredients: &Vec<Ingredient>, fields: &Vec<usize>) -> i64 {
     let mut result = 1i64;
     for field in fields {
         let value = amount.iter().zip(ingredients.iter()
-            .map(|i| {
-                match field {
-                    0 => i.capacity,
-                    1 => i.durability,
-                    2 => i.flavor,
-                    3 => i.texture,
-                    4 => i.calories,
-                    _ => panic!("field id isn't supported")
-                }
-            }))
-            .map(|(a, v)| *a * v)
+            .map(|i| i.components[*field]))
+            .map(|(a, v)| *a as i32 * v)
             .sum::<i32>();
         if value > 0 {
             result *= value as i64;
@@ -62,6 +42,60 @@ fn scores(amount: &Vec<i32>, ingredients: &Vec<Ingredient>, fields: &Vec<usize>)
         }
     }
     result
+}
+
+struct Sum100Iterator {
+    target: usize,
+    size: usize,
+    step: usize,
+    arr: Vec<usize>,
+}
+
+impl Sum100Iterator {
+    pub fn new(target: usize, size: usize) -> Self {
+        Self {
+            target,
+            size,
+            step: 0,
+            arr: vec![0usize; size],
+        }
+    }
+}
+
+impl Iterator for Sum100Iterator {
+    type Item = Vec<usize>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let max = self.target - self.size + 1;
+        if self.step == 0 {
+            self.arr.iter_mut().for_each(|v| *v = 1);
+            self.arr[self.size - 1] = max;
+            self.step += 1;
+            Some(self.arr.clone())
+        } else {
+            loop {
+                let mut carry = 1;
+                for val in self.arr.iter_mut().rev() {
+                    let next = *val + carry;
+                    if next > max {
+                        carry = 1;
+                        *val = 1;
+                    } else {
+                        carry = 0;
+                        *val = next;
+                        break;
+                    }
+                }
+                if carry == 1 {
+                    break None
+                }
+                let sum = self.arr.iter().sum::<usize>();
+                if sum == 100 {
+                    break Some(self.arr.clone())
+                }
+            }
+        }
+    }
 }
 
 pub struct AoC2015_15 {
@@ -86,68 +120,29 @@ impl AoC2015_15 {
 impl Solution for AoC2015_15 {
     fn part_one(&self) -> String {
         let size = self.ingredients.len();
-        let mut counters = vec![1i32; size];
-        let max = (100 - size) as i32 + 1;
-        let fieds = vec![0usize, 1, 2, 3];
-        counters[size - 1] = max;
-        let mut best = 0i64;
-        loop {
-            let sum = counters.iter().sum::<i32>();
-            if sum == 100 {
-                let val = scores(&counters, &self.ingredients, &fieds) as i64;
-                best = best.max(val);
-            }
-            let mut carry = 1;
-            for val in counters.iter_mut().rev() {
-                let next = *val + carry;
-                if next > max {
-                    carry = 1;
-                    *val = 1;
-                } else {
-                    carry = 0;
-                    *val = next;
-                    break;
-                }
-            }
-            if carry == 1 {
-                break;
-            }
-        }
+        let fields = vec![0usize, 1, 2, 3];
+        let best = Sum100Iterator::new(100, size)
+            .fold(0, |acc, counters| {
+                let val = scores(&counters, &self.ingredients, &fields);
+                acc.max(val)
+            });
         best.to_string()
     }
 
     fn part_two(&self) -> String {
         let size = self.ingredients.len();
-        let mut counters = vec![1i32; size];
-        let max = (100 - size) as i32 + 1;
-        let fieds = vec![0usize, 1, 2, 3];
-        counters[size - 1] = max;
-        let mut best = 0i64;
-        loop {
-            let sum = counters.iter().sum::<i32>();
-            if sum == 100 {
+        let fields = vec![0usize, 1, 2, 3];
+        let best = Sum100Iterator::new(100, size)
+            .fold(0, |acc, counters| {
                 let cals = scores(&counters, &self.ingredients, &vec![4]) as i64;
                 if cals == 500 {
-                    let val = scores(&counters, &self.ingredients, &fieds) as i64;
-                    best = best.max(val);
-                }
-            }
-            let mut carry = 1;
-            for val in counters.iter_mut().rev() {
-                let next = *val + carry;
-                if next > max {
-                    carry = 1;
-                    *val = 1;
+                    let val = scores(&counters, &self.ingredients, &fields);
+                    acc.max(val)
                 } else {
-                    carry = 0;
-                    *val = next;
-                    break;
+                    acc
                 }
-            }
-            if carry == 1 {
-                break;
-            }
-        }
+                
+            });
         best.to_string()
     }
 
@@ -179,12 +174,12 @@ mod test {
     fn aoc2015_15_ingredient_parse() -> Result<(), ParseIntError> {
         let str = "Sugar: capacity 3, durability 1, flavor 0, texture -3, calories 2";
         let item = str.parse::<Ingredient>()?;
-        assert_eq!(item.name, "Sugar");
-        assert_eq!(item.capacity, 3);
-        assert_eq!(item.durability, 1);
-        assert_eq!(item.flavor, 0);
-        assert_eq!(item.texture, -3);
-        assert_eq!(item.calories, 2);
+        // assert_eq!(item.name, "Sugar");
+        assert_eq!(item.components[0], 3);
+        assert_eq!(item.components[1], 1);
+        assert_eq!(item.components[2], 0);
+        assert_eq!(item.components[3], -3);
+        assert_eq!(item.components[4], 2);
         Ok(())
     }
 
