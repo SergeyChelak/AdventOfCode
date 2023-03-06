@@ -44,14 +44,14 @@ fn scores(amount: &Vec<usize>, ingredients: &Vec<Ingredient>, fields: &Vec<usize
     result
 }
 
-struct Sum100Iterator {
+struct IndexSumIterator {
     target: usize,
     size: usize,
     step: usize,
     arr: Vec<usize>,
 }
 
-impl Sum100Iterator {
+impl IndexSumIterator {
     pub fn new(target: usize, size: usize) -> Self {
         Self {
             target,
@@ -62,7 +62,7 @@ impl Sum100Iterator {
     }
 }
 
-impl Iterator for Sum100Iterator {
+impl Iterator for IndexSumIterator {
     type Item = Vec<usize>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -92,7 +92,7 @@ impl Iterator for Sum100Iterator {
                     break None
                 }
                 let sum = self.arr.iter().sum::<usize>();
-                if sum == 100 {
+                if sum == self.target {
                     break Some(self.arr.clone())
                 }
             }
@@ -123,7 +123,7 @@ impl Solution for AoC2015_15 {
     fn part_one(&self) -> String {
         let size = self.ingredients.len();
         let fields = vec![0usize, 1, 2, 3];
-        let best = Sum100Iterator::new(100, size)
+        let best = IndexSumIterator::new(100, size)
             .fold(0, |acc, counters| {
                 let val = scores(&counters, &self.ingredients, &fields);
                 acc.max(val)
@@ -134,7 +134,7 @@ impl Solution for AoC2015_15 {
     fn part_two(&self) -> String {
         let size = self.ingredients.len();
         let fields = vec![0usize, 1, 2, 3];
-        let best = Sum100Iterator::new(100, size)
+        let best = IndexSumIterator::new(100, size)
             .fold(0, |acc, counters| {
                 let cals = scores(&counters, &self.ingredients, &vec![4]) as i64;
                 if cals == 500 {
