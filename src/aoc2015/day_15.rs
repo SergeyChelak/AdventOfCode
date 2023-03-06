@@ -57,7 +57,7 @@ impl Sum100Iterator {
             target,
             size,
             step: 0,
-            arr: vec![0usize; size],
+            arr: vec![1usize; size],
         }
     }
 }
@@ -66,9 +66,11 @@ impl Iterator for Sum100Iterator {
     type Item = Vec<usize>;
 
     fn next(&mut self) -> Option<Self::Item> {
+        if self.target < self.size {
+            return None;
+        }
         let max = self.target - self.size + 1;
         if self.step == 0 {
-            self.arr.iter_mut().for_each(|v| *v = 1);
             self.arr[self.size - 1] = max;
             self.step += 1;
             Some(self.arr.clone())
