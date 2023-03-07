@@ -47,8 +47,10 @@ fn scores(amount: &Vec<usize>, ingredients: &Vec<Ingredient>, fields: &Vec<usize
 struct IndexSumIterator {
     target: usize,
     size: usize,
-    step: usize,
-    arr: Vec<usize>,
+    sp: usize,          // stack pointer
+    stack_idx: Vec<usize>,
+    stack_sum: Vec<usize>,
+    items: Vec<usize>,
 }
 
 impl IndexSumIterator {
@@ -56,8 +58,10 @@ impl IndexSumIterator {
         Self {
             target,
             size,
-            step: 0,
-            arr: vec![1usize; size],
+            sp: 0,
+            stack_idx: vec![1; size + 1],
+            stack_sum: vec![0; size + 1],
+            items: vec![0usize; size],
         }
     }
 }
@@ -69,31 +73,25 @@ impl Iterator for IndexSumIterator {
         if self.target < self.size {
             return None;
         }
-        let max = self.target - self.size + 1;
-        if self.step == 0 {
-            self.arr[self.size - 1] = max;
-            self.step += 1;
-            Some(self.arr.clone())
-        } else {
-            loop {
-                let mut carry = 1;
-                for val in self.arr.iter_mut().rev() {
-                    let next = *val + carry;
-                    if next > max {
-                        carry = 1;
-                        *val = 1;
-                    } else {
-                        carry = 0;
-                        *val = next;
-                        break;
-                    }
+        loop {
+            if self.sp == self.size {
+                if self.stack_sum[self.sp] == self.target {
+                    self.sp -= 1;
+                    return Some(self.items.clone());
                 }
-                if carry == 1 {
-                    break None
-                }
-                let sum = self.arr.iter().sum::<usize>();
-                if sum == self.target {
-                    break Some(self.arr.clone())
+                self.sp -= 1;
+            } else {
+                let max = self.target as isize - self.stack_sum[self.sp] as isize - self.size as isize + self.sp as isize + 1;
+                if self.stack_idx[self.sp] as isize <= max {
+                    self.items[self.sp] = self.stack_idx[self.sp];
+                    self.stack_idx[self.sp + 1] = 1;
+                    self.stack_sum[self.sp + 1] = self.stack_idx[self.sp] + self.stack_sum[self.sp];
+                    self.stack_idx[self.sp] += 1;
+                    self.sp += 1;
+                } else if self.sp == 0 {
+                    return None
+                } else {
+                    self.sp -= 1;
                 }
             }
         }
@@ -176,7 +174,6 @@ mod test {
     fn aoc2015_15_ingredient_parse() -> Result<(), ParseIntError> {
         let str = "Sugar: capacity 3, durability 1, flavor 0, texture -3, calories 2";
         let item = str.parse::<Ingredient>()?;
-        // assert_eq!(item.name, "Sugar");
         assert_eq!(item.components[0], 3);
         assert_eq!(item.components[1], 1);
         assert_eq!(item.components[2], 0);
