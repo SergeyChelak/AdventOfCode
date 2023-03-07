@@ -74,6 +74,33 @@ impl Profile {
             perfumes: Some(1)
         }
     }
+
+    pub fn diff(&self, other: &Self) -> i32 {
+        let mut result = 0;
+        for (a, b) in self.prop_values().iter().zip(other.prop_values()) {
+            match (a, b) {
+                (Some(v1), Some(v2)) => if *v1 != v2 { return i32::MAX; },
+                (Some(_), None) => result += 1,
+                _ => return i32::MAX,
+            }
+        }
+        result
+    }
+
+    fn prop_values(&self) -> Vec<Option<i32>> {
+        vec![
+            self.children,
+            self.cats,
+            self.samoyeds,
+            self.pomeranians,
+            self.akitas,
+            self.vizslas,
+            self.goldfish,
+            self.trees,
+            self.cars,
+            self.perfumes,
+        ]
+    }
 }
 
 pub struct AoC2015_16 {
@@ -95,8 +122,18 @@ impl AoC2015_16 {
 }
 
 impl Solution for AoC2015_16 {
-    // fn part_one(&self) -> String {
-    // }
+    fn part_one(&self) -> String {
+        let mut min = i32::MAX;
+        let mut best = String::from("");
+        for profile in &self.profiles {
+            let diff = self.sender.diff(profile);
+            if diff < min {
+                min = diff;
+                best = profile.title.clone();
+            }
+        }
+        best
+    }
 
     // fn part_two(&self) -> String {
     // }
@@ -120,7 +157,7 @@ mod test {
     #[test]
     fn aoc2015_16_correctness() -> io::Result<()> {
         let sol = AoC2015_16::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "Sue 213");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
