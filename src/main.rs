@@ -24,7 +24,8 @@ fn main() -> io::Result<()> {
         Box::new(AoC2015_13::new()?),
         Box::new(AoC2015_14::new()?),
         Box::new(AoC2015_15::new()?),
-        Box::new(AoC2015_16::new()?)
+        Box::new(AoC2015_16::new()?),
+        Box::new(AoC2015_17::new()?)
     ];
     // days.iter()
     //     .for_each(execute);
