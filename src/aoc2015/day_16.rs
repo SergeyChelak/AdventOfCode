@@ -35,9 +35,9 @@ impl Profile {
     }
 
     pub fn from_str(s: &str) -> Self {
-        let idx = s.find(": ").expect("Separator not found");
-        let mut profile = Profile::default(&s[..idx]);
-        let tokens = &s[idx + 2..].split(", ").collect::<Vec<&str>>();
+        let tokens = s.split_once(": ").expect("Separator not found");
+        let mut profile = Profile::default(tokens.0);
+        let tokens = tokens.1.split(", ").collect::<Vec<&str>>();
         for token in tokens {
             let pair = token.split(": ").collect::<Vec<&str>>();
             let property = pair[0];
