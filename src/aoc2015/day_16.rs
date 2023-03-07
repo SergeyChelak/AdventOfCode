@@ -87,18 +87,32 @@ impl Profile {
         result
     }
 
+    pub fn fuzzy_diff(&self, other: &Self) -> i32 {
+        let mut result = 0;
+        for (idx, (a, b)) in self.prop_values().iter().zip(other.prop_values()).enumerate() {
+            match (a, b) {
+                (Some(v1), Some(v2)) if matches!(idx,  1 | 7) => if v2 <= *v1 { return i32::MAX; }
+                (Some(v1), Some(v2)) if matches!(idx,  3 | 6) => if v2 >= *v1 { return i32::MAX; }
+                (Some(v1), Some(v2)) => if *v1 != v2 { return i32::MAX; },
+                (Some(_), None) => result += 1,
+                _ => return i32::MAX,
+            }
+        }
+        result
+    }
+
     fn prop_values(&self) -> Vec<Option<i32>> {
         vec![
-            self.children,
-            self.cats,
-            self.samoyeds,
-            self.pomeranians,
-            self.akitas,
-            self.vizslas,
-            self.goldfish,
-            self.trees,
-            self.cars,
-            self.perfumes,
+            self.children, // 0
+            self.cats, // 1
+            self.samoyeds, // 2
+            self.pomeranians, // 3
+            self.akitas, // 4
+            self.vizslas, // 5
+            self.goldfish, // 6
+            self.trees, // 7
+            self.cars, // 8
+            self.perfumes, // 9
         ]
     }
 }
@@ -119,14 +133,12 @@ impl AoC2015_16 {
             sender: Profile::sender(),
         })
     }
-}
 
-impl Solution for AoC2015_16 {
-    fn part_one(&self) -> String {
+    fn find_best(&self, comparator: &(dyn Fn(&Profile, &Profile) -> i32)) -> String {
         let mut min = i32::MAX;
         let mut best = String::from("");
         for profile in &self.profiles {
-            let diff = self.sender.diff(profile);
+            let diff = comparator(&self.sender, profile);
             if diff < min {
                 min = diff;
                 best = profile.title.clone();
@@ -134,9 +146,16 @@ impl Solution for AoC2015_16 {
         }
         best
     }
+}
 
-    // fn part_two(&self) -> String {
-    // }
+impl Solution for AoC2015_16 {
+    fn part_one(&self) -> String {
+        self.find_best(&Profile::diff)
+    }
+
+    fn part_two(&self) -> String {
+        self.find_best(&Profile::fuzzy_diff)
+    }
 
     fn description(&self) -> String {
         "AoC 2015/Day 16: Aunt Sue".to_string()
