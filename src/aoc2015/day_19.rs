@@ -2,6 +2,7 @@ use crate::solution::Solution;
 use crate::utils::*;
 
 use std::io;
+use std::collections::HashSet;
 
 struct Replacement {
     inp: String,
@@ -27,7 +28,8 @@ pub struct AoC2015_19 {
 impl AoC2015_19 {
     pub fn new() -> io::Result<Self> {
         let lines = read_file_as_lines("input/aoc2015_19")?;
-        let index = lines.iter().position(|elem| elem.is_empty()).expect("Empty line is expected");
+        let index = lines.iter().position(|elem| elem.is_empty())
+            .expect("Empty line is expected");
         let replacement = lines[..index].iter()
             .map(|elem| Replacement::from_str(elem))
             .collect::<Vec<Replacement>>();
@@ -37,11 +39,24 @@ impl AoC2015_19 {
             replacement,
         })
     }
+
+    fn collect_replacements(&self, replacement: &Replacement, into: &mut HashSet<String>) {        
+        for (pos, _) in self.molecule.match_indices(&replacement.inp) {
+            let suffix = self.molecule[pos..].replacen(&replacement.inp, &replacement.out, 1);
+            let modified = self.molecule[..pos].to_string() + &suffix;
+            into.insert(modified);
+        }
+    }
 }
 
 impl Solution for AoC2015_19 {
-    // fn part_one(&self) -> String {
-    // }
+    fn part_one(&self) -> String {
+        let mut variants = HashSet::new();
+        for r in &self.replacement {
+            self.collect_replacements(r, &mut variants);
+        }
+        variants.len().to_string()
+    }
 
     // fn part_two(&self) -> String {
     // }
@@ -66,7 +81,7 @@ mod test {
     #[test]
     fn aoc2015_19_correctness() -> io::Result<()> {
         let sol = AoC2015_19::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "509");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
