@@ -18,6 +18,13 @@ impl Replacement {
             substitute: pair.1.to_string(),
         }
     }
+
+    fn inversed(&self) -> Self {
+        Self {
+            value: self.substitute.clone(),
+            substitute: self.value.clone()
+        }
+    }
 }
 
 pub struct AoC2015_19 {
@@ -47,28 +54,32 @@ impl AoC2015_19 {
         }
     }
 
-    fn find_fewest_steps(&self, initial: &str) -> usize {
+    fn find_fewest_steps(&self) -> usize {
+        let subs = self.replacement
+            .iter()
+            .map(|r| r.inversed())
+            .collect::<Vec<Replacement>>();
+        let mut stack = vec![(self.molecule.clone(), 1)];
         let mut processed: HashSet<String> = HashSet::new();
-        let mut stack = vec![(initial.to_string(), 1)];
         let mut result = usize::MAX;
-        let target_len = self.molecule.len();
         while !stack.is_empty() {
             let (mol, step) = stack.pop()
                 .expect("Stack shouldn't be empty");
-            if mol == self.molecule {
-                result = result.min(step);
-                break;
+            if processed.contains(&mol) {
+                continue;
             }
-            //println!("{step}");
-            for r in &self.replacement {
-                for (pos, _) in mol.match_indices(&r.value) {
-                    let next = mol[..pos].to_string() + &r.substitute + &mol[(pos + r.value.len())..];
-                    if !processed.contains(&next) && next.len() <= target_len {
-                        stack.push((next.clone(), step + 1));
-                    }
-                    processed.insert(next);
+            if mol == "e" {
+                result = step.min(result);
+                continue;
+            }
+            println!("{mol}");
+            for repl in &subs {
+                for (pos, _) in mol.match_indices(&repl.value) {
+                    let next = mol[..pos].to_string() + &repl.substitute + &mol[(pos + repl.value.len())..];
+                    stack.push((next, step + 1));
                 }
             }
+            processed.insert(mol);
         }
         result
     }
@@ -84,14 +95,8 @@ impl Solution for AoC2015_19 {
     }
 
     fn part_two(&self) -> String {
-        let mut steps = usize::MAX;
-        self.replacement
-            .iter()
-            .filter(|elem| elem.value == "e")
-            .for_each(|elem| {
-                steps = steps.min(self.find_fewest_steps(&elem.substitute));
-            });
-        steps.to_string()
+        self.find_fewest_steps()
+            .to_string()
     }
 
     fn description(&self) -> String {
