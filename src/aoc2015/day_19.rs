@@ -5,8 +5,8 @@ use std::io;
 use std::collections::HashSet;
 
 struct Replacement {
-    inp: String,
-    out: String
+    value: String,
+    substitute: String
 }
 
 impl Replacement {
@@ -14,8 +14,8 @@ impl Replacement {
         let pair = s.split_once(" => ")
             .expect("Invalid replacement string format");
         Self {
-            inp: pair.0.to_string(),
-            out: pair.1.to_string(),
+            value: pair.0.to_string(),
+            substitute: pair.1.to_string(),
         }
     }
 }
@@ -40,12 +40,37 @@ impl AoC2015_19 {
         })
     }
 
-    fn collect_replacements(&self, replacement: &Replacement, into: &mut HashSet<String>) {        
-        for (pos, _) in self.molecule.match_indices(&replacement.inp) {
-            let suffix = self.molecule[pos..].replacen(&replacement.inp, &replacement.out, 1);
-            let modified = self.molecule[..pos].to_string() + &suffix;
+    fn collect_replacements(&self, repl: &Replacement, into: &mut HashSet<String>) {        
+        for (pos, _) in self.molecule.match_indices(&repl.value) {
+            let modified = self.molecule[..pos].to_string() + &repl.substitute + &self.molecule[(pos + repl.value.len())..];
             into.insert(modified);
         }
+    }
+
+    fn find_fewest_steps(&self, initial: &str) -> usize {
+        let mut processed: HashSet<String> = HashSet::new();
+        let mut stack = vec![(initial.to_string(), 1)];
+        let mut result = usize::MAX;
+        let target_len = self.molecule.len();
+        while !stack.is_empty() {
+            let (mol, step) = stack.pop()
+                .expect("Stack shouldn't be empty");
+            if mol == self.molecule {
+                result = result.min(step);
+                break;
+            }
+            //println!("{step}");
+            for r in &self.replacement {
+                for (pos, _) in mol.match_indices(&r.value) {
+                    let next = mol[..pos].to_string() + &r.substitute + &mol[(pos + r.value.len())..];
+                    if !processed.contains(&next) && next.len() <= target_len {
+                        stack.push((next.clone(), step + 1));
+                    }
+                    processed.insert(next);
+                }
+            }
+        }
+        result
     }
 }
 
@@ -58,8 +83,16 @@ impl Solution for AoC2015_19 {
         variants.len().to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut steps = usize::MAX;
+        self.replacement
+            .iter()
+            .filter(|elem| elem.value == "e")
+            .for_each(|elem| {
+                steps = steps.min(self.find_fewest_steps(&elem.substitute));
+            });
+        steps.to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2015/Day 19: Medicine for Rudolph".to_string()
