@@ -15,8 +15,23 @@ impl AoC2015_20 {
 }
 
 impl Solution for AoC2015_20 {
-    // fn part_one(&self) -> String {
-    // }
+    fn part_one(&self) -> String {
+        let mut num = 0usize;
+        loop {
+            let mut count = 0usize;
+            num += 1;
+            for i in 1..=num {
+                if num % i == 0 {
+                    count += i * 10;
+                }
+            }
+            println!("{count}");
+            if count >= self.input {
+                break;
+            }
+        };
+        num.to_string()
+    }
 
     // fn part_two(&self) -> String {
     // }
