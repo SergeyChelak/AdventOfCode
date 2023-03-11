@@ -55,33 +55,23 @@ impl AoC2015_19 {
     }
 
     fn find_fewest_steps(&self) -> usize {
-        let subs = self.replacement
-            .iter()
+        let repl = self.replacement.iter()
             .map(|r| r.inversed())
             .collect::<Vec<Replacement>>();
-        let mut stack = vec![(self.molecule.clone(), 1)];
-        let mut processed: HashSet<String> = HashSet::new();
-        let mut result = usize::MAX;
-        while !stack.is_empty() {
-            let (mol, step) = stack.pop()
-                .expect("Stack shouldn't be empty");
-            if processed.contains(&mol) {
-                continue;
-            }
-            if mol == "e" {
-                result = step.min(result);
-                continue;
-            }
-            println!("{mol}");
-            for repl in &subs {
-                for (pos, _) in mol.match_indices(&repl.value) {
-                    let next = mol[..pos].to_string() + &repl.substitute + &mol[(pos + repl.value.len())..];
-                    stack.push((next, step + 1));
+        let mut count = 0usize;
+        let mut mol = self.molecule.clone();
+        let mut has_next = true;
+        while has_next {
+            has_next = false;
+            for r in &repl {
+                if let Some(pos) = mol.find(&r.value) {
+                    mol = mol[..pos].to_string() + &r.substitute + &mol[(pos + r.value.len())..];
+                    count += 1;
+                    has_next = true;
                 }
             }
-            processed.insert(mol);
         }
-        result
+        count
     }
 }
 
@@ -120,7 +110,27 @@ mod test {
     fn aoc2015_19_correctness() -> io::Result<()> {
         let sol = AoC2015_19::new()?;
         assert_eq!(sol.part_one(), "509");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "195");
         Ok(())
+    }
+
+    #[test]
+    fn aoc2015_19_search() {
+        let repl = vec![
+            "e => H",
+            "e => O",
+            "H => HO",
+            "H => OH",
+            "O => HH"
+        ].iter()
+        .map(|&s| s.to_string())
+        .map(|s| Replacement::from_str(&s))
+        .collect::<Vec<Replacement>>();
+        let sol = AoC2015_19 {
+            replacement: repl,
+            molecule: "HOHOHO".to_string()
+        };
+        let steps = sol.find_fewest_steps();
+        assert_eq!(steps, 6);
     }
 }
