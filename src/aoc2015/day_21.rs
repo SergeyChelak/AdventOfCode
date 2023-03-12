@@ -52,28 +52,23 @@ impl Equipment {
     }
 }
 
-fn cost(equip: &Vec<Equipment>) -> i32 {
-    equip.iter()
-        .map(|eq| eq.cost)
-        .sum::<i32>()
-}
 
-fn find_min_win_cost() -> i32 {
+fn find_battle_cost(initial: i32, fit_cost: &dyn Fn(&Vec<Equipment>, i32) -> i32) -> i32 {
     let mut equip: Vec<Equipment> = Vec::new();
-    let mut cost = i32::MAX;
+    let mut cost = initial;
     for w in Equipment::weapons() {
         equip.push(w);
-        cost = battle_cost(&equip).min(cost);
+        cost = fit_cost(&equip, cost);
         for a in Equipment::armors() {
             equip.push(a);
-            cost = battle_cost(&equip).min(cost);
+            cost = fit_cost(&equip, cost);
             for r1 in Equipment::rings() {
                 equip.push(r1.clone());
-                cost = battle_cost(&equip).min(cost);
+                cost = fit_cost(&equip, cost);
                 for r2 in Equipment::rings() {
                     if r1.name != r2.name {
                         equip.push(r2);
-                        cost = battle_cost(&equip).min(cost);
+                        cost = fit_cost(&equip, cost);
                         equip.pop();
                     }
                 }
@@ -86,15 +81,44 @@ fn find_min_win_cost() -> i32 {
     cost
 }
 
-fn battle_cost(equip: &Vec<Equipment>) -> i32 {
+fn min_win_cost(equip: &Vec<Equipment>, current: i32) -> i32 {
     let mut player = Player::with_equipment(equip);
     let mut boss = Player::boss();
     battle(&mut player, &mut boss);
     if boss.is_alive() {
-        i32::MAX
+        current
     } else {
-        cost(equip)    
+        equip_cost(equip).min(current)
     }
+}
+
+fn battle(first: &mut Player, second: &mut Player) {
+    let mut is_first = true;
+    while first.is_alive() && second.is_alive() {
+        if is_first {
+            first.attack(second);
+        } else {
+            second.attack(first);
+        }
+        is_first = !is_first;
+    }
+}
+
+fn max_loose_cost(equip: &Vec<Equipment>, current: i32) -> i32 {
+    let mut player = Player::with_equipment(equip);
+    let mut boss = Player::boss();
+    battle(&mut player, &mut boss);
+    if player.is_alive() {
+        current
+    } else {
+        equip_cost(equip).max(current)
+    }
+}
+
+fn equip_cost(equip: &Vec<Equipment>) -> i32 {
+    equip.iter()
+        .map(|eq| eq.cost)
+        .sum::<i32>()
 }
 
 struct Player {
@@ -135,18 +159,6 @@ impl Player {
     }
 }
 
-fn battle(first: &mut Player, second: &mut Player) {
-    let mut is_first = true;
-    while first.is_alive() && second.is_alive() {
-        if is_first {
-            first.attack(second);
-        } else {
-            second.attack(first);
-        }
-        is_first = !is_first;
-    }
-}
-
 pub struct AoC2015_21;
 impl AoC2015_21 {
     pub fn new() -> io::Result<Self> {
@@ -156,12 +168,14 @@ impl AoC2015_21 {
 
 impl Solution for AoC2015_21 {
     fn part_one(&self) -> String {
-        find_min_win_cost()
+        find_battle_cost(i32::MAX, &min_win_cost)
             .to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        find_battle_cost(0, &max_loose_cost)
+            .to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2015/Day 21: RPG Simulator 20XX"
