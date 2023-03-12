@@ -14,63 +14,46 @@ impl AoC2015_20 {
     }
 }
 
-fn gifts(n: usize) -> usize {
-    let mut count = 10usize;
-    for i in 2..=n {
-        if n % i == 0 {
-            count += i * 10;
-        }
-    }
-    count
-}
-
-fn gifts_limit(n: usize) -> usize {
-    let mut count = 10usize;
-    for i in 2..=n {
-        if n % i == 0 && n / i < 51 {
-            count += i * 11;
-        }
-    }
-    count
-}
-
 impl Solution for AoC2015_20 {
-    // fn part_one(&self) -> String {
-    //     let mut num = 1usize;
-    //     loop {
-    //         let amount = gifts(num);
-    //         println!("# {num} gifts: {amount}");
-    //         if amount > self.input {
-    //             break;
-    //         } else {
-    //             let k = self.input / amount;
-    //             if k > 10 {
-    //                 num *= 2;
-    //             } else {
-    //                 num += 1;
-    //             }
-    //         }
-    //     }
-    //     num.to_string()
-    // }
-
-    fn part_two(&self) -> String {
-        let mut num = 1usize;
-        loop {
-            let amount = gifts_limit(num);
-            // println!("# {num} gifts: {amount}");
-            if amount > self.input {
-                break;
-            } else {
-                let k = self.input / amount;
-                if k > 10 {
-                    num *= 2;
-                } else {
-                    num += 1;
+    fn part_one(&self) -> String {
+        let mut max_houses = self.input / 10;
+        let mut gifts = vec![0usize; max_houses];
+        let mut elf = 1usize;
+        while elf < max_houses {
+            for i in (elf..max_houses).step_by(elf) {
+                gifts[i] += elf * 10;
+                if gifts[i] > self.input {
+                    max_houses = i;
+                    break;
                 }
             }
+            elf += 1;
         }
-        num.to_string()
+        gifts.iter()
+            .position(|&val| val >= self.input)
+            .unwrap()
+            .to_string()
+    }
+
+    fn part_two(&self) -> String {
+        let mut max_houses = self.input / 10;
+        let mut gifts = vec![0usize; max_houses];
+        let mut elf = 1usize;
+        while elf < max_houses {
+            let max = max_houses.min(50 * elf);
+            for i in (elf..max).step_by(elf) {
+                gifts[i] += elf * 11;
+                if gifts[i] > self.input {
+                    max_houses = i;
+                    break;
+                }
+            }
+            elf += 1;
+        }
+        gifts.iter()
+            .position(|&val| val >= self.input)
+            .unwrap()
+            .to_string()
     }
 
     fn description(&self) -> String {
