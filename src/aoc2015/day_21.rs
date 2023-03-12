@@ -22,18 +22,19 @@ impl Equipment {
 
     fn weapons() -> Vec::<Self> {
         vec![
-            Self::new("Dagger", 8, 4, 0),
+            Self::new("Dagger",      8, 4, 0),
             Self::new("Shortsword", 10, 5, 0),
-            Self::new("Warhammer", 25, 6, 0),
-            Self::new("Longsword", 40, 7, 0),
-            Self::new("Greataxe", 74, 8, 0)
+            Self::new("Warhammer",  25, 6, 0),
+            Self::new("Longsword",  40, 7, 0),
+            Self::new("Greataxe",   74, 8, 0)
         ]
     }
 
     fn armors() -> Vec::<Self> {
         vec! [
-            Self::new("Leather", 13, 0, 1),
-            Self::new("Chainmail", 31, 0, 2),
+            Self::new("Fake#Armor",  0, 0, 0),
+            Self::new("Leather",    13, 0, 1),
+            Self::new("Chainmail",  31, 0, 2),
             Self::new("Splintmail", 53, 0, 3),
             Self::new("Bandedmail", 75, 0, 4),
             Self::new("Platemail", 102, 0, 5)
@@ -42,8 +43,8 @@ impl Equipment {
 
     fn rings() -> Vec::<Self> {
         vec! [
-            Self::new("Damage +1", 25, 1, 0),
-            Self::new("Damage +2", 50, 2, 0),
+            Self::new("Damage +1",  25, 1, 0),
+            Self::new("Damage +2",  50, 2, 0),
             Self::new("Damage +3", 100, 3, 0),
             Self::new("Defense +1", 20, 0, 1),
             Self::new("Defense +2", 40, 0, 2),
@@ -63,10 +64,11 @@ fn find_battle_cost(initial: i32, fit_cost: &dyn Fn(&Vec<Equipment>, i32) -> i32
             equip.push(a);
             cost = fit_cost(&equip, cost);
             for r1 in Equipment::rings() {
-                equip.push(r1.clone());
+                let name = r1.name.clone();
+                equip.push(r1);
                 cost = fit_cost(&equip, cost);
                 for r2 in Equipment::rings() {
-                    if r1.name != r2.name {
+                    if name != r2.name {
                         equip.push(r2);
                         cost = fit_cost(&equip, cost);
                         equip.pop();
@@ -92,6 +94,17 @@ fn min_win_cost(equip: &Vec<Equipment>, current: i32) -> i32 {
     }
 }
 
+fn max_loose_cost(equip: &Vec<Equipment>, current: i32) -> i32 {
+    let mut player = Player::with_equipment(equip);
+    let mut boss = Player::boss();
+    battle(&mut player, &mut boss);
+    if boss.is_alive() {
+        equip_cost(equip).max(current)
+    } else {
+        current
+    }
+}
+
 fn battle(first: &mut Player, second: &mut Player) {
     let mut is_first = true;
     while first.is_alive() && second.is_alive() {
@@ -101,17 +114,6 @@ fn battle(first: &mut Player, second: &mut Player) {
             second.attack(first);
         }
         is_first = !is_first;
-    }
-}
-
-fn max_loose_cost(equip: &Vec<Equipment>, current: i32) -> i32 {
-    let mut player = Player::with_equipment(equip);
-    let mut boss = Player::boss();
-    battle(&mut player, &mut boss);
-    if player.is_alive() {
-        current
-    } else {
-        equip_cost(equip).max(current)
     }
 }
 
