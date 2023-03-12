@@ -14,22 +14,33 @@ impl AoC2015_20 {
     }
 }
 
+fn gifts(n: usize) -> usize {
+    let mut count = 10usize;
+    for i in 2..=n {
+        if n % i == 0 {
+            count += i * 10;
+        }
+    }
+    count
+}
+
 impl Solution for AoC2015_20 {
     fn part_one(&self) -> String {
-        let mut num = 0usize;
+        let mut num = 1usize;
         loop {
-            let mut count = 0usize;
-            num += 1;
-            for i in 1..=num {
-                if num % i == 0 {
-                    count += i * 10;
+            let amount = gifts(num);
+            println!("# {num} gifts: {amount}");
+            if amount > self.input {
+                break;
+            } else {
+                let k = self.input / amount;
+                if k > 10 {
+                    num *= 2;
+                } else {
+                    num += 1;
                 }
             }
-            println!("{count}");
-            if count >= self.input {
-                break;
-            }
-        };
+        }
         num.to_string()
     }
 
@@ -48,7 +59,7 @@ mod test {
     #[test]
     fn aoc2015_20_correctness() -> io::Result<()> {
         let sol = AoC2015_20::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "786240");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
