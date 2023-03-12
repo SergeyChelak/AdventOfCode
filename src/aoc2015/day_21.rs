@@ -2,6 +2,7 @@ use crate::solution::Solution;
 
 use std::io;
 
+#[derive(Clone)]
 struct Equipment {
     name: String,
     cost: i32,
@@ -29,7 +30,7 @@ impl Equipment {
         ]
     }
 
-    fn armor() -> Vec::<Self> {
+    fn armors() -> Vec::<Self> {
         vec! [
             Self::new("Leather", 13, 0, 1),
             Self::new("Chainmail", 31, 0, 2),
@@ -48,6 +49,51 @@ impl Equipment {
             Self::new("Defense +2", 40, 0, 2),
             Self::new("Defense +3", 80, 0, 3)
         ]
+    }
+}
+
+fn cost(equip: &Vec<Equipment>) -> i32 {
+    equip.iter()
+        .map(|eq| eq.cost)
+        .sum::<i32>()
+}
+
+fn find_min_win_cost() -> i32 {
+    let mut equip: Vec<Equipment> = Vec::new();
+    let mut cost = i32::MAX;
+    for w in Equipment::weapons() {
+        equip.push(w);
+        cost = battle_cost(&equip).min(cost);
+        for a in Equipment::armors() {
+            equip.push(a);
+            cost = battle_cost(&equip).min(cost);
+            for r1 in Equipment::rings() {
+                equip.push(r1.clone());
+                cost = battle_cost(&equip).min(cost);
+                for r2 in Equipment::rings() {
+                    if r1.name != r2.name {
+                        equip.push(r2);
+                        cost = battle_cost(&equip).min(cost);
+                        equip.pop();
+                    }
+                }
+                equip.pop();
+            }
+            equip.pop();
+        }
+        equip.pop();
+    }
+    cost
+}
+
+fn battle_cost(equip: &Vec<Equipment>) -> i32 {
+    let mut player = Player::with_equipment(equip);
+    let mut boss = Player::boss();
+    battle(&mut player, &mut boss);
+    if boss.is_alive() {
+        i32::MAX
+    } else {
+        cost(equip)    
     }
 }
 
@@ -109,8 +155,10 @@ impl AoC2015_21 {
 }
 
 impl Solution for AoC2015_21 {
-    // fn part_one(&self) -> String {
-    // }
+    fn part_one(&self) -> String {
+        find_min_win_cost()
+            .to_string()
+    }
 
     // fn part_two(&self) -> String {
     // }
@@ -128,7 +176,7 @@ mod test {
     #[test]
     fn aoc2015_21_correctness() -> io::Result<()> {
         let sol = AoC2015_21::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "91");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
