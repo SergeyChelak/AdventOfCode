@@ -1,5 +1,4 @@
 use crate::solution::Solution;
-use crate::utils::*;
 
 use std::io;
 
@@ -31,12 +30,6 @@ impl Solution for AoC2015_21 {
 #[cfg(test)]
 mod test {
     use super::*;
-
-    #[test]
-    fn aoc2015_21_input_load_test() -> io::Result<()> {
-        let sol = AoC2015_21::new()?;
-        Ok(())
-    }
 
     #[test]
     fn aoc2015_21_correctness() -> io::Result<()> {
