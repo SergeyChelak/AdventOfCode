@@ -128,32 +128,30 @@ impl Wizard {
     }
 }
 
-fn perform_battle(spells: &Vec<Spell>) {
-    let mut wizard = Wizard::new();
-    let mut boss = Boss::new();
+fn perform_battle(spells: &Vec<Spell>, wizard: &mut Wizard, boss: &mut Boss) {
     let mut timer = 0;
     let mut ptr = 0;
     let mut active_effects: Vec<Effect> = Vec::new();
-    while wizard.is_alive() || boss.is_alive() {
+    while wizard.is_alive() && boss.is_alive() {
         if timer % 2 == 0 && ptr < spells.len () {
             let spell = spells[ptr];
             ptr += 1;
-            if spell.cost() <= wizard.mana {
+            if spell.cost() < wizard.mana {
                 wizard.mana -= spell.cost();
                 let effect = Effect::with_spell(spell);
-                effect.activate(&mut wizard, &mut boss);            
+                effect.activate(wizard, boss);            
                 active_effects.push(effect);
             }
         }
         active_effects.iter_mut()
-            .for_each(|effect| effect.cast(&mut wizard, &mut boss));        
+            .for_each(|effect| effect.cast(wizard, boss));        
         if timer % 2 != 0 {
-            let damage = (boss.damage - wizard.armor).min(1);
+            let damage = (boss.damage - wizard.armor).max(1);
             wizard.hit_points -= damage;
         }
         timer += 1;
         active_effects.iter_mut()
-            .for_each(|e| e.decrease(&mut wizard));
+            .for_each(|e| e.decrease(wizard));
 
         active_effects = active_effects.into_iter()
             .filter(|ef| ef.is_active())
@@ -196,5 +194,50 @@ mod test {
         assert_eq!(sol.part_one(), "");
         assert_eq!(sol.part_two(), "");
         Ok(())
+    }
+
+    #[test]
+    fn aoc2015_22_battle_test1() {
+        let mut wizard = Wizard {
+            hit_points: 10,
+            armor: 0,
+            mana: 250,
+        };
+
+        let mut boss = Boss {
+            hit_points: 13,
+            damage: 8,
+        };
+        perform_battle(&vec![Spell::Poison, Spell::MagicMissile], &mut wizard, &mut boss);
+        assert!(!boss.is_alive());
+        assert_eq!(wizard.hit_points, 2);
+        assert_eq!(wizard.armor, 0);
+        assert_eq!(wizard.mana, 24);
+    }
+
+    #[test]
+    fn aoc2015_22_battle_test2() {
+        let mut wizard = Wizard {
+            hit_points: 10,
+            armor: 0,
+            mana: 250,
+        };
+
+        let mut boss = Boss {
+            hit_points: 14,
+            damage: 8,
+        };
+        let spells = vec![
+            Spell::Recharge, 
+            Spell::Shield, 
+            Spell::Drain, 
+            Spell::Poison, 
+            Spell::MagicMissile
+        ];
+        perform_battle(&spells, &mut wizard, &mut boss);
+        assert!(!boss.is_alive());
+        assert_eq!(wizard.hit_points, 1);
+        assert_eq!(wizard.armor, 0);
+        assert_eq!(wizard.mana, 114);
     }
 }
