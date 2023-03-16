@@ -12,6 +12,16 @@ enum Spell {
 }
 
 impl Spell {
+    fn all_cases() -> Vec<Spell> {
+        vec![
+            Self::MagicMissile,
+            Self::Drain,
+            Self::Shield,
+            Self::Poison,
+            Self::Recharge,
+        ]
+    }
+
     fn cost(&self) -> i32 {
         match self {
             Self::MagicMissile => 53,
@@ -108,6 +118,8 @@ impl Boss {
     }
 }
 
+const WIZARD_MANA: i32 = 500;
+
 struct Wizard {
     hit_points: i32,
     mana: i32,
@@ -118,7 +130,7 @@ impl Wizard {
     fn new() -> Self {
         Self {
             hit_points: 50,
-            mana: 500,
+            mana: WIZARD_MANA,
             armor: 0,
         }
     }
@@ -128,19 +140,23 @@ impl Wizard {
     }
 }
 
-fn perform_battle(spells: &Vec<Spell>, wizard: &mut Wizard, boss: &mut Boss) {
+fn perform_battle(spells: &Vec<Spell>, wizard: &mut Wizard, boss: &mut Boss) -> bool {
     let mut timer = 0;
     let mut ptr = 0;
     let mut active_effects: Vec<Effect> = Vec::new();
     while wizard.is_alive() && boss.is_alive() {
-        if timer % 2 == 0 && ptr < spells.len () {
-            let spell = spells[ptr];
-            ptr += 1;
-            if spell.cost() < wizard.mana {
-                wizard.mana -= spell.cost();
-                let effect = Effect::with_spell(spell);
-                effect.activate(wizard, boss);            
-                active_effects.push(effect);
+        if timer % 2 == 0 { 
+            if ptr < spells.len () {
+                let spell = spells[ptr];
+                ptr += 1;
+                if spell.cost() < wizard.mana {
+                    wizard.mana -= spell.cost();
+                    let effect = Effect::with_spell(spell);
+                    effect.activate(wizard, boss);            
+                    active_effects.push(effect);
+                }
+            } else {
+                return false;
             }
         }
         active_effects.iter_mut()
@@ -156,25 +172,42 @@ fn perform_battle(spells: &Vec<Spell>, wizard: &mut Wizard, boss: &mut Boss) {
         active_effects = active_effects.into_iter()
             .filter(|ef| ef.is_active())
             .collect();
-
     }
+    wizard.is_alive()
 }
 
-pub struct AoC2015_22 {
-    // place required fields here
+fn is_wizard_win(spells: &Vec<Spell>) -> bool {
+    let mut wizard = Wizard::new();
+    let mut boss = Boss::new();
+    perform_battle(spells, &mut wizard, &mut boss)
 }
+
+fn cost(spells: &Vec<Spell>) -> i32 {
+    spells.iter()
+        .map(|s| s.cost())
+        .sum()
+}
+
+fn calc_min_mana() -> i32 {
+    let all_spells = Spell::all_cases();
+    let mut stack: Vec<usize> = Vec::new();
+    let mut sp = 0;
+    todo!()
+}
+
+pub struct AoC2015_22;
 
 impl AoC2015_22 {
     pub fn new() -> io::Result<Self> {
-        Ok(Self {
-            // initialize solution
-        })
+        Ok(Self)
     }
 }
 
 impl Solution for AoC2015_22 {
-    // fn part_one(&self) -> String {
-    // }
+    fn part_one(&self) -> String {
+        calc_min_mana()
+            .to_string()
+    }
 
     // fn part_two(&self) -> String {
     // }
