@@ -4,6 +4,7 @@ use std::io;
 
 #[derive(Copy, Clone)]
 enum Spell {
+    Fake,
     MagicMissile,
     Drain,
     Shield,
@@ -14,6 +15,7 @@ enum Spell {
 impl Spell {
     fn all_cases() -> Vec<Spell> {
         vec![
+            Self::Fake,
             Self::MagicMissile,
             Self::Drain,
             Self::Shield,
@@ -24,6 +26,7 @@ impl Spell {
 
     fn cost(&self) -> i32 {
         match self {
+            Self::Fake => 0,
             Self::MagicMissile => 53,
             Self::Drain => 73,
             Self::Shield => 113,
@@ -34,6 +37,7 @@ impl Spell {
 
     fn initial_duration(&self) -> i32 {
         match self {
+            Self::Fake => 0,
             Self::MagicMissile => 1,
             Self::Drain => 1,
             Self::Shield => 6,
