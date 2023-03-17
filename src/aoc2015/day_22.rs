@@ -131,7 +131,7 @@ impl Wizard {
     }
 }
 
-fn perform_battle(spells: &Vec<Spell>, wizard: &mut Wizard, boss: &mut Boss) -> bool {
+fn perform_battle(spells: &Vec<Spell>, wizard: &mut Wizard, boss: &mut Boss) {
     let mut timer = 0;
     let mut ptr = 0;
     let mut active_effects: Vec<Effect> = Vec::new();
@@ -140,13 +140,14 @@ fn perform_battle(spells: &Vec<Spell>, wizard: &mut Wizard, boss: &mut Boss) -> 
             if ptr < spells.len () {
                 let spell = spells[ptr];
                 ptr += 1;
-                if spell.cost() <= wizard.mana {
+                if spell.cost() < wizard.mana {
                     wizard.mana -= spell.cost();
                     let effect = Effect::with_spell(spell);
                     effect.activate(wizard, boss);            
                     active_effects.push(effect);
                 } else {
-                    return false;
+                    wizard.mana = 0;
+                    break;
                 } 
             }
         }
@@ -164,13 +165,13 @@ fn perform_battle(spells: &Vec<Spell>, wizard: &mut Wizard, boss: &mut Boss) -> 
             .filter(|ef| ef.is_active())
             .collect();
     }
-    wizard.is_alive()
 }
 
 fn is_wizard_win(spells: &Vec<Spell>) -> bool {
     let mut wizard = Wizard::new();
     let mut boss = Boss::new();
-    perform_battle(spells, &mut wizard, &mut boss)
+    perform_battle(spells, &mut wizard, &mut boss);
+    wizard.is_alive()
 }
 
 fn is_valid(spells: &Vec<Spell>) -> bool {
@@ -192,16 +193,16 @@ fn is_valid(spells: &Vec<Spell>) -> bool {
 }
 
 fn calc_min_mana(spells: &mut Vec<Spell>, cost: &mut i32, min_mana: &mut i32) {
-    if spells.len() > 13 { 
+    if spells.len() > 12 { 
         return;
     }
     for spell in Spell::all_cases() {
         let s_cost = spell.cost();
         *cost += s_cost;
         spells.push(spell);
-        if is_valid(spells) {
+        if *cost < *min_mana && is_valid(spells) {
             if is_wizard_win(spells) {
-                *min_mana = *cost.min(min_mana);
+                *min_mana = *cost;
             } else {
                 calc_min_mana(spells, cost, min_mana);
             }
