@@ -1,10 +1,9 @@
 use crate::solution::Solution;
 
-use std::io;
+use std::{io, collections::HashMap};
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
 enum Spell {
-    Fake,
     MagicMissile,
     Drain,
     Shield,
@@ -15,7 +14,6 @@ enum Spell {
 impl Spell {
     fn all_cases() -> Vec<Spell> {
         vec![
-            Self::Fake,
             Self::MagicMissile,
             Self::Drain,
             Self::Shield,
@@ -26,7 +24,6 @@ impl Spell {
 
     fn cost(&self) -> i32 {
         match self {
-            Self::Fake => 0,
             Self::MagicMissile => 53,
             Self::Drain => 73,
             Self::Shield => 113,
@@ -37,19 +34,11 @@ impl Spell {
 
     fn initial_duration(&self) -> i32 {
         match self {
-            Self::Fake => 0,
             Self::MagicMissile => 1,
             Self::Drain => 1,
             Self::Shield => 6,
             Self::Poison => 6,
             Self::Recharge => 5,
-        }
-    }
-
-    fn is_always_active(&self) -> bool {
-        match self {
-            Self::Poison | Self::Recharge => true,
-            _ => false
         }
     }
 }
@@ -122,8 +111,6 @@ impl Boss {
     }
 }
 
-const WIZARD_MANA: i32 = 500;
-
 struct Wizard {
     hit_points: i32,
     mana: i32,
@@ -134,7 +121,7 @@ impl Wizard {
     fn new() -> Self {
         Self {
             hit_points: 50,
-            mana: WIZARD_MANA,
+            mana: 500,
             armor: 0,
         }
     }
@@ -153,14 +140,14 @@ fn perform_battle(spells: &Vec<Spell>, wizard: &mut Wizard, boss: &mut Boss) -> 
             if ptr < spells.len () {
                 let spell = spells[ptr];
                 ptr += 1;
-                if spell.cost() < wizard.mana {
+                if spell.cost() <= wizard.mana {
                     wizard.mana -= spell.cost();
                     let effect = Effect::with_spell(spell);
                     effect.activate(wizard, boss);            
                     active_effects.push(effect);
-                }
-            } else {
-                return false;
+                } else {
+                    return false;
+                } 
             }
         }
         active_effects.iter_mut()
@@ -186,17 +173,42 @@ fn is_wizard_win(spells: &Vec<Spell>) -> bool {
     perform_battle(spells, &mut wizard, &mut boss)
 }
 
-fn cost(spells: &Vec<Spell>) -> i32 {
-    spells.iter()
-        .map(|s| s.cost())
-        .sum()
+fn is_valid(spells: &Vec<Spell>) -> bool {
+    let mut map: HashMap<Spell, u32> = HashMap::new();
+    for spell in Spell::all_cases() {
+        map.insert(spell, 0);
+    }
+    for s in spells.iter() {
+        let val = *map.get(s).unwrap();
+        if val < 2 {
+            map.insert(*s, s.initial_duration() as u32);
+        } else {
+            return false;
+        }
+        map.iter_mut()
+            .for_each(|(_, v)| *v = v.saturating_sub(1));
+    }
+    true
 }
 
-fn calc_min_mana() -> i32 {
-    let all_spells = Spell::all_cases();
-    let mut stack: Vec<usize> = Vec::new();
-    let mut sp = 0;
-    todo!()
+fn calc_min_mana(spells: &mut Vec<Spell>, cost: &mut i32, min_mana: &mut i32) {
+    if spells.len() > 13 { 
+        return;
+    }
+    for spell in Spell::all_cases() {
+        let s_cost = spell.cost();
+        *cost += s_cost;
+        spells.push(spell);
+        if is_valid(spells) {
+            if is_wizard_win(spells) {
+                *min_mana = *cost.min(min_mana);
+            } else {
+                calc_min_mana(spells, cost, min_mana);
+            }
+        }
+        spells.pop();
+        *cost -= s_cost;
+    }
 }
 
 pub struct AoC2015_22;
@@ -209,8 +221,11 @@ impl AoC2015_22 {
 
 impl Solution for AoC2015_22 {
     fn part_one(&self) -> String {
-        calc_min_mana()
-            .to_string()
+        let mut spells = vec![];
+        let mut result = i32::MAX;
+        let mut cost = 0;
+        calc_min_mana(&mut spells, &mut cost, &mut result);
+        result.to_string()
     }
 
     // fn part_two(&self) -> String {
