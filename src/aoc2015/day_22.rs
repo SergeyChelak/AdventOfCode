@@ -164,7 +164,7 @@ impl Battlefield {
 
     fn cast_effects(&mut self) {
         self.cast_poison();
-        // self.cast_recharge();
+        self.cast_recharge();
         // self.cast_shield();
     }
 
@@ -180,8 +180,14 @@ impl Battlefield {
     }
 
     fn cast_recharge(&mut self) {
-        self.wizard.mana += 101;
-        todo!()
+        if let Some(val) = self.timer_recharge {
+            self.timer_recharge = if val == 0 {
+                None
+            } else {
+                self.wizard.mana += 101;
+                Some(val - 1)
+            }
+        }
     }
 
     fn cast_shield(&mut self) {
@@ -200,6 +206,15 @@ impl Battlefield {
                     false
                 }
             },
+            Spell::Recharge => {
+                if self.timer_recharge.is_none() {
+                    self.timer_recharge = Some(spell.effect_duration());
+                    self.cast_recharge();
+                    true
+                } else {
+                    false
+                }
+            }
             _ => panic!()
         }
     }
