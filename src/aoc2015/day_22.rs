@@ -155,7 +155,24 @@ impl Battlefield {
     }
 
     fn cast_effects(&mut self) {
-        todo!("cast effects");
+        self.cast_poison();
+        self.cast_recharge();
+        self.cast_shield();
+    }
+
+    fn cast_poison(&mut self) {
+        self.boss.hit_points -= 3;
+        todo!()
+    }
+
+    fn cast_recharge(&mut self) {
+        self.wizard.mana += 101;
+        todo!()
+    }
+
+    fn cast_shield(&mut self) {
+        self.wizard.armor += 7;
+        todo!()
     }
 }
 
