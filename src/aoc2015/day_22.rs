@@ -91,65 +91,87 @@ impl Boss {
     }
 }
 
+struct Battlefield {
+    wizard: Wizard,
+    boss: Boss,
+    spells: Vec<Spell>,
+}
+
+impl Battlefield {
+    pub fn with_spells(spells: &Vec<Spell>) -> Self {
+        Self::new(Wizard::new(), Boss::new(), spells)
+    }
+
+    fn new(wizard: Wizard, boss: Boss, spells: &Vec<Spell>) -> Self {
+        let spells = spells.into_iter().rev()
+            .map(|el| el.clone())
+            .collect::<Vec<Spell>>();
+        Self {
+            wizard,
+            boss,
+            spells
+        }
+    }
+
+    fn battle(&mut self) -> Aftermath {
+        let mut is_wizard_move = true;
+        while self.wizard.is_alive() && self.boss.is_alive() {
+            if is_wizard_move {
+                self.cast_effects();
+                let spell = self.spells.pop();
+                if spell.is_none() {
+                    return Aftermath::InsufficientSpells;
+                }
+                let spell = spell.unwrap();
+                if spell.cost() > self.wizard.mana {
+                    return Aftermath::Lose;
+                }
+                self.wizard.mana -= spell.cost();
+                if spell.has_effect() {
+                    todo!()
+                } else {
+                    match spell {
+                        Spell::MagicMissile => {
+                            self.boss.hit_points -= 4;
+                        },
+                        Spell::Drain => {
+                            self.boss.hit_points -= 2;
+                            self.wizard.hit_points += 2;
+                        },
+                        _ => panic!("Unexpected spell without effect")
+                    }
+                }
+            } else {
+                let damage = (self.boss.damage - self.wizard.armor).max(1);
+                self.wizard.hit_points -= damage;
+            }
+            is_wizard_move = !is_wizard_move;
+        }
+        if self.wizard.is_alive() && self.spells.is_empty() {
+            Aftermath::Win
+        } else {
+            Aftermath::Lose
+        }
+    }
+
+    fn cast_effects(&mut self) {
+        todo!("cast effects");
+    }
+}
+
 fn calc_min_mana_amount(cost: i32, spells: &mut Vec<Spell>, result: &mut i32) {
     if cost >= *result {
         return;
     }
     for spell in Spell::all_cases() {
         spells.push(spell);
-        match eval(&spells) {
+        match Battlefield::with_spells(spells).battle() {
             Aftermath::Win => *result = cost.min(*result),
             Aftermath::InsufficientSpells => calc_min_mana_amount(cost + spell.cost(), spells, result),
             _ => (),
         }
         spells.pop();
     }
-}
-
-fn eval(spells: &Vec<Spell>) -> Aftermath {
-    let mut wizard = Wizard::new();
-    let mut boss = Boss::new();
-    battle(&mut wizard, &mut boss, spells)
-}
-
-fn battle(wizard: &mut Wizard, boss: &mut Boss, spells: &Vec<Spell>) -> Aftermath {
-    let mut spells = spells.into_iter().rev()
-        .map(|el| el.clone())
-        .collect::<Vec<Spell>>();
-    let mut is_wizard_move = true;
-    while wizard.is_alive() && boss.is_alive() {
-        // todo: cast effects...
-        if is_wizard_move {
-            let spell = spells.pop();
-            if spell.is_none() {
-                return Aftermath::InsufficientSpells;
-            }
-            let spell = spell.unwrap();
-            if spell.cost() > wizard.mana {
-                return Aftermath::Lose;
-            }
-            wizard.mana -= spell.cost();
-            if spell.has_effect() {
-                todo!()
-            } else {
-                match spell {
-                    Spell::MagicMissile => {
-                        boss.hit_points -= 4;
-                    },
-                    Spell::Drain => {
-                        boss.hit_points -= 2;
-                        wizard.hit_points += 2;
-                    },
-                    _ => panic!("Unexpected spell without effect")
-                }
-            }
-        } else {
-            let damage = (boss.damage - wizard.armor).max(1);
-            wizard.hit_points -= damage;
-        }
-        is_wizard_move = !is_wizard_move;
-    }
-    if wizard.is_alive() { Aftermath::Win } else { Aftermath::Lose }
 }
 
 pub struct AoC2015_22;
@@ -189,32 +211,33 @@ mod test {
 
     #[test]
     fn aoc2015_22_battle_test1() {
-        let mut wizard = Wizard {
+        let wizard = Wizard {
             hit_points: 10,
             armor: 0,
             mana: 250,
         };
 
-        let mut boss = Boss {
+        let boss = Boss {
             hit_points: 13,
             damage: 8,
         };
-        battle(&mut wizard, &mut boss, &vec![Spell::Poison, Spell::MagicMissile]);
-        assert!(!boss.is_alive());
-        assert_eq!(wizard.hit_points, 2);
-        assert_eq!(wizard.armor, 0);
-        assert_eq!(wizard.mana, 24);
+        let mut bf = Battlefield::new(wizard, boss, &vec![Spell::Poison, Spell::MagicMissile]);
+        bf.battle();
+        assert!(!bf.boss.is_alive());
+        assert_eq!(bf.wizard.hit_points, 2);
+        assert_eq!(bf.wizard.armor, 0);
+        assert_eq!(bf.wizard.mana, 24);
     }
 
     #[test]
     fn aoc2015_22_battle_test2() {
-        let mut wizard = Wizard {
+        let wizard = Wizard {
             hit_points: 10,
             armor: 0,
             mana: 250,
         };
 
-        let mut boss = Boss {
+        let boss = Boss {
             hit_points: 14,
             damage: 8,
         };
@@ -225,10 +248,11 @@ mod test {
             Spell::Poison, 
             Spell::MagicMissile
         ];
-        battle(&mut wizard, &mut boss, &spells);
-        assert!(!boss.is_alive());
-        assert_eq!(wizard.hit_points, 1);
-        assert_eq!(wizard.armor, 0);
-        assert_eq!(wizard.mana, 114);
+        let mut bf = Battlefield::new(wizard, boss, &spells);
+        bf.battle();
+        assert!(!bf.boss.is_alive());
+        assert_eq!(bf.wizard.hit_points, 1);
+        assert_eq!(bf.wizard.armor, 0);
+        assert_eq!(bf.wizard.mana, 114);
     }
 }
