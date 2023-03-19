@@ -50,9 +50,6 @@ impl Spell {
 enum Aftermath {
     Win,
     Lose,
-    // Overlap,
-    // ManaOver,
-    // ExcessiveSpells,
     InsufficientSpells,
 }
 
@@ -132,8 +129,20 @@ fn battle(wizard: &mut Wizard, boss: &mut Boss, spells: &Vec<Spell>) -> Aftermat
                 return Aftermath::Lose;
             }
             wizard.mana -= spell.cost();
-
-            todo!()
+            if spell.has_effect() {
+                todo!()
+            } else {
+                match spell {
+                    Spell::MagicMissile => {
+                        boss.hit_points -= 4;
+                    },
+                    Spell::Drain => {
+                        boss.hit_points -= 2;
+                        wizard.hit_points += 2;
+                    },
+                    _ => panic!("Unexpected spell without effect")
+                }
+            }
         } else {
             let damage = (boss.damage - wizard.armor).max(1);
             wizard.hit_points -= damage;
