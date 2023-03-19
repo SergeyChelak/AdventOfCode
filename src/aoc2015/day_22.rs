@@ -31,6 +31,20 @@ impl Spell {
             Self::Recharge => 229,
         }
     }
+
+    fn effect_duration(&self) -> i32 {
+        match self {
+            Self::MagicMissile => 0,
+            Self::Drain => 0,
+            Self::Shield => 6,
+            Self::Poison => 6,
+            Self::Recharge => 5,
+        }
+    }
+
+    fn has_effect(&self) -> bool {
+        self.effect_duration() > 0
+    }
 }
 
 enum Aftermath {
@@ -48,9 +62,36 @@ struct Wizard {
     mana: i32,
 }
 
+impl Wizard {
+    fn new() -> Self {
+        Self {
+            hit_points: 50,
+            armor: 0,
+            mana: 500,
+        }
+    }
+
+    fn is_alive(&self) -> bool {
+        self.hit_points > 0 && self.mana > 0
+    }
+}
+
 struct Boss {
     hit_points: i32,
     damage: i32,
+}
+
+impl Boss {
+    fn new() -> Self {
+        Self {
+            hit_points: 58,
+            damage: 9,
+        }
+    }
+
+    fn is_alive(&self) -> bool {
+        self.hit_points > 0
+    }
 }
 
 fn calc_min_mana_amount(cost: i32, spells: &mut Vec<Spell>, result: &mut i32) {
@@ -69,15 +110,8 @@ fn calc_min_mana_amount(cost: i32, spells: &mut Vec<Spell>, result: &mut i32) {
 }
 
 fn eval(spells: &Vec<Spell>) -> Aftermath {
-    let mut wizard = Wizard {
-        hit_points: 50,
-        armor: 0,
-        mana: 500,
-    };
-    let mut boss = Boss {
-        hit_points: 58,
-        damage: 9,
-    };
+    let mut wizard = Wizard::new();
+    let mut boss = Boss::new();
     battle(&mut wizard, &mut boss, spells)
 }
 
@@ -86,7 +120,7 @@ fn battle(wizard: &mut Wizard, boss: &mut Boss, spells: &Vec<Spell>) -> Aftermat
         .map(|el| el.clone())
         .collect::<Vec<Spell>>();
     let mut is_wizard_move = true;
-    while wizard.hit_points > 0 && boss.hit_points > 0 {
+    while wizard.is_alive() && boss.is_alive() {
         // todo: cast effects...
         if is_wizard_move {
             let spell = spells.pop();
@@ -97,6 +131,8 @@ fn battle(wizard: &mut Wizard, boss: &mut Boss, spells: &Vec<Spell>) -> Aftermat
             if spell.cost() > wizard.mana {
                 return Aftermath::Lose;
             }
+            wizard.mana -= spell.cost();
+
             todo!()
         } else {
             let damage = (boss.damage - wizard.armor).max(1);
@@ -104,7 +140,7 @@ fn battle(wizard: &mut Wizard, boss: &mut Boss, spells: &Vec<Spell>) -> Aftermat
         }
         is_wizard_move = !is_wizard_move;
     }
-    if wizard.hit_points > 0 { Aftermath::Win } else { Aftermath::Lose }
+    if wizard.is_alive() { Aftermath::Win } else { Aftermath::Lose }
 }
 
 pub struct AoC2015_22;
@@ -155,7 +191,7 @@ mod test {
             damage: 8,
         };
         battle(&mut wizard, &mut boss, &vec![Spell::Poison, Spell::MagicMissile]);
-        assert!(boss.hit_points <= 0);
+        assert!(!boss.is_alive());
         assert_eq!(wizard.hit_points, 2);
         assert_eq!(wizard.armor, 0);
         assert_eq!(wizard.mana, 24);
@@ -181,7 +217,7 @@ mod test {
             Spell::MagicMissile
         ];
         battle(&mut wizard, &mut boss, &spells);
-        assert!(boss.hit_points <= 0);
+        assert!(!boss.is_alive());
         assert_eq!(wizard.hit_points, 1);
         assert_eq!(wizard.armor, 0);
         assert_eq!(wizard.mana, 114);
