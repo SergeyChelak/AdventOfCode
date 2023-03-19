@@ -95,6 +95,9 @@ struct Battlefield {
     wizard: Wizard,
     boss: Boss,
     spells: Vec<Spell>,
+    timer_shield: Option<i32>,
+    timer_poison: Option<i32>,
+    timer_recharge: Option<i32>
 }
 
 impl Battlefield {
@@ -109,7 +112,10 @@ impl Battlefield {
         Self {
             wizard,
             boss,
-            spells
+            spells,
+            timer_shield: None,
+            timer_poison: None,
+            timer_recharge: None
         }
     }
 
@@ -128,7 +134,9 @@ impl Battlefield {
                 }
                 self.wizard.mana -= spell.cost();
                 if spell.has_effect() {
-                    todo!()
+                    if !self.try_effect(&spell) {
+                        return Aftermath::Lose;
+                    }
                 } else {
                     match spell {
                         Spell::MagicMissile => {
@@ -156,13 +164,19 @@ impl Battlefield {
 
     fn cast_effects(&mut self) {
         self.cast_poison();
-        self.cast_recharge();
-        self.cast_shield();
+        // self.cast_recharge();
+        // self.cast_shield();
     }
 
     fn cast_poison(&mut self) {
-        self.boss.hit_points -= 3;
-        todo!()
+        if let Some(val) = self.timer_poison {
+            self.timer_poison = if val == 0 {
+                None
+            } else {
+                self.boss.hit_points -= 3;
+                Some(val - 1)
+            }
+        }
     }
 
     fn cast_recharge(&mut self) {
@@ -173,6 +187,21 @@ impl Battlefield {
     fn cast_shield(&mut self) {
         self.wizard.armor += 7;
         todo!()
+    }
+
+    fn try_effect(&mut self, spell: &Spell) -> bool {
+        match spell {
+            Spell::Poison => {
+                if self.timer_poison.is_none() {
+                    self.timer_poison = Some(spell.effect_duration());
+                    self.cast_poison();
+                    true
+                } else {
+                    false
+                }
+            },
+            _ => panic!()
+        }
     }
 }
 
