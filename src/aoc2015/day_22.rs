@@ -122,8 +122,8 @@ impl Battlefield {
     fn battle(&mut self) -> Aftermath {
         let mut is_wizard_move = true;
         while self.wizard.is_alive() && self.boss.is_alive() {
-            if is_wizard_move {
-                self.cast_effects();
+            self.cast_effects();
+            if is_wizard_move {                
                 let spell = self.spells.pop();
                 if spell.is_none() {
                     return Aftermath::InsufficientSpells;
