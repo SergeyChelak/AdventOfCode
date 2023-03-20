@@ -284,7 +284,7 @@ mod test {
     #[test]
     fn aoc2015_22_correctness() -> io::Result<()> {
         let sol = AoC2015_22::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "1269");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
