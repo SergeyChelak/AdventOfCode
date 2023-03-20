@@ -97,15 +97,16 @@ struct Battlefield {
     spells: Vec<Spell>,
     timer_shield: Option<i32>,
     timer_poison: Option<i32>,
-    timer_recharge: Option<i32>
+    timer_recharge: Option<i32>,
+    is_hard: bool,
 }
 
 impl Battlefield {
-    pub fn with_spells(spells: &Vec<Spell>) -> Self {
-        Self::new(Wizard::new(), Boss::new(), spells)
+    pub fn with_spells(spells: &Vec<Spell>, is_hard: bool) -> Self {
+        Self::new(Wizard::new(), Boss::new(), spells, is_hard)
     }
 
-    fn new(wizard: Wizard, boss: Boss, spells: &Vec<Spell>) -> Self {
+    fn new(wizard: Wizard, boss: Boss, spells: &Vec<Spell>, is_hard: bool) -> Self {
         let spells = spells.into_iter().rev()
             .map(|el| el.clone())
             .collect::<Vec<Spell>>();
@@ -115,13 +116,20 @@ impl Battlefield {
             spells,
             timer_shield: None,
             timer_poison: None,
-            timer_recharge: None
+            timer_recharge: None,
+            is_hard
         }
     }
 
     fn battle(&mut self) -> Aftermath {
         let mut is_wizard_move = true;
         while self.wizard.is_alive() && self.boss.is_alive() {
+            if self.is_hard { 
+                self.wizard.hit_points -= 1;
+                if !self.wizard.is_alive() { 
+                    break
+                }
+            }
             self.cast_effects();
             if is_wizard_move {                
                 let spell = self.spells.pop();
@@ -238,16 +246,16 @@ impl Battlefield {
     }
 }
 
-fn calc_min_mana_amount(cost: i32, spells: &mut Vec<Spell>, result: &mut i32) {
+fn calc_min_mana_amount(is_hard: bool, cost: i32, spells: &mut Vec<Spell>, result: &mut i32) {
     if cost >= *result {
         return;
     }
     for spell in Spell::all_cases() {
         let new_cost = cost + spell.cost();
         spells.push(spell);
-        match Battlefield::with_spells(spells).battle() {
+        match Battlefield::with_spells(spells, is_hard).battle() {
             Aftermath::Win => *result = new_cost.min(*result),
-            Aftermath::InsufficientSpells => calc_min_mana_amount(new_cost, spells, result),
+            Aftermath::InsufficientSpells => calc_min_mana_amount(is_hard, new_cost, spells, result),
             _ => (),
         }
         spells.pop();
@@ -265,12 +273,15 @@ impl AoC2015_22 {
 impl Solution for AoC2015_22 {
     fn part_one(&self) -> String {
         let mut result = i32::MAX;
-        calc_min_mana_amount(0, &mut Vec::new(), &mut result);
+        calc_min_mana_amount(false, 0, &mut Vec::new(), &mut result);
         result.to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut result = i32::MAX;
+        calc_min_mana_amount(true, 0, &mut Vec::new(), &mut result);
+        result.to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2015/Day 22: Wizard Simulator 20XX".to_string()
@@ -285,7 +296,7 @@ mod test {
     fn aoc2015_22_correctness() -> io::Result<()> {
         let sol = AoC2015_22::new()?;
         assert_eq!(sol.part_one(), "1269");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "1309");
         Ok(())
     }
 
@@ -301,7 +312,7 @@ mod test {
             hit_points: 13,
             damage: 8,
         };
-        let mut bf = Battlefield::new(wizard, boss, &vec![Spell::Poison, Spell::MagicMissile]);
+        let mut bf = Battlefield::new(wizard, boss, &vec![Spell::Poison, Spell::MagicMissile], false);
         bf.battle();
         assert!(!bf.boss.is_alive());
         assert_eq!(bf.wizard.hit_points, 2);
@@ -328,7 +339,7 @@ mod test {
             Spell::Poison, 
             Spell::MagicMissile
         ];
-        let mut bf = Battlefield::new(wizard, boss, &spells);
+        let mut bf = Battlefield::new(wizard, boss, &spells, false);
         bf.battle();
         assert!(!bf.boss.is_alive());
         assert_eq!(bf.wizard.hit_points, 1);
