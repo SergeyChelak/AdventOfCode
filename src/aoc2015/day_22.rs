@@ -165,7 +165,7 @@ impl Battlefield {
     fn cast_effects(&mut self) {
         self.cast_poison();
         self.cast_recharge();
-        // self.cast_shield();
+        self.cast_shield();
     }
 
     fn cast_poison(&mut self) {
@@ -191,8 +191,17 @@ impl Battlefield {
     }
 
     fn cast_shield(&mut self) {
-        self.wizard.armor += 7;
-        todo!()
+        if let Some(val) = self.timer_shield {
+            self.timer_shield = if val == 0 {
+                self.wizard.armor -= 7;
+                None
+            } else {
+                if val == Spell::Shield.effect_duration() {
+                    self.wizard.armor += 7;
+                } 
+                Some(val - 1)
+            }
+        }
     }
 
     fn try_effect(&mut self, spell: &Spell) -> bool {
@@ -215,7 +224,16 @@ impl Battlefield {
                     false
                 }
             }
-            _ => panic!()
+            Spell::Shield => {
+                if self.timer_shield.is_none() {
+                    self.timer_shield = Some(spell.effect_duration());
+                    self.cast_shield();
+                    true
+                } else {
+                    false
+                }
+            }
+            _ => panic!("Unexpected effect type")
         }
     }
 }
