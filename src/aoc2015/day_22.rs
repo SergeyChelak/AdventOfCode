@@ -243,10 +243,11 @@ fn calc_min_mana_amount(cost: i32, spells: &mut Vec<Spell>, result: &mut i32) {
         return;
     }
     for spell in Spell::all_cases() {
+        let new_cost = cost + spell.cost();
         spells.push(spell);
         match Battlefield::with_spells(spells).battle() {
-            Aftermath::Win => *result = cost.min(*result),
-            Aftermath::InsufficientSpells => calc_min_mana_amount(cost + spell.cost(), spells, result),
+            Aftermath::Win => *result = new_cost.min(*result),
+            Aftermath::InsufficientSpells => calc_min_mana_amount(new_cost, spells, result),
             _ => (),
         }
         spells.pop();
