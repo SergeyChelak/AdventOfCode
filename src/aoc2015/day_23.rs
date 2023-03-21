@@ -3,14 +3,14 @@ use crate::utils::*;
 
 use std::io;
 
-#[derive(Clone)]
+#[derive(Debug, Copy, Clone)]
 enum Instruction {
-    Hlf(usize),         // hlf r sets register r to half its current value, then continues with the next instruction.
-    Tpl(usize),         // tpl r sets register r to triple its current value, then continues with the next instruction.
-    Inc(usize),         // inc r increments register r, adding 1 to it, then continues with the next instruction.
-    Jmp(isize),         // jmp offset is a jump; it continues with the instruction offset away relative to itself.
-    Jie(usize, isize),  // jie r, offset is like jmp, but only jumps if register r is even ("jump if even").
-    Jio(usize, isize)   // jio r, offset is like jmp, but only jumps if register r is 1 ("jump if one", not odd).
+    Hlf(usize),         
+    Tpl(usize),         
+    Inc(usize),         
+    Jmp(isize),         
+    Jie(usize, isize),  
+    Jio(usize, isize)   
 }
 
 impl Instruction {
@@ -65,12 +65,59 @@ impl Computer {
         Self {
             pc: 0,
             register: [0usize; 2],
-            memory: memory
+            memory
         }
     }
 
     fn run(&mut self) {
-        todo!()
+        while self.pc < self.memory.len() {
+            let inst = self.memory[self.pc];
+            self.do_instruction(inst);
+        }
+    }
+
+    fn do_instruction(&mut self, inst: Instruction) {
+        match inst {
+            Instruction::Hlf(reg) => {
+                // hlf r sets register r to half its current value, then continues with the next instruction.
+                self.register[reg] >>= 1;
+                self.pc += 1;
+            },
+            Instruction::Tpl(reg) => {
+                // tpl r sets register r to triple its current value, then continues with the next instruction.
+                self.register[reg] *= 3;
+                self.pc += 1;
+            },
+            Instruction::Inc(reg) => {
+                // inc r increments register r, adding 1 to it, then continues with the next instruction.
+                self.register[reg] += 1;
+                self.pc += 1;
+            },
+            Instruction::Jmp(offset) => {
+                // jmp offset is a jump; it continues with the instruction offset away relative to itself.
+                self.pc = (self.pc as isize + offset) as usize;
+            },
+            Instruction::Jie(reg, offset) => {
+                // jie r, offset is like jmp, but only jumps if register r is even ("jump if even").
+                if self.register[reg] % 2 == 0 {
+                    self.pc = (self.pc as isize + offset) as usize;
+                } else {
+                    self.pc += 1;
+                }
+            }
+            Instruction::Jio(reg, offset) => {
+                // jio r, offset is like jmp, but only jumps if register r is 1 ("jump if one", not odd).
+                if self.register[reg] == 1 {
+                    self.pc = (self.pc as isize + offset) as usize;
+                } else {
+                    self.pc += 1;
+                }
+            }
+        }
+    }
+
+    fn reg_b(&self) -> usize {
+        self.register[1]
     }
 }
 
@@ -91,8 +138,12 @@ impl AoC2015_23 {
 }
 
 impl Solution for AoC2015_23 {
-    // fn part_one(&self) -> String {
-    // }
+    fn part_one(&self) -> String {
+        let mut computer = Computer::with_program(self.program.clone());
+        computer.run();
+        computer.reg_b()
+            .to_string()
+    }
 
     // fn part_two(&self) -> String {
     // }
@@ -116,7 +167,7 @@ mod test {
     #[test]
     fn aoc2015_23_correctness() -> io::Result<()> {
         let sol = AoC2015_23::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "170");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
