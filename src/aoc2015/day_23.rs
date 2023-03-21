@@ -145,8 +145,13 @@ impl Solution for AoC2015_23 {
             .to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut computer = Computer::with_program(self.program.clone());
+        computer.register[0] = 1;
+        computer.run();
+        computer.reg_b()
+            .to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2015/Day 23: Opening the Turing Lock".to_string()
@@ -168,7 +173,7 @@ mod test {
     fn aoc2015_23_correctness() -> io::Result<()> {
         let sol = AoC2015_23::new()?;
         assert_eq!(sol.part_one(), "170");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "247");
         Ok(())
     }
 }
