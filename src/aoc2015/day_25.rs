@@ -26,9 +26,27 @@ fn calc_code(number: usize) -> usize {
     value
 }
 
+fn position_to_number(row: usize, col: usize) -> usize {
+    let mut num = 1;
+    if row > 1 {
+        for i in 2..=row {
+            num += i - 1;
+        }
+    }
+    if col > 1 {
+        let mut val = row + 1;
+        for _ in 2..=col {
+            num += val;
+            val += 1;
+        }
+    }
+    num
+}
+
 impl Solution for AoC2015_25 {
     fn part_one(&self) -> String {
-        0.to_string()
+        calc_code(position_to_number(self.row, self.col))
+            .to_string()
     }
 
     // fn part_two(&self) -> String {
@@ -46,7 +64,7 @@ mod test {
     #[test]
     fn aoc2015_25_correctness() -> io::Result<()> {
         let sol = AoC2015_25::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "19980801");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
@@ -60,6 +78,42 @@ mod test {
         assert_eq!(calc_code(4), matrix[2][0]);
         assert_eq!(calc_code(5), matrix[1][1]);
         assert_eq!(calc_code(6), matrix[0][2]);
+    }
+
+    #[test]
+    fn aoc2015_25_pos2num_rows() {
+        assert_eq!(position_to_number(1, 1), 1);
+        assert_eq!(position_to_number(2, 1), 2);
+        assert_eq!(position_to_number(3, 1), 4);
+        assert_eq!(position_to_number(4, 1), 7);
+        assert_eq!(position_to_number(5, 1), 11);
+        assert_eq!(position_to_number(6, 1), 16);
+    }
+
+    #[test]
+    fn aoc2015_25_pos2num_cols() {
+        assert_eq!(position_to_number(1, 1), 1);
+        assert_eq!(position_to_number(1, 2), 3);
+        assert_eq!(position_to_number(1, 3), 6);
+        assert_eq!(position_to_number(1, 4), 10);
+        assert_eq!(position_to_number(1, 5), 15);
+        assert_eq!(position_to_number(1, 6), 21);
+    }
+
+    #[test]
+    fn aoc2015_25_pos2num() {
+        assert_eq!(position_to_number(2, 2), 5);
+        assert_eq!(position_to_number(2, 3), 9);
+        assert_eq!(position_to_number(2, 4), 14);
+        assert_eq!(position_to_number(2, 5), 20);
+
+        assert_eq!(position_to_number(3, 2), 8);
+        assert_eq!(position_to_number(3, 3), 13);
+        assert_eq!(position_to_number(3, 4), 19);
+
+        assert_eq!(position_to_number(4, 2), 12);
+        assert_eq!(position_to_number(4, 3), 18);
+
     }
 
     fn matrix() -> Vec<Vec<usize>> {
