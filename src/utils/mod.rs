@@ -9,3 +9,6 @@ pub use string2id::*;
 
 pub mod permutations;
 pub use permutations::*;
+
+pub mod combinations;
+pub use combinations::*;

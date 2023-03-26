@@ -1,4 +1,4 @@
-// 
+//
 // Implementation based on Wikipedia article
 // https://en.wikipedia.org/wiki/Heap%27s_algorithm
 //
@@ -42,7 +42,7 @@ impl<T: Copy> Iterator for PermutationIterator<T> {
             }
         }
         None
-    }    
+    }
 }
 
 pub trait Permutable<T> {
