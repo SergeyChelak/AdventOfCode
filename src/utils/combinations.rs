@@ -3,7 +3,7 @@
 //
 pub struct CombinationIterator<'a, T> {
     array: &'a Vec<T>,
-    c: Vec<isize>,
+    c: Vec<usize>,
     k: usize,
     is_first: bool,
 }
@@ -13,9 +13,9 @@ impl<'a, T: Copy> CombinationIterator<'a, T> {
         let n = array.len();
         let mut c = vec![0; k + 3];
         for i in 1..=k {
-            c[i] = i as isize - 1;
+            c[i] = i - 1;
         }
-        c[k + 1] = n as isize;
+        c[k + 1] = n;
         c[k + 2] = 0;
         Self {
             array,
@@ -28,7 +28,7 @@ impl<'a, T: Copy> CombinationIterator<'a, T> {
     fn get_combination(&self) -> Vec<T> {
         self.c[1..=self.k]
             .iter()
-            .map(|i| self.array[*i as usize])
+            .map(|i| self.array[*i])
             .collect::<Vec<T>>()
     }
 }
@@ -42,7 +42,7 @@ impl<'a, T: Copy> Iterator for CombinationIterator<'a, T> {
         } else {
             let mut j = 1;
             while self.c[j] + 1 == self.c[j + 1] {
-                self.c[j] = j as isize - 1;
+                self.c[j] = j - 1;
                 j += 1;
             }
             if j > self.k  {
