@@ -193,7 +193,7 @@ mod test {
     fn aoc2015_21_correctness() -> io::Result<()> {
         let sol = AoC2015_21::new()?;
         assert_eq!(sol.part_one(), "91");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "158");
         Ok(())
     }
 
@@ -222,7 +222,7 @@ mod test {
 
         boss.attack(&mut player);
         assert_eq!(player.hit_points, 4);
-        
+
         player.attack(&mut boss);
         assert_eq!(boss.hit_points, 3);
 
