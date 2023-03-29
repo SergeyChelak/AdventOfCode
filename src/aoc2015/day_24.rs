@@ -18,36 +18,23 @@ impl AoC2015_24 {
         })
     }
 
-    fn search(&self, value: usize, position: usize, target: usize, items: &mut Vec<usize>, output: &mut (usize, usize)) {
-        if value < target {
-            for i in position..self.input.len() {
-                let val = self.input[i];
-                items.push(val);
-                self.search(value + val, i + 1, target, items, output);
-                items.pop();
-            }
-        } else if value == target {
-            let cur_cnt = items.len();
-            let (cnt, qe) = *output;
-            let cur_qe = items.iter().fold(1usize, |acc, v| acc.saturating_mul(*v));
-            if cur_cnt < cnt {
-                *output = (cur_cnt, cur_qe);
-            } else if cur_cnt == cnt {
-                *output = (cur_cnt, cur_qe.min(qe));
-            }
-        }
-    }
-
     fn accommodate_boxes(&self, trunks: usize) -> Option<usize> {
-        let sum: usize = self.input.iter().sum();        
+        let mut result: Option<usize> = None;
+        let sum: usize = self.input.iter().sum();
         if sum % trunks == 0 {
             let target = sum / trunks;
-            let mut output = (usize::MAX, usize::MAX);
-            self.search(0, 0, target, &mut Vec::new(), &mut output);
-            Some(output.1)
-        } else {
-            None
+            for k in 1..=self.input.len() {
+                result = self.input
+                    .combination_iter(k)
+                    .filter(|arr| arr.iter().sum::<usize>() == target)
+                    .map(|arr| arr.iter().product())
+                    .min();
+                if result.is_some() {
+                    break;
+                }
+            }
         }
+        result
     }
 
     fn format_output(&self, value: Option<usize>) -> String {
@@ -61,7 +48,7 @@ impl AoC2015_24 {
 }
 
 impl Solution for AoC2015_24 {
-    fn part_one(&self) -> String {                
+    fn part_one(&self) -> String {
         let result = self.accommodate_boxes(3);
         self.format_output(result)
     }

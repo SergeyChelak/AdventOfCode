@@ -1,22 +1,35 @@
 //
-// Generate combinations with Gray codes
-// Based on
-// https://cp-algorithms.com/combinatorics/generating_combinations.html
+// Combinations iterator
 //
-
 pub struct CombinationIterator<'a, T> {
     array: &'a Vec<T>,
+    c: Vec<isize>,
     k: usize,
-    pos: usize,
+    is_first: bool,
 }
 
-impl<'a, T> CombinationIterator<'a, T> {
-    pub fn from_vector(v: &'a Vec<T>, k: usize) -> Self {
-        Self {
-            array: v,
-            k,
-            pos: 0,
+impl<'a, T: Copy> CombinationIterator<'a, T> {
+    pub fn from_vector(array: &'a Vec<T>, k: usize) -> Self {
+        let n = array.len();
+        let mut c = vec![0; k + 3];
+        for i in 1..=k {
+            c[i] = i as isize - 1;
         }
+        c[k + 1] = n as isize;
+        c[k + 2] = 0;
+        Self {
+            array,
+            c,
+            k,
+            is_first: true,
+        }
+    }
+
+    fn get_combination(&self) -> Vec<T> {
+        self.c[1..=self.k]
+            .iter()
+            .map(|i| self.array[*i as usize])
+            .collect::<Vec<T>>()
     }
 }
 
@@ -24,37 +37,21 @@ impl<'a, T: Copy> Iterator for CombinationIterator<'a, T> {
     type Item = Vec<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let n = self.array.len();
-        if self.pos < 1 << n {
-            let cur = gray_code(self.pos);
-            if count_bits(cur) == self.k {
-                let mut output = Vec::with_capacity(self.k);
-                for j in 0..n {
-                    if cur & (1 << j) != 0 {
-                        output.push(self.array[j]);
-                    }
-                }
-                self.pos += 1;
-                return Some(output);
+        if self.is_first {
+            self.is_first = false;
+        } else {
+            let mut j = 1;
+            while self.c[j] + 1 == self.c[j + 1] {
+                self.c[j] = j as isize - 1;
+                j += 1;
             }
+            if j > self.k  {
+                return None;
+            }
+            self.c[j] += 1;
         }
-        None
+        Some(self.get_combination())
     }
-}
-
-#[inline(always)]
-fn gray_code(n: usize) -> usize {
-    n ^ (n >> 1)
-}
-
-fn count_bits(n: usize) -> usize {
-    let mut res = 0;
-    let mut i = n;
-    while i > 0 {
-        res += i & 1;
-        i >>= 1;
-    }
-    res
 }
 
 pub trait Combinable<T> {
@@ -83,11 +80,14 @@ mod tests {
             vec![1, 3],
             vec![0, 3],
         ].into_iter().collect();
-        vec![0, 1, 2, 3]
+
+        let combs = vec![0, 1, 2, 3]
             .combination_iter(2)
-            .for_each(|arr| {
-                assert!(cases.contains(&arr));
-            });
+            .collect::<Vec<Vec<usize>>>();
+        assert_eq!(combs.len(), cases.len());
+
+        combs.iter()
+            .for_each(|arr| assert!(cases.contains(arr)));
     }
 
     #[test]
@@ -114,10 +114,12 @@ mod tests {
             vec![1, 2, 5],
             vec![0, 1, 5],
         ].into_iter().collect();
-        vec![0, 1, 2, 3, 4, 5]
+        let combs = vec![0, 1, 2, 3, 4, 5]
             .combination_iter(3)
-            .for_each(|arr| {
-                assert!(cases.contains(&arr));
-            });
+            .collect::<Vec<Vec<usize>>>();
+        assert_eq!(combs.len(), cases.len());
+
+        combs.iter()
+            .for_each(|arr| assert!(cases.contains(arr)));
     }
 }
