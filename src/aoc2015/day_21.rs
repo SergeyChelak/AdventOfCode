@@ -94,7 +94,7 @@ fn min_win_cost(equip: &Vec<Equipment>, current: i32) -> i32 {
     }
 }
 
-fn max_loose_cost(equip: &Vec<Equipment>, current: i32) -> i32 {
+fn max_lose_cost(equip: &Vec<Equipment>, current: i32) -> i32 {
     let mut player = Player::with_equipment(equip);
     let mut boss = Player::boss();
     battle(&mut player, &mut boss);
@@ -175,7 +175,7 @@ impl Solution for AoC2015_21 {
     }
 
     fn part_two(&self) -> String {
-        find_battle_cost(0, &max_loose_cost)
+        find_battle_cost(0, &max_lose_cost)
             .to_string()
     }
 
