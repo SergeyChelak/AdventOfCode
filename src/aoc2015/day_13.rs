@@ -1,14 +1,51 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::io;
 type Graph = HashMap<(usize, usize), i32>;
 
+struct Helper {
+    graph: Graph,
+    count: usize,
+}
+
+impl Helper {
+    fn calculate(&self) -> String {
+        let mut arr: Vec<usize> = vec![0; self.count];
+        for i in 0..self.count {
+            arr[i] = i;
+        }
+        let val = arr.permut_iter()
+            .map(|v| self.fit(&v))
+            .fold(None, |acc, v| bigger_option(&acc, &v));
+        if let Some(v) = val {
+            v.to_string()
+        } else {
+            "Not found".to_string()
+        }
+    }
+
+    fn fit(&self, order: &Vec<usize>) -> Option<i32> {
+        let mut sum = 0i32;
+        let n = order.len();
+        for i in 0..n {
+            let prev_idx = if i > 0 { i - 1 } else { n - 1};
+            let prev = (order[i], order[prev_idx]);
+            let next = (order[i], order[(i + 1) % n]);
+            if let (Some(val1), Some(val2)) = (self.graph.get(&prev), self.graph.get(&next)) {
+                sum += val1 + val2;
+            } else {
+                return None;
+            }
+        }
+        Some(sum)
+    }
+}
+
 pub struct AoC2015_13 {
-    graph: RefCell<Graph>,
-    count: RefCell<usize>,
+    graph: Graph,
+    count: usize,
 }
 
 impl AoC2015_13 {
@@ -16,8 +53,8 @@ impl AoC2015_13 {
         let lines = read_file_as_lines("input/aoc2015_13")?;
         let (graph, count) = Self::parse_input(&lines);
         Ok(Self {
-            graph: RefCell::new(graph),
-            count: RefCell::new(count),
+            graph: graph,
+            count: count,
         })
     }
 
@@ -42,56 +79,28 @@ impl AoC2015_13 {
         let value = arr[3].parse::<i32>().expect("Integer value is expected");
         (from, to, sign * value)
     }
-
-    fn calculate(&self) -> String {
-        let count = *self.count.borrow();
-        let mut arr: Vec<usize> = vec![0; count];
-        for i in 0..count {
-            arr[i] = i;
-        }
-        let val = arr.permut_iter()
-            .map(|v| self.fit(&v))
-            .fold(None, |acc, v| bigger_option(&acc, &v));
-        if let Some(v) = val {
-            v.to_string()
-        } else {
-            "Not found".to_string()
-        }
-    }
-
-    fn fit(&self, order: &Vec<usize>) -> Option<i32> {
-        let mut sum = 0i32;
-        let n = order.len();
-        let graph = self.graph.borrow();
-        for i in 0..n {
-            let prev_idx = if i > 0 { i - 1 } else { n - 1};
-            let prev = (order[i], order[prev_idx]);
-            let next = (order[i], order[(i + 1) % n]);
-            if let (Some(val1), Some(val2)) = (graph.get(&prev), graph.get(&next)) {
-                sum += val1 + val2;
-            } else {
-                return None;
-            }
-        }
-        Some(sum)
-    }
 }
 
 impl Solution for AoC2015_13 {
     fn part_one(&self) -> String {
-        self.calculate()
+        Helper {
+            graph: self.graph.clone(),
+            count: self.count
+        }.calculate()
     }
 
     fn part_two(&self) -> String {
-        let mut graph = self.graph.borrow().clone();
-        let my_id = *self.count.borrow();
+        let mut graph = self.graph.clone();
+        let my_id = self.count;
         for i in 0..my_id {
             graph.insert((my_id, i), 0);
             graph.insert((i, my_id), 0);
         }
-        self.graph.replace(graph);
-        self.count.replace(my_id + 1);
-        self.calculate()
+        let count = my_id + 1;
+        Helper {
+            graph,
+            count
+        }.calculate()
     }
 
     fn description(&self) -> String {
@@ -106,8 +115,8 @@ mod test {
     #[test]
     fn aoc2015_13_input_load_test() -> io::Result<()> {
         let sol = AoC2015_13::new()?;
-        assert!(*sol.count.borrow() > 0);
-        assert!(sol.graph.borrow().len() > 0);
+        assert!(sol.count > 0);
+        assert!(sol.graph.len() > 0);
         Ok(())
     }
 
