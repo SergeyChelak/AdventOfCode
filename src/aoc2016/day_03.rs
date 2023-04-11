@@ -3,15 +3,7 @@ use crate::utils::*;
 
 use std::io;
 
-struct Sides(i32, i32, i32);
-
-impl Sides {
-    fn is_possible_triangle(&self) -> bool {
-        self.0 + self.1 > self.2 &&
-        self.0 + self.2 > self.1 &&
-        self.1 + self.2 > self.0
-    }
-}
+type Sides = [i32; 3];
 
 pub struct AoC2016_03 {
     input: Vec<Sides>
@@ -25,7 +17,7 @@ impl AoC2016_03 {
                 let values = s.split_whitespace()
                     .map(|val| val.parse::<i32>().expect("integer value expected"))
                     .collect::<Vec<i32>>();
-                Sides(values[0], values[1], values[2])
+                [values[0], values[1], values[2]]
             })
             .collect::<Vec<Sides>>();
         Ok(Self {
@@ -37,17 +29,40 @@ impl AoC2016_03 {
 impl Solution for AoC2016_03 {
     fn part_one(&self) -> String {
         self.input.iter()
-            .filter(|&sides| sides.is_possible_triangle())
+            .filter(|&sides| is_possible_triangle(sides))
             .count()
             .to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let len = self.input.len();
+        if len % 3 == 0 {
+            let mut count = 0usize;
+            for i in (0..len).step_by(3) {
+                let a = self.input[i];
+                let b = self.input[i + 1];
+                let c = self.input[i + 2];
+                for j in 0..3 {
+                    if is_possible_triangle(&[a[j], b[j], c[j]]) {
+                        count += 1;
+                    }
+                }
+            }
+            count.to_string()
+        } else {
+            "Incorrect number of lines".to_string()
+        }
+    }
 
     fn description(&self) -> String {
         "AoC 2016/Day 3: Squares With Three Sides".to_string()
     }
+}
+
+fn is_possible_triangle(sides: &[i32; 3]) -> bool {
+    sides[0] + sides[1] > sides[2] &&
+    sides[0] + sides[2] > sides[1] &&
+    sides[1] + sides[2] > sides[0]
 }
 
 #[cfg(test)]
