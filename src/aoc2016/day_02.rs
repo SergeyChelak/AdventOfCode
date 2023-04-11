@@ -44,8 +44,38 @@ impl Solution for AoC2016_02 {
         output
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let x = '\0';
+        let keypad = vec![
+            vec![ x,   x,  '1',  x,   x ],
+            vec![ x,  '2', '3', '4',  x ],
+            vec!['5', '6', '7', '8', '9'],
+            vec![ x,  'A', 'B', 'C',  x ],
+            vec![ x,   x,  'D',  x,   x ],
+        ];
+        let range = 0..keypad.len() as i32;
+        let mut output = String::new();
+        let mut pos = (2, 0);
+        for line in &self.lines {
+            for ch in line.chars() {
+                let (mut r, mut c) = pos;
+                match ch {
+                    'L' => c -= 1,
+                    'R' => c += 1,
+                    'U' => r -= 1,
+                    'D' => r += 1,
+                    _ => panic!("Unexpected char {ch}")
+                };
+                if range.contains(&r) 
+                    && range.contains(&c) 
+                    && keypad[r as usize][c as usize] != x {
+                    pos = (r, c);
+                }
+            }
+            output.push(keypad[pos.0 as usize][pos.1 as usize]);
+        }
+        output
+    }
 
     fn description(&self) -> String {
         "AoC 2016/Day 2: Bathroom Security".to_string()
@@ -67,15 +97,28 @@ mod test {
     fn aoc2016_02_correctness() -> io::Result<()> {
         let sol = AoC2016_02::new()?;
         assert_eq!(sol.part_one(), "53255");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "7423A");
         Ok(())
     }
 
     #[test]
-    fn aoc2016_02_demo_case() {
+    fn aoc2016_02_demo_case1() {
         assert_eq!(get_matrix_number(5, "ULL"), 1);
         assert_eq!(get_matrix_number(1, "RRDDD"), 9);
         assert_eq!(get_matrix_number(9, "LURDL"), 8);
         assert_eq!(get_matrix_number(8, "UUUUD"), 5);
+    }
+
+    #[test]
+    fn aoc2016_02_demo_case2() {
+        let sol = AoC2016_02 {
+            lines: vec! [
+                String::from("ULL"),
+                String::from("RRDDD"),
+                String::from("LURDL"),
+                String::from("UUUUD"),
+            ]
+        };
+        assert_eq!(sol.part_two(), "5DB3");
     }
 }
