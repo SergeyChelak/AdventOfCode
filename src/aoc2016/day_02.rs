@@ -3,7 +3,7 @@ use crate::utils::*;
 
 use std::io;
 
-fn get_number(from: i32, s: &str) -> i32 {
+fn get_matrix_number(from: i32, s: &str) -> i32 {
     let from = from - 1;
     let pos = (from / 3, from % 3);
     let (r, c) = s.chars()
@@ -37,7 +37,7 @@ impl Solution for AoC2016_02 {
         let mut prev = 5;
         let mut output = String::new();
         for line in &self.lines {
-            let val = get_number(prev, line);
+            let val = get_matrix_number(prev, line);
             prev = val;
             output.push_str(&val.to_string());
         }
@@ -73,9 +73,9 @@ mod test {
 
     #[test]
     fn aoc2016_02_demo_case() {
-        assert_eq!(get_number(5, "ULL"), 1);
-        assert_eq!(get_number(1, "RRDDD"), 9);
-        assert_eq!(get_number(9, "LURDL"), 8);
-        assert_eq!(get_number(8, "UUUUD"), 5);
+        assert_eq!(get_matrix_number(5, "ULL"), 1);
+        assert_eq!(get_matrix_number(1, "RRDDD"), 9);
+        assert_eq!(get_matrix_number(9, "LURDL"), 8);
+        assert_eq!(get_matrix_number(8, "UUUUD"), 5);
     }
 }
