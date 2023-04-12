@@ -8,7 +8,7 @@ enum Spell {
     Drain,
     Shield,
     Poison,
-    Recharge
+    Recharge,
 }
 
 impl Spell {
@@ -107,7 +107,9 @@ impl Battlefield {
     }
 
     fn new(wizard: Wizard, boss: Boss, spells: &Vec<Spell>, is_hard: bool) -> Self {
-        let spells = spells.into_iter().rev()
+        let spells = spells
+            .into_iter()
+            .rev()
             .map(|el| el.clone())
             .collect::<Vec<Spell>>();
         Self {
@@ -117,21 +119,21 @@ impl Battlefield {
             timer_shield: None,
             timer_poison: None,
             timer_recharge: None,
-            is_hard
+            is_hard,
         }
     }
 
     fn battle(&mut self) -> Aftermath {
         let mut is_wizard_move = true;
         while self.wizard.is_alive() && self.boss.is_alive() {
-            if self.is_hard { 
+            if self.is_hard {
                 self.wizard.hit_points -= 1;
-                if !self.wizard.is_alive() { 
-                    break
+                if !self.wizard.is_alive() {
+                    break;
                 }
             }
             self.cast_effects();
-            if is_wizard_move {                
+            if is_wizard_move {
                 let spell = self.spells.pop();
                 if spell.is_none() {
                     return Aftermath::InsufficientSpells;
@@ -149,12 +151,12 @@ impl Battlefield {
                     match spell {
                         Spell::MagicMissile => {
                             self.boss.hit_points -= 4;
-                        },
+                        }
                         Spell::Drain => {
                             self.boss.hit_points -= 2;
                             self.wizard.hit_points += 2;
-                        },
-                        _ => panic!("Unexpected spell without effect")
+                        }
+                        _ => panic!("Unexpected spell without effect"),
                     }
                 }
             } else {
@@ -206,7 +208,7 @@ impl Battlefield {
             } else {
                 if val == Spell::Shield.effect_duration() {
                     self.wizard.armor += 7;
-                } 
+                }
                 Some(val - 1)
             }
         }
@@ -222,7 +224,7 @@ impl Battlefield {
                 } else {
                     false
                 }
-            },
+            }
             Spell::Recharge => {
                 if self.timer_recharge.is_none() {
                     self.timer_recharge = Some(spell.effect_duration());
@@ -241,7 +243,7 @@ impl Battlefield {
                     false
                 }
             }
-            _ => panic!("Unexpected effect type")
+            _ => panic!("Unexpected effect type"),
         }
     }
 }
@@ -255,7 +257,9 @@ fn calc_min_mana_amount(is_hard: bool, cost: i32, spells: &mut Vec<Spell>, resul
         spells.push(spell);
         match Battlefield::with_spells(spells, is_hard).battle() {
             Aftermath::Win => *result = new_cost.min(*result),
-            Aftermath::InsufficientSpells => calc_min_mana_amount(is_hard, new_cost, spells, result),
+            Aftermath::InsufficientSpells => {
+                calc_min_mana_amount(is_hard, new_cost, spells, result)
+            }
             _ => (),
         }
         spells.pop();
@@ -312,7 +316,12 @@ mod test {
             hit_points: 13,
             damage: 8,
         };
-        let mut bf = Battlefield::new(wizard, boss, &vec![Spell::Poison, Spell::MagicMissile], false);
+        let mut bf = Battlefield::new(
+            wizard,
+            boss,
+            &vec![Spell::Poison, Spell::MagicMissile],
+            false,
+        );
         bf.battle();
         assert!(!bf.boss.is_alive());
         assert_eq!(bf.wizard.hit_points, 2);
@@ -333,11 +342,11 @@ mod test {
             damage: 8,
         };
         let spells = vec![
-            Spell::Recharge, 
-            Spell::Shield, 
-            Spell::Drain, 
-            Spell::Poison, 
-            Spell::MagicMissile
+            Spell::Recharge,
+            Spell::Shield,
+            Spell::Drain,
+            Spell::Poison,
+            Spell::MagicMissile,
         ];
         let mut bf = Battlefield::new(wizard, boss, &spells, false);
         bf.battle();

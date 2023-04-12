@@ -8,36 +8,41 @@ type Grid = Vec<Vec<i32>>;
 fn switch_lights(input: &Grid) -> Grid {
     let rows = input.len();
     let mut result = Grid::with_capacity(rows);
-    input.iter()
-        .map(|arr| arr.len())
-        .for_each(|s| {
-            result.push(vec![0; s]);
-        });
-    
+    input.iter().map(|arr| arr.len()).for_each(|s| {
+        result.push(vec![0; s]);
+    });
+
     for i in 0..rows {
         let cols = input[i].len();
         for j in 0..cols {
             let offs = vec![
                 (-1, -1), // 1
-                ( 0, -1), // 2
-                ( 1, -1), // 3
-                (-1,  0), // 4
-                ( 1,  0), // 5
-                (-1,  1), // 6
-                ( 0,  1), // 7
-                ( 1,  1)  // 8
+                (0, -1),  // 2
+                (1, -1),  // 3
+                (-1, 0),  // 4
+                (1, 0),   // 5
+                (-1, 1),  // 6
+                (0, 1),   // 7
+                (1, 1),   // 8
             ];
-            let on_count = offs.iter()                
+            let on_count = offs
+                .iter()
                 .map(|(dx, dy)| (i as i32 + *dx, j as i32 + *dy))
-                .filter(|(r, c)| {
-                    (0..rows as i32).contains(r) && (0..cols as i32).contains(c)
-                })
+                .filter(|(r, c)| (0..rows as i32).contains(r) && (0..cols as i32).contains(c))
                 .map(|(x, y)| input[x as usize][y as usize])
                 .sum::<i32>();
             result[i][j] = if input[i][j] == 1 {
-                if matches!(on_count, 2 | 3) { 1 } else { 0 }
+                if matches!(on_count, 2 | 3) {
+                    1
+                } else {
+                    0
+                }
             } else {
-                if on_count == 3 { 1 } else { 0 }
+                if on_count == 3 {
+                    1
+                } else {
+                    0
+                }
             }
         }
     }
@@ -45,9 +50,7 @@ fn switch_lights(input: &Grid) -> Grid {
 }
 
 fn lights_count(input: &Grid) -> i32 {
-    input.iter()
-        .map(|arr| arr.iter().sum::<i32>())
-        .sum()
+    input.iter().map(|arr| arr.iter().sum::<i32>()).sum()
 }
 
 fn turn_on_corners(lights: &mut Grid) {
@@ -59,23 +62,25 @@ fn turn_on_corners(lights: &mut Grid) {
 }
 
 pub struct AoC2015_18 {
-    grid: Grid
+    grid: Grid,
 }
 
 impl AoC2015_18 {
     pub fn new() -> io::Result<Self> {
         let lines = read_file_as_lines("input/aoc2015_18")?;
         Ok(Self {
-            grid: Self::parse_lines(&lines)
+            grid: Self::parse_lines(&lines),
         })
     }
 
     fn parse_lines(lines: &[String]) -> Grid {
-        lines.iter()
-            .map(|s| 
+        lines
+            .iter()
+            .map(|s| {
                 s.chars()
-                  .map(|ch| if ch == '.' { 0 } else { 1 })
-                  .collect::<Vec<i32>>())
+                    .map(|ch| if ch == '.' { 0 } else { 1 })
+                    .collect::<Vec<i32>>()
+            })
             .collect::<Grid>()
     }
 }
@@ -86,8 +91,7 @@ impl Solution for AoC2015_18 {
         for _ in 0..100 {
             lights = switch_lights(&lights);
         }
-        lights_count(&lights)
-            .to_string()
+        lights_count(&lights).to_string()
     }
 
     fn part_two(&self) -> String {
@@ -97,8 +101,7 @@ impl Solution for AoC2015_18 {
             lights = switch_lights(&lights);
             turn_on_corners(&mut lights);
         }
-        lights_count(&lights)
-            .to_string()
+        lights_count(&lights).to_string()
     }
 
     fn description(&self) -> String {
@@ -128,12 +131,7 @@ mod test {
     #[test]
     fn aoc2015_18_case6x6() {
         let mut grid = lines_to_grid(&vec![
-            ".#.#.#",
-            "...##.",
-            "#....#",
-            "..#...",
-            "#.#..#",
-            "####.."
+            ".#.#.#", "...##.", "#....#", "..#...", "#.#..#", "####..",
         ]);
 
         for _ in 0..4 {
@@ -141,12 +139,7 @@ mod test {
         }
 
         let expected_grid = lines_to_grid(&vec![
-            "......",
-            "......",
-            "..##..",
-            "..##..",
-            "......",
-            "......"
+            "......", "......", "..##..", "..##..", "......", "......",
         ]);
 
         for i in 0..grid.len() {
@@ -157,9 +150,7 @@ mod test {
     }
 
     fn lines_to_grid(input: &[&str]) -> Grid {
-        let lines = input.iter()
-        .map(|s| s.to_string())
-        .collect::<Vec<String>>();
+        let lines = input.iter().map(|s| s.to_string()).collect::<Vec<String>>();
         AoC2015_18::parse_lines(&lines)
     }
 }

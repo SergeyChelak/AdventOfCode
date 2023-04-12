@@ -24,7 +24,8 @@ impl AoC2015_09 {
     }
 
     fn parse_input(lines: &Vec<String>) -> (usize, Graph) {
-        let distances = lines.iter()
+        let distances = lines
+            .iter()
             .map(|s| Self::parse_line(&s))
             .collect::<Vec<Distance>>();
         let mut cities = String2IdMapper::new();
@@ -41,7 +42,8 @@ impl AoC2015_09 {
     fn parse_line(s: &str) -> Distance {
         let equation = s.split(" = ").collect::<Vec<&str>>();
         assert_eq!(equation.len(), 2, "Incorrect input string");
-        let weight = equation.last()
+        let weight = equation
+            .last()
             .unwrap()
             .parse::<usize>()
             .expect("Integer value expected after =");
@@ -67,7 +69,8 @@ impl AoC2015_09 {
         for i in 0..self.cities_count {
             order[i] = i;
         }
-        let distance = order.permut_iter()
+        let distance = order
+            .permut_iter()
             .map(|v| self.calc_distance(&v))
             .fold(None, |acc, val| criteria(&acc, &val));
 
@@ -89,7 +92,7 @@ impl Solution for AoC2015_09 {
     }
 
     fn description(&self) -> String {
-    	"AoC 2015/Day 9: All in a Single Night".to_string()
+        "AoC 2015/Day 9: All in a Single Night".to_string()
     }
 }
 

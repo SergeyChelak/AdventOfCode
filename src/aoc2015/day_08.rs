@@ -10,7 +10,7 @@ pub struct AoC2015_08 {
 impl AoC2015_08 {
     pub fn new() -> io::Result<Self> {
         Ok(Self {
-            input: read_file_as_lines("input/aoc2015_08")?
+            input: read_file_as_lines("input/aoc2015_08")?,
         })
     }
 
@@ -19,7 +19,7 @@ impl AoC2015_08 {
         let mut len = chars.len();
         let count = len - 1;
         assert!(len > 1, "String is too short");
-        if chars[0] == '\"' && chars[len-1] == '\"' {
+        if chars[0] == '\"' && chars[len - 1] == '\"' {
             len -= 2;
         } else {
             panic!("String isn't wrapped with quotes")
@@ -55,21 +55,23 @@ impl AoC2015_08 {
 
 impl Solution for AoC2015_08 {
     fn part_one(&self) -> String {
-        self.input.iter()
+        self.input
+            .iter()
             .map(|s| s.len() - Self::unescaped_len(s))
             .sum::<usize>()
             .to_string()
     }
 
     fn part_two(&self) -> String {
-        self.input.iter()
+        self.input
+            .iter()
             .map(|s| Self::escaped_len(s) - s.len())
             .sum::<usize>()
             .to_string()
     }
 
     fn description(&self) -> String {
-    	"AoC 2015/Day 8: Matchsticks".to_string()
+        "AoC 2015/Day 8: Matchsticks".to_string()
     }
 }
 

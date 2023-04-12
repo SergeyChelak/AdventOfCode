@@ -1,17 +1,18 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::io;
 use std::collections::HashSet;
+use std::io;
 
 struct Replacement {
     value: String,
-    substitute: String
+    substitute: String,
 }
 
 impl Replacement {
     fn from_str(s: &str) -> Self {
-        let pair = s.split_once(" => ")
+        let pair = s
+            .split_once(" => ")
             .expect("Invalid replacement string format");
         Self {
             value: pair.0.to_string(),
@@ -22,7 +23,7 @@ impl Replacement {
     fn inversed(&self) -> Self {
         Self {
             value: self.substitute.clone(),
-            substitute: self.value.clone()
+            substitute: self.value.clone(),
         }
     }
 }
@@ -35,9 +36,12 @@ pub struct AoC2015_19 {
 impl AoC2015_19 {
     pub fn new() -> io::Result<Self> {
         let lines = read_file_as_lines("input/aoc2015_19")?;
-        let index = lines.iter().position(|elem| elem.is_empty())
+        let index = lines
+            .iter()
+            .position(|elem| elem.is_empty())
             .expect("Empty line is expected");
-        let replacement = lines[..index].iter()
+        let replacement = lines[..index]
+            .iter()
             .map(|elem| Replacement::from_str(elem))
             .collect::<Vec<Replacement>>();
         let molecule = lines[lines.len() - 1].to_string();
@@ -47,15 +51,19 @@ impl AoC2015_19 {
         })
     }
 
-    fn collect_replacements(&self, repl: &Replacement, into: &mut HashSet<String>) {        
+    fn collect_replacements(&self, repl: &Replacement, into: &mut HashSet<String>) {
         for (pos, _) in self.molecule.match_indices(&repl.value) {
-            let modified = self.molecule[..pos].to_string() + &repl.substitute + &self.molecule[(pos + repl.value.len())..];
+            let modified = self.molecule[..pos].to_string()
+                + &repl.substitute
+                + &self.molecule[(pos + repl.value.len())..];
             into.insert(modified);
         }
     }
 
     fn find_fewest_steps(&self) -> usize {
-        let repl = self.replacement.iter()
+        let repl = self
+            .replacement
+            .iter()
             .map(|r| r.inversed())
             .collect::<Vec<Replacement>>();
         let mut count = 0usize;
@@ -85,8 +93,7 @@ impl Solution for AoC2015_19 {
     }
 
     fn part_two(&self) -> String {
-        self.find_fewest_steps()
-            .to_string()
+        self.find_fewest_steps().to_string()
     }
 
     fn description(&self) -> String {
@@ -116,19 +123,14 @@ mod test {
 
     #[test]
     fn aoc2015_19_search() {
-        let repl = vec![
-            "e => H",
-            "e => O",
-            "H => HO",
-            "H => OH",
-            "O => HH"
-        ].iter()
-        .map(|&s| s.to_string())
-        .map(|s| Replacement::from_str(&s))
-        .collect::<Vec<Replacement>>();
+        let repl = vec!["e => H", "e => O", "H => HO", "H => OH", "O => HH"]
+            .iter()
+            .map(|&s| s.to_string())
+            .map(|s| Replacement::from_str(&s))
+            .collect::<Vec<Replacement>>();
         let sol = AoC2015_19 {
             replacement: repl,
-            molecule: "HOHOHO".to_string()
+            molecule: "HOHOHO".to_string(),
         };
         let steps = sol.find_fewest_steps();
         assert_eq!(steps, 6);

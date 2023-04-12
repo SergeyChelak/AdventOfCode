@@ -8,9 +8,7 @@ pub struct AoC2015_20 {
 
 impl AoC2015_20 {
     pub fn new() -> io::Result<Self> {
-        Ok(Self {
-            input: 34000000
-        })
+        Ok(Self { input: 34000000 })
     }
 }
 
@@ -29,7 +27,8 @@ impl Solution for AoC2015_20 {
             }
             elf += 1;
         }
-        gifts.iter()
+        gifts
+            .iter()
             .position(|&val| val >= self.input)
             .unwrap()
             .to_string()
@@ -50,7 +49,8 @@ impl Solution for AoC2015_20 {
             }
             elf += 1;
         }
-        gifts.iter()
+        gifts
+            .iter()
             .position(|&val| val >= self.input)
             .unwrap()
             .to_string()

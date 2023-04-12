@@ -1,7 +1,7 @@
 use crate::solution::Solution;
 
-use std::io;
 use md5;
+use std::io;
 
 pub struct AoC2015_04 {
     input: String,
@@ -10,16 +10,16 @@ pub struct AoC2015_04 {
 impl AoC2015_04 {
     pub fn new() -> io::Result<Self> {
         Ok(Self {
-            input: "bgvyzdsv".to_string()
+            input: "bgvyzdsv".to_string(),
         })
     }
 
-    fn search(&self, prefix: &str) -> String {        
+    fn search(&self, prefix: &str) -> String {
         for i in 1..usize::MAX {
             let input = format!("{}{i}", self.input);
             let hash = format!("{:x}", md5::compute(input));
             if hash.starts_with(prefix) {
-                return i.to_string()
+                return i.to_string();
             }
         }
         "Not found".to_string()

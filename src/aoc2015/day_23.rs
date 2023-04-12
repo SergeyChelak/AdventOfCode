@@ -5,18 +5,17 @@ use std::io;
 
 #[derive(Debug, Copy, Clone)]
 enum Instruction {
-    Hlf(usize),         
-    Tpl(usize),         
-    Inc(usize),         
-    Jmp(isize),         
-    Jie(usize, isize),  
-    Jio(usize, isize)   
+    Hlf(usize),
+    Tpl(usize),
+    Inc(usize),
+    Jmp(isize),
+    Jie(usize, isize),
+    Jio(usize, isize),
 }
 
 impl Instruction {
     fn from_str(s: &str) -> Self {
-        let (instr, param) = s.split_once(" ")
-            .expect("Incorrect instruction");
+        let (instr, param) = s.split_once(" ").expect("Incorrect instruction");
         match instr {
             "hlf" => Self::Hlf(Self::parse_reg(param)),
             "tpl" => Self::Tpl(Self::parse_reg(param)),
@@ -25,12 +24,12 @@ impl Instruction {
             "jie" => {
                 let (reg, offs) = Self::parse_reg_offset(param);
                 Self::Jie(reg, offs)
-            },
+            }
             "jio" => {
                 let (reg, offs) = Self::parse_reg_offset(param);
                 Self::Jio(reg, offs)
-            },
-            _ => panic!("Unexpected instruction")
+            }
+            _ => panic!("Unexpected instruction"),
         }
     }
 
@@ -38,24 +37,24 @@ impl Instruction {
         match s {
             "a" => 0,
             "b" => 1,
-            _ => panic!("Unexpected register name {s}")
+            _ => panic!("Unexpected register name {s}"),
         }
     }
 
     fn parse_offset(s: &str) -> isize {
-        s.parse()
-            .expect("Signed value expected for offset value")
+        s.parse().expect("Signed value expected for offset value")
     }
 
     fn parse_reg_offset(s: &str) -> (usize, isize) {
-        let (reg, offs) = s.split_once(", ")
+        let (reg, offs) = s
+            .split_once(", ")
             .expect("Invalid format of <reg, offset> arguments");
         (Self::parse_reg(reg), Self::parse_offset(offs))
     }
 }
 
 struct Computer {
-    pc: usize,              // program counter
+    pc: usize, // program counter
     register: [usize; 2],
     memory: Vec<Instruction>,
 }
@@ -65,7 +64,7 @@ impl Computer {
         Self {
             pc: 0,
             register: [0usize; 2],
-            memory
+            memory,
         }
     }
 
@@ -82,21 +81,21 @@ impl Computer {
                 // hlf r sets register r to half its current value, then continues with the next instruction.
                 self.register[reg] >>= 1;
                 self.pc += 1;
-            },
+            }
             Instruction::Tpl(reg) => {
                 // tpl r sets register r to triple its current value, then continues with the next instruction.
                 self.register[reg] *= 3;
                 self.pc += 1;
-            },
+            }
             Instruction::Inc(reg) => {
                 // inc r increments register r, adding 1 to it, then continues with the next instruction.
                 self.register[reg] += 1;
                 self.pc += 1;
-            },
+            }
             Instruction::Jmp(offset) => {
                 // jmp offset is a jump; it continues with the instruction offset away relative to itself.
                 self.pc = (self.pc as isize + offset) as usize;
-            },
+            }
             Instruction::Jie(reg, offset) => {
                 // jie r, offset is like jmp, but only jumps if register r is even ("jump if even").
                 if self.register[reg] % 2 == 0 {
@@ -122,7 +121,7 @@ impl Computer {
 }
 
 pub struct AoC2015_23 {
-    program: Vec<Instruction>
+    program: Vec<Instruction>,
 }
 
 impl AoC2015_23 {
@@ -131,9 +130,7 @@ impl AoC2015_23 {
             .iter()
             .map(|s| Instruction::from_str(s))
             .collect::<Vec<Instruction>>();
-        Ok(Self {
-            program
-        })
+        Ok(Self { program })
     }
 }
 
@@ -141,16 +138,14 @@ impl Solution for AoC2015_23 {
     fn part_one(&self) -> String {
         let mut computer = Computer::with_program(self.program.clone());
         computer.run();
-        computer.reg_b()
-            .to_string()
+        computer.reg_b().to_string()
     }
 
     fn part_two(&self) -> String {
         let mut computer = Computer::with_program(self.program.clone());
         computer.register[0] = 1;
         computer.run();
-        computer.reg_b()
-            .to_string()
+        computer.reg_b().to_string()
     }
 
     fn description(&self) -> String {

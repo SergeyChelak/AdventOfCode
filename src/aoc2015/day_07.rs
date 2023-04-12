@@ -1,8 +1,8 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::io;
 use std::collections::HashMap;
+use std::io;
 
 type Int = u16;
 type Memo = HashMap<String, Int>;
@@ -24,11 +24,11 @@ impl Argument {
 
 enum Token {
     Value(Argument),
-    Function(String, Vec<Argument>)
+    Function(String, Vec<Argument>),
 }
 
 struct Interpreter {
-    tokens: HashMap<String, Token>
+    tokens: HashMap<String, Token>,
 }
 
 impl Interpreter {
@@ -92,15 +92,14 @@ impl Interpreter {
             panic!("Token '{name}' not found")
         };
         let value = match token {
-            Token::Value(arg) => {
-                self.eval_arg(arg, memo)
-            },
+            Token::Value(arg) => self.eval_arg(arg, memo),
             Token::Function(fn_name, args) => {
-                let params = args.iter()
+                let params = args
+                    .iter()
                     .map(|arg| self.eval_arg(arg, memo))
                     .collect::<Vec<Int>>();
                 Self::compute(fn_name, &params)
-            },
+            }
         };
         memo.insert(name.to_string(), value);
         value
@@ -120,17 +119,17 @@ impl Interpreter {
             "NOT" => !params[0],
             "RSHIFT" => params[0] >> params[1],
             "LSHIFT" => params[0] << params[1],
-            _ => panic!("Unknown function '{fn_name}")
+            _ => panic!("Unknown function '{fn_name}"),
         }
     }
 }
 
 pub struct AoC2015_07 {
-    lines: Vec<String>
+    lines: Vec<String>,
 }
 
 impl AoC2015_07 {
-    pub fn new() -> io::Result<Self> { 
+    pub fn new() -> io::Result<Self> {
         Ok(Self {
             lines: read_file_as_lines("input/aoc2015_07")?,
         })
@@ -140,21 +139,21 @@ impl AoC2015_07 {
 impl Solution for AoC2015_07 {
     fn part_one(&self) -> String {
         let interp = Interpreter::with_commands(&self.lines);
-        interp.get_signal("a")
-            .to_string()
+        interp.get_signal("a").to_string()
     }
 
     fn part_two(&self) -> String {
         let interp = Interpreter::with_commands(&self.lines);
         let signal = interp.get_signal("a");
         let mut interp = Interpreter::with_commands(&self.lines);
-        interp.tokens.insert("b".to_string(), Token::Value(Argument::Const(signal)));
-        interp.get_signal("a")
-            .to_string()
+        interp
+            .tokens
+            .insert("b".to_string(), Token::Value(Argument::Const(signal)));
+        interp.get_signal("a").to_string()
     }
 
     fn description(&self) -> String {
-    	"AoC 2015/Day 7: Some Assembly Required".to_string()
+        "AoC 2015/Day 7: Some Assembly Required".to_string()
     }
 }
 
@@ -187,9 +186,12 @@ mod test {
             "x LSHIFT 2 -> f",
             "y RSHIFT 2 -> g",
             "NOT x -> h",
-            "NOT y -> i"
-        ].iter().map(|x| x.to_string()).collect();
-        let interpreter = Interpreter::with_commands(&input);        
+            "NOT y -> i",
+        ]
+        .iter()
+        .map(|x| x.to_string())
+        .collect();
+        let interpreter = Interpreter::with_commands(&input);
         assert_eq!(interpreter.get_signal("d"), 72);
         assert_eq!(interpreter.get_signal("e"), 507);
         assert_eq!(interpreter.get_signal("f"), 492);

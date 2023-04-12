@@ -20,39 +20,38 @@ impl Equipment {
         }
     }
 
-    fn weapons() -> Vec::<Self> {
+    fn weapons() -> Vec<Self> {
         vec![
-            Self::new("Dagger",      8, 4, 0),
+            Self::new("Dagger", 8, 4, 0),
             Self::new("Shortsword", 10, 5, 0),
-            Self::new("Warhammer",  25, 6, 0),
-            Self::new("Longsword",  40, 7, 0),
-            Self::new("Greataxe",   74, 8, 0)
+            Self::new("Warhammer", 25, 6, 0),
+            Self::new("Longsword", 40, 7, 0),
+            Self::new("Greataxe", 74, 8, 0),
         ]
     }
 
-    fn armors() -> Vec::<Self> {
-        vec! [
-            Self::new("Fake#Armor",  0, 0, 0),
-            Self::new("Leather",    13, 0, 1),
-            Self::new("Chainmail",  31, 0, 2),
+    fn armors() -> Vec<Self> {
+        vec![
+            Self::new("Fake#Armor", 0, 0, 0),
+            Self::new("Leather", 13, 0, 1),
+            Self::new("Chainmail", 31, 0, 2),
             Self::new("Splintmail", 53, 0, 3),
             Self::new("Bandedmail", 75, 0, 4),
-            Self::new("Platemail", 102, 0, 5)
+            Self::new("Platemail", 102, 0, 5),
         ]
     }
 
-    fn rings() -> Vec::<Self> {
-        vec! [
-            Self::new("Damage +1",  25, 1, 0),
-            Self::new("Damage +2",  50, 2, 0),
+    fn rings() -> Vec<Self> {
+        vec![
+            Self::new("Damage +1", 25, 1, 0),
+            Self::new("Damage +2", 50, 2, 0),
             Self::new("Damage +3", 100, 3, 0),
             Self::new("Defense +1", 20, 0, 1),
             Self::new("Defense +2", 40, 0, 2),
-            Self::new("Defense +3", 80, 0, 3)
+            Self::new("Defense +3", 80, 0, 3),
         ]
     }
 }
-
 
 fn find_battle_cost(initial: i32, fit_cost: &dyn Fn(&Vec<Equipment>, i32) -> i32) -> i32 {
     let mut equip: Vec<Equipment> = Vec::new();
@@ -118,20 +117,19 @@ fn battle(first: &mut Player, second: &mut Player) {
 }
 
 fn equip_cost(equip: &Vec<Equipment>) -> i32 {
-    equip.iter()
-        .map(|eq| eq.cost)
-        .sum::<i32>()
+    equip.iter().map(|eq| eq.cost).sum::<i32>()
 }
 
 struct Player {
     hit_points: i32,
     damage: i32,
-    armor: i32
+    armor: i32,
 }
 
 impl Player {
     fn with_equipment(equip: &Vec<Equipment>) -> Self {
-        let params = equip.iter()
+        let params = equip
+            .iter()
             .map(|e| (e.damage, e.armor))
             .fold((0, 0), |(total_dmg, total_armor), (dmg, armor)| {
                 (total_dmg + dmg, total_armor + armor)
@@ -170,18 +168,15 @@ impl AoC2015_21 {
 
 impl Solution for AoC2015_21 {
     fn part_one(&self) -> String {
-        find_battle_cost(i32::MAX, &min_win_cost)
-            .to_string()
+        find_battle_cost(i32::MAX, &min_win_cost).to_string()
     }
 
     fn part_two(&self) -> String {
-        find_battle_cost(0, &max_lose_cost)
-            .to_string()
+        find_battle_cost(0, &max_lose_cost).to_string()
     }
 
     fn description(&self) -> String {
-        "AoC 2015/Day 21: RPG Simulator 20XX"
-        .to_string()
+        "AoC 2015/Day 21: RPG Simulator 20XX".to_string()
     }
 }
 

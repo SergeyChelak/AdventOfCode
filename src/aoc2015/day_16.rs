@@ -14,7 +14,7 @@ struct Profile {
     goldfish: Option<i32>,
     trees: Option<i32>,
     cars: Option<i32>,
-    perfumes: Option<i32>
+    perfumes: Option<i32>,
 }
 
 impl Profile {
@@ -30,7 +30,7 @@ impl Profile {
             goldfish: None,
             trees: None,
             cars: None,
-            perfumes: None
+            perfumes: None,
         }
     }
 
@@ -71,7 +71,7 @@ impl Profile {
             goldfish: Some(5),
             trees: Some(3),
             cars: Some(2),
-            perfumes: Some(1)
+            perfumes: Some(1),
         }
     }
 
@@ -79,7 +79,11 @@ impl Profile {
         let mut result = 0;
         for (a, b) in self.prop_values().iter().zip(other.prop_values()) {
             match (a, b) {
-                (Some(v1), Some(v2)) => if *v1 != v2 { return i32::MAX; },
+                (Some(v1), Some(v2)) => {
+                    if *v1 != v2 {
+                        return i32::MAX;
+                    }
+                }
                 (Some(_), None) => result += 1,
                 _ => return i32::MAX,
             }
@@ -89,11 +93,28 @@ impl Profile {
 
     pub fn fuzzy_diff(&self, other: &Self) -> i32 {
         let mut result = 0;
-        for (idx, (a, b)) in self.prop_values().iter().zip(other.prop_values()).enumerate() {
+        for (idx, (a, b)) in self
+            .prop_values()
+            .iter()
+            .zip(other.prop_values())
+            .enumerate()
+        {
             match (a, b) {
-                (Some(v1), Some(v2)) if matches!(idx,  1 | 7) => if v2 <= *v1 { return i32::MAX; }
-                (Some(v1), Some(v2)) if matches!(idx,  3 | 6) => if v2 >= *v1 { return i32::MAX; }
-                (Some(v1), Some(v2)) => if *v1 != v2 { return i32::MAX; },
+                (Some(v1), Some(v2)) if matches!(idx, 1 | 7) => {
+                    if v2 <= *v1 {
+                        return i32::MAX;
+                    }
+                }
+                (Some(v1), Some(v2)) if matches!(idx, 3 | 6) => {
+                    if v2 >= *v1 {
+                        return i32::MAX;
+                    }
+                }
+                (Some(v1), Some(v2)) => {
+                    if *v1 != v2 {
+                        return i32::MAX;
+                    }
+                }
                 (Some(_), None) => result += 1,
                 _ => return i32::MAX,
             }
@@ -103,16 +124,16 @@ impl Profile {
 
     fn prop_values(&self) -> Vec<Option<i32>> {
         vec![
-            self.children, // 0
-            self.cats, // 1
-            self.samoyeds, // 2
+            self.children,    // 0
+            self.cats,        // 1
+            self.samoyeds,    // 2
             self.pomeranians, // 3
-            self.akitas, // 4
-            self.vizslas, // 5
-            self.goldfish, // 6
-            self.trees, // 7
-            self.cars, // 8
-            self.perfumes, // 9
+            self.akitas,      // 4
+            self.vizslas,     // 5
+            self.goldfish,    // 6
+            self.trees,       // 7
+            self.cars,        // 8
+            self.perfumes,    // 9
         ]
     }
 }

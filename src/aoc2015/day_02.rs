@@ -1,15 +1,13 @@
 use std::io;
 
-use crate::utils::read_file_as_lines;
 use crate::solution::*;
+use crate::utils::read_file_as_lines;
 
 struct Pack(i32, i32, i32); // l - w - h
 
 impl Pack {
     fn from_string(line: &str) -> Self {
-        let list: Vec<i32> = line.split('x')
-        .map(|s| s.parse::<i32>().unwrap())
-        .collect();
+        let list: Vec<i32> = line.split('x').map(|s| s.parse::<i32>().unwrap()).collect();
         Self(list[0], list[1], list[2])
     }
 
@@ -25,7 +23,7 @@ impl Pack {
         let p1 = self.0 + self.1;
         let p2 = self.1 + self.2;
         let p3 = self.0 + self.2;
-        2 * (p1.min(p2).min(p3))  + self.0 * self.1 * self.2
+        2 * (p1.min(p2).min(p3)) + self.0 * self.1 * self.2
     }
 }
 
@@ -36,15 +34,15 @@ pub struct AoC2015_02 {
 impl AoC2015_02 {
     pub fn new() -> io::Result<Self> {
         Ok(Self {
-            items: Self::load_input()?
+            items: Self::load_input()?,
         })
     }
 
     fn load_input() -> io::Result<Vec<Pack>> {
         let input = read_file_as_lines("input/aoc2015_02")?
-                            .iter()
-                            .map(|line| Pack::from_string(line))
-                            .collect();
+            .iter()
+            .map(|line| Pack::from_string(line))
+            .collect();
         Ok(input)
     }
 }
@@ -55,17 +53,19 @@ impl Solution for AoC2015_02 {
     }
 
     fn part_one(&self) -> String {
-        self.items.iter()
-        .map(|pack| pack.wrap_size())
-        .sum::<i32>()
-        .to_string()
+        self.items
+            .iter()
+            .map(|pack| pack.wrap_size())
+            .sum::<i32>()
+            .to_string()
     }
 
     fn part_two(&self) -> String {
-        self.items.iter()
-        .map(|pack| pack.ribbon_len())
-        .sum::<i32>()
-        .to_string()        
+        self.items
+            .iter()
+            .map(|pack| pack.ribbon_len())
+            .sum::<i32>()
+            .to_string()
     }
 }
 

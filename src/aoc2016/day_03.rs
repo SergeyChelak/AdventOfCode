@@ -6,7 +6,7 @@ use std::io;
 type Sides = [i32; 3];
 
 pub struct AoC2016_03 {
-    input: Vec<Sides>
+    input: Vec<Sides>,
 }
 
 impl AoC2016_03 {
@@ -14,21 +14,21 @@ impl AoC2016_03 {
         let sides = read_file_as_lines("input/aoc2016_03")?
             .iter()
             .map(|s| {
-                let values = s.split_whitespace()
+                let values = s
+                    .split_whitespace()
                     .map(|val| val.parse::<i32>().expect("integer value expected"))
                     .collect::<Vec<i32>>();
                 [values[0], values[1], values[2]]
             })
             .collect::<Vec<Sides>>();
-        Ok(Self {
-            input: sides
-        })
+        Ok(Self { input: sides })
     }
 }
 
 impl Solution for AoC2016_03 {
     fn part_one(&self) -> String {
-        self.input.iter()
+        self.input
+            .iter()
             .filter(|&sides| is_possible_triangle(sides))
             .count()
             .to_string()
@@ -60,9 +60,9 @@ impl Solution for AoC2016_03 {
 }
 
 fn is_possible_triangle(sides: &[i32; 3]) -> bool {
-    sides[0] + sides[1] > sides[2] &&
-    sides[0] + sides[2] > sides[1] &&
-    sides[1] + sides[2] > sides[0]
+    sides[0] + sides[1] > sides[2]
+        && sides[0] + sides[2] > sides[1]
+        && sides[1] + sides[2] > sides[0]
 }
 
 #[cfg(test)]

@@ -30,7 +30,7 @@ impl Solution for AoC2015_03 {
                 '<' => x = -1,
                 '^' => y = 1,
                 'v' => y = -1,
-                _ => panic!("unexpected value {ch}")
+                _ => panic!("unexpected value {ch}"),
             };
             coord.0 += x;
             coord.1 += y;
@@ -46,13 +46,17 @@ impl Solution for AoC2015_03 {
         set.insert(pos_santa);
         let mut is_santa = true;
         for ch in self.input.iter() {
-            let mut coord = if is_santa { &mut pos_santa } else { &mut pos_robo };
+            let mut coord = if is_santa {
+                &mut pos_santa
+            } else {
+                &mut pos_robo
+            };
             match ch {
                 '>' => coord.0 += 1,
                 '<' => coord.0 -= 1,
                 '^' => coord.1 += 1,
                 'v' => coord.1 -= 1,
-                _ => panic!("unexpected value {ch}")
+                _ => panic!("unexpected value {ch}"),
             };
             set.insert(*coord);
             is_santa = !is_santa;
@@ -78,25 +82,25 @@ mod tests {
 
     #[test]
     fn aoc2015_03_pt1_case1() {
-        let result = AoC2015_03 {
-            input: vec!['>']
-        }.part_one();
+        let result = AoC2015_03 { input: vec!['>'] }.part_one();
         assert_eq!(result, "2");
     }
 
     #[test]
     fn aoc2015_03_pt1_case2() {
         let result = AoC2015_03 {
-            input: vec!['^', '>', 'v', '<']
-        }.part_one();
+            input: vec!['^', '>', 'v', '<'],
+        }
+        .part_one();
         assert_eq!(result, "4");
     }
 
     #[test]
     fn aoc2015_03_pt1_case3() {
         let result = AoC2015_03 {
-            input: vec!['^', 'v', '^', 'v', '^', 'v', '^', 'v', '^', 'v']
-        }.part_one();
+            input: vec!['^', 'v', '^', 'v', '^', 'v', '^', 'v', '^', 'v'],
+        }
+        .part_one();
         assert_eq!(result, "2");
     }
 

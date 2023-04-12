@@ -39,7 +39,7 @@ fn is_valid(s: &str) -> bool {
     if !has_sequence {
         return false;
     }
-    
+
     let mut prev = '\0';
     let mut count = 0;
     let mut is_group = false;
@@ -68,13 +68,13 @@ fn next_valid_password(s: &str) -> String {
 }
 
 pub struct AoC2015_11 {
-    input: String
+    input: String,
 }
 
 impl AoC2015_11 {
     pub fn new() -> io::Result<Self> {
         Ok(Self {
-            input: "vzbxkghb".to_string()
+            input: "vzbxkghb".to_string(),
         })
     }
 }
@@ -89,7 +89,7 @@ impl Solution for AoC2015_11 {
     }
 
     fn description(&self) -> String {
-    	"AoC 2015/Day 11: Corporate Policy".to_string()
+        "AoC 2015/Day 11: Corporate Policy".to_string()
     }
 }
 

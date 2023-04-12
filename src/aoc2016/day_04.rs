@@ -1,13 +1,13 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::io;
 use std::cmp::Ordering;
+use std::io;
 
 struct RoomCode {
     encrypted_name: String,
     sector_id: i32,
-    stored_checksum: String
+    stored_checksum: String,
 }
 
 impl RoomCode {
@@ -15,16 +15,20 @@ impl RoomCode {
         let components = s.split("-").collect::<Vec<&str>>();
         let last_idx = components.len() - 1;
         let name = components[..last_idx]
-                .iter()
-                .map(|s| s.to_string())
-                .collect::<Vec<String>>()
-                .join("-");
+            .iter()
+            .map(|s| s.to_string())
+            .collect::<Vec<String>>()
+            .join("-");
         let checksum_compound = components[last_idx];
-        let split_index = checksum_compound.find('[').expect("Input string should contain [ .. ]");
+        let split_index = checksum_compound
+            .find('[')
+            .expect("Input string should contain [ .. ]");
         let (sector_id, checksum) = checksum_compound.split_at(split_index);
         Self {
             encrypted_name: name,
-            sector_id: sector_id.parse::<i32>().expect("Sector id expected to be integer value"),
+            sector_id: sector_id
+                .parse::<i32>()
+                .expect("Sector id expected to be integer value"),
             stored_checksum: checksum[1..checksum.len() - 1].to_string(),
         }
     }
@@ -33,21 +37,27 @@ impl RoomCode {
         let mut freq = [0i32; 26];
         let offset = 'a' as u8 as usize;
         for ch in self.encrypted_name.chars() {
-            if ch == '-' { continue; }
+            if ch == '-' {
+                continue;
+            }
             let index = ch as u8 as usize - offset;
             freq[index] += 1;
         }
         let mut char_data: Vec<(usize, i32)> = Vec::new();
         for i in 0..freq.len() {
             let val = freq[i];
-            if val == 0 { continue; }
+            if val == 0 {
+                continue;
+            }
             char_data.push((i, val));
         }
         char_data.sort_by(|(a_code, a_freq), (b_code, b_freq)| {
-            let ordering = b_freq.partial_cmp(a_freq)
+            let ordering = b_freq
+                .partial_cmp(a_freq)
                 .expect("Frequencies should be comparable");
             if ordering == Ordering::Equal {
-                a_code.partial_cmp(b_code)
+                a_code
+                    .partial_cmp(b_code)
                     .expect("Frequencies should be comparable")
             } else {
                 ordering
@@ -56,9 +66,7 @@ impl RoomCode {
         char_data
             .iter()
             .take(5)
-            .map(|(chr, _)| {
-                (chr + offset) as u8 as char
-            })
+            .map(|(chr, _)| (chr + offset) as u8 as char)
             .collect::<String>()
     }
 
@@ -76,7 +84,7 @@ impl RoomCode {
                     'a'..='z' => {
                         let code = (ch as u8 - offset + 1) % 26;
                         (code + offset) as char
-                    },
+                    }
                     ' ' | '-' => ' ',
                     _ => ch,
                 })
@@ -87,7 +95,7 @@ impl RoomCode {
 }
 
 pub struct AoC2016_04 {
-    input: Vec<RoomCode>
+    input: Vec<RoomCode>,
 }
 
 impl AoC2016_04 {
@@ -96,9 +104,7 @@ impl AoC2016_04 {
             .iter()
             .map(|s| RoomCode::from_str(s))
             .collect::<Vec<RoomCode>>();
-        Ok(Self {
-            input
-        })
+        Ok(Self { input })
     }
 }
 

@@ -101,6 +101,6 @@ pub fn all_days() -> std::io::Result<Vec<Box<dyn Solution>>> {
         Box::new(AoC2015_22::new()?),
         Box::new(AoC2015_23::new()?),
         Box::new(AoC2015_24::new()?),
-        Box::new(AoC2015_25::new()?)
+        Box::new(AoC2015_25::new()?),
     ])
 }

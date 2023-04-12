@@ -72,7 +72,6 @@ mod tests {
         assert!(val.is_none())
     }
 
-
     #[test]
     fn utils_permutations_case2() {
         let iter = PermutationIterator::from_array(&vec![1, 2]);
@@ -92,7 +91,9 @@ mod tests {
             vec![2, 3, 1],
             vec![3, 1, 2],
             vec![3, 2, 1],
-        ].into_iter().collect();
+        ]
+        .into_iter()
+        .collect();
         for v in iter {
             assert!(set.contains(&v));
         }

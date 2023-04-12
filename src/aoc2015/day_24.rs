@@ -4,18 +4,19 @@ use crate::utils::*;
 use std::io;
 
 pub struct AoC2015_24 {
-    input: Vec<usize>
+    input: Vec<usize>,
 }
 
 impl AoC2015_24 {
     pub fn new() -> io::Result<Self> {
         let input = read_file_as_lines("input/aoc2015_24")?
             .iter()
-            .map(|s| s.parse::<usize>().expect("Non numerical value found in input"))
+            .map(|s| {
+                s.parse::<usize>()
+                    .expect("Non numerical value found in input")
+            })
             .collect::<Vec<usize>>();
-        Ok(Self {
-            input
-        })
+        Ok(Self { input })
     }
 
     fn accommodate_boxes(&self, trunks: usize) -> Option<usize> {
@@ -24,7 +25,8 @@ impl AoC2015_24 {
         if sum % trunks == 0 {
             let target = sum / trunks;
             for k in 1..=self.input.len() {
-                result = self.input
+                result = self
+                    .input
                     .combination_iter(k)
                     .filter(|arr| arr.iter().sum::<usize>() == target)
                     .map(|arr| arr.iter().product())
@@ -41,8 +43,7 @@ impl AoC2015_24 {
         if let Some(value) = value {
             value.to_string()
         } else {
-            "Can't divide input weights with equal parts"
-                .to_string()
+            "Can't divide input weights with equal parts".to_string()
         }
     }
 }

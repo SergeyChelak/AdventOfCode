@@ -11,7 +11,7 @@ pub struct AoC2015_05 {
 impl AoC2015_05 {
     pub fn new() -> io::Result<Self> {
         Ok(Self {
-            input: read_file_as_lines("input/aoc2015_05")?
+            input: read_file_as_lines("input/aoc2015_05")?,
         })
     }
 
@@ -51,8 +51,8 @@ impl AoC2015_05 {
         }
         {
             for i in 0..(chars.len() - 2) {
-                let pair = &s[i..=(i+1)];
-                let substr = &s[(i+2)..];
+                let pair = &s[i..=(i + 1)];
+                let substr = &s[(i + 2)..];
                 if substr.contains(pair) {
                     return true;
                 }
@@ -61,8 +61,12 @@ impl AoC2015_05 {
         false
     }
 
-    fn count_nice_strings<C>(&self, criteria: C) -> String where C: Fn(&str) -> bool {
-        self.input.iter()
+    fn count_nice_strings<C>(&self, criteria: C) -> String
+    where
+        C: Fn(&str) -> bool,
+    {
+        self.input
+            .iter()
             .filter(|v| criteria(v))
             .count()
             .to_string()

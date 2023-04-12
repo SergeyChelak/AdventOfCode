@@ -45,7 +45,7 @@ impl<'a, T: Copy> Iterator for CombinationIterator<'a, T> {
                 self.c[j] = j - 1;
                 j += 1;
             }
-            if j > self.k  {
+            if j > self.k {
                 return None;
             }
             self.c[j] += 1;
@@ -79,15 +79,16 @@ mod tests {
             vec![2, 3],
             vec![1, 3],
             vec![0, 3],
-        ].into_iter().collect();
+        ]
+        .into_iter()
+        .collect();
 
         let combs = vec![0, 1, 2, 3]
             .combination_iter(2)
             .collect::<Vec<Vec<usize>>>();
         assert_eq!(combs.len(), cases.len());
 
-        combs.iter()
-            .for_each(|arr| assert!(cases.contains(arr)));
+        combs.iter().for_each(|arr| assert!(cases.contains(arr)));
     }
 
     #[test]
@@ -113,13 +114,14 @@ mod tests {
             vec![0, 2, 5],
             vec![1, 2, 5],
             vec![0, 1, 5],
-        ].into_iter().collect();
+        ]
+        .into_iter()
+        .collect();
         let combs = vec![0, 1, 2, 3, 4, 5]
             .combination_iter(3)
             .collect::<Vec<Vec<usize>>>();
         assert_eq!(combs.len(), cases.len());
 
-        combs.iter()
-            .for_each(|arr| assert!(cases.contains(arr)));
+        combs.iter().for_each(|arr| assert!(cases.contains(arr)));
     }
 }

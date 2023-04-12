@@ -4,15 +4,13 @@ use crate::utils::*;
 use std::io;
 
 pub struct AoC2016_02 {
-    lines: Vec<String>
+    lines: Vec<String>,
 }
 
 impl AoC2016_02 {
     pub fn new() -> io::Result<Self> {
         let lines = read_file_as_lines("input/aoc2016_02")?;
-        Ok(Self {
-            lines
-        })
+        Ok(Self { lines })
     }
 }
 
@@ -21,17 +19,14 @@ impl Solution for AoC2016_02 {
         let mut pos = (1, 1);
         let mut output = String::new();
         for line in &self.lines {
-            let (r, c) = line.chars()
-                .fold(pos, |(r, c), ch| {
-                match ch {
-                    'L' => (r, 0.max(c - 1)),
-                    'R' => (r, 2.min(c + 1)),
-                    'U' => (0.max(r - 1), c),
-                    'D' => (2.min(r + 1), c),
-                    _ => panic!("Unexpected char {ch}")
-                }
-            });            
-            pos = (r,c);
+            let (r, c) = line.chars().fold(pos, |(r, c), ch| match ch {
+                'L' => (r, 0.max(c - 1)),
+                'R' => (r, 2.min(c + 1)),
+                'U' => (0.max(r - 1), c),
+                'D' => (2.min(r + 1), c),
+                _ => panic!("Unexpected char {ch}"),
+            });
+            pos = (r, c);
             let val = r * 3 + c + 1;
             output.push_str(&val.to_string());
         }
@@ -41,11 +36,11 @@ impl Solution for AoC2016_02 {
     fn part_two(&self) -> String {
         let x = '\0';
         let keypad = vec![
-            vec![ x,   x,  '1',  x,   x ],
-            vec![ x,  '2', '3', '4',  x ],
+            vec![x, x, '1', x, x],
+            vec![x, '2', '3', '4', x],
             vec!['5', '6', '7', '8', '9'],
-            vec![ x,  'A', 'B', 'C',  x ],
-            vec![ x,   x,  'D',  x,   x ],
+            vec![x, 'A', 'B', 'C', x],
+            vec![x, x, 'D', x, x],
         ];
         let range = 0..keypad.len() as i32;
         let mut output = String::new();
@@ -58,11 +53,9 @@ impl Solution for AoC2016_02 {
                     'R' => c += 1,
                     'U' => r -= 1,
                     'D' => r += 1,
-                    _ => panic!("Unexpected char {ch}")
+                    _ => panic!("Unexpected char {ch}"),
                 };
-                if range.contains(&r) 
-                    && range.contains(&c) 
-                    && keypad[r as usize][c as usize] != x {
+                if range.contains(&r) && range.contains(&c) && keypad[r as usize][c as usize] != x {
                     pos = (r, c);
                 }
             }
@@ -109,12 +102,12 @@ mod test {
 
     fn example_input() -> AoC2016_02 {
         AoC2016_02 {
-            lines: vec! [
+            lines: vec![
                 String::from("ULL"),
                 String::from("RRDDD"),
                 String::from("LURDL"),
                 String::from("UUUUD"),
-            ]
+            ],
         }
     }
 }

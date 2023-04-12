@@ -6,7 +6,7 @@ use std::io;
 
 enum Maneuver {
     Left(i32),
-    Right(i32)
+    Right(i32),
 }
 
 impl Maneuver {
@@ -16,7 +16,7 @@ impl Maneuver {
         match dir {
             "L" => Maneuver::Left(steps),
             "R" => Maneuver::Right(steps),
-            _ => panic!("unexpected direction {}", dir)
+            _ => panic!("unexpected direction {}", dir),
         }
     }
 }
@@ -25,7 +25,7 @@ enum Pole {
     North,
     South,
     East,
-    West
+    West,
 }
 
 impl Pole {
@@ -36,25 +36,33 @@ impl Pole {
             false
         };
         match self {
-            Pole::North => if is_left {
-                Pole::West
-            } else {
-                Pole::East
-            },
-            Pole::West => if is_left {
-                Pole::South
-            } else {
-                Pole::North
-            },
-            Pole::East => if is_left {
-                Pole::North
-            } else {
-                Pole::South
-            },
-            Pole::South => if is_left {
-                Pole::East
-            } else {
-                Pole::West
+            Pole::North => {
+                if is_left {
+                    Pole::West
+                } else {
+                    Pole::East
+                }
+            }
+            Pole::West => {
+                if is_left {
+                    Pole::South
+                } else {
+                    Pole::North
+                }
+            }
+            Pole::East => {
+                if is_left {
+                    Pole::North
+                } else {
+                    Pole::South
+                }
+            }
+            Pole::South => {
+                if is_left {
+                    Pole::East
+                } else {
+                    Pole::West
+                }
             }
         }
     }
@@ -64,10 +72,7 @@ type Location = [i32; 2];
 
 fn calc_distance(pos: Option<Location>) -> i32 {
     if let Some(pos) = pos {
-        pos
-        .iter()
-        .map(|x| x.abs())
-        .sum()
+        pos.iter().map(|x| x.abs()).sum()
     } else {
         0
     }
@@ -77,7 +82,7 @@ struct NavigationIterator<'a> {
     pole: Pole,
     route: &'a Vec<Maneuver>,
     position: usize,
-    location: Location
+    location: Location,
 }
 
 impl<'a> NavigationIterator<'a> {
@@ -86,7 +91,7 @@ impl<'a> NavigationIterator<'a> {
             pole,
             route,
             position: 0,
-            location: [0, 0]
+            location: [0, 0],
         }
     }
 }
@@ -104,7 +109,7 @@ impl<'a> Iterator for NavigationIterator<'a> {
             let item = &self.route[self.position];
             let mut steps = match item {
                 Maneuver::Left(s) => -*s,
-                Maneuver::Right(s) => *s
+                Maneuver::Right(s) => *s,
             };
             if matches!(self.pole, Pole::South | Pole::East) {
                 steps = -steps;
@@ -120,13 +125,13 @@ impl<'a> Iterator for NavigationIterator<'a> {
 }
 
 pub struct AoC2016_01 {
-    input: Vec<Maneuver>
+    input: Vec<Maneuver>,
 }
 
 impl AoC2016_01 {
     pub fn new() -> io::Result<Self> {
         Ok(Self {
-            input: Self::parse_input("input/aoc2016_01")?
+            input: Self::parse_input("input/aoc2016_01")?,
         })
     }
 
@@ -135,17 +140,14 @@ impl AoC2016_01 {
             .trim()
             .split(", ")
             .map(|token| Maneuver::with_str(token))
-            .collect::<Vec<Maneuver>>()
-        )
+            .collect::<Vec<Maneuver>>())
     }
 }
 
 impl Solution for AoC2016_01 {
     fn part_one(&self) -> String {
-        let pos = NavigationIterator::new(Pole::North, &self.input)
-            .last();
-        calc_distance(pos)
-            .to_string()
+        let pos = NavigationIterator::new(Pole::North, &self.input).last();
+        calc_distance(pos).to_string()
     }
 
     fn part_two(&self) -> String {
@@ -193,27 +195,16 @@ mod test {
 
     #[test]
     fn aoc2016_01_path_case1() -> io::Result<()> {
-        let input = vec![
-            Maneuver::Right(2),
-            Maneuver::Left(3)
-        ];
-        let sol = AoC2016_01 {
-            input
-        };
+        let input = vec![Maneuver::Right(2), Maneuver::Left(3)];
+        let sol = AoC2016_01 { input };
         assert_eq!(sol.part_one(), "5");
         Ok(())
     }
 
     #[test]
     fn aoc2016_01_path_case2() -> io::Result<()> {
-        let input = vec![
-            Maneuver::Right(2),
-            Maneuver::Right(2),
-            Maneuver::Right(2)
-        ];
-        let sol = AoC2016_01 {
-            input
-        };
+        let input = vec![Maneuver::Right(2), Maneuver::Right(2), Maneuver::Right(2)];
+        let sol = AoC2016_01 { input };
         assert_eq!(sol.part_one(), "2");
         Ok(())
     }
@@ -224,11 +215,9 @@ mod test {
             Maneuver::Right(5),
             Maneuver::Left(5),
             Maneuver::Right(5),
-            Maneuver::Right(3)
+            Maneuver::Right(3),
         ];
-        let sol = AoC2016_01 {
-            input
-        };
+        let sol = AoC2016_01 { input };
         assert_eq!(sol.part_one(), "12");
         Ok(())
     }
@@ -239,11 +228,9 @@ mod test {
             Maneuver::Right(8),
             Maneuver::Right(4),
             Maneuver::Right(4),
-            Maneuver::Right(8)
+            Maneuver::Right(8),
         ];
-        let sol = AoC2016_01 {
-            input
-        };
+        let sol = AoC2016_01 { input };
         assert_eq!(sol.part_two(), "4");
         Ok(())
     }

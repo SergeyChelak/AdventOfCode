@@ -16,7 +16,7 @@ impl AoC2015_17 {
             .collect::<Vec<i32>>();
         Ok(Self {
             values,
-            target: 150
+            target: 150,
         })
     }
 
@@ -43,7 +43,6 @@ impl AoC2015_17 {
                 self.calc_min(i + 1, sum + self.values[i], depth + 1, min_depth, count);
             }
         }
-
     }
 }
 

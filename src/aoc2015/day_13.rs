@@ -16,7 +16,8 @@ impl Helper {
         for i in 0..self.count {
             arr[i] = i;
         }
-        let val = arr.permut_iter()
+        let val = arr
+            .permut_iter()
             .map(|v| self.fit(&v))
             .fold(None, |acc, v| bigger_option(&acc, &v));
         if let Some(v) = val {
@@ -30,7 +31,7 @@ impl Helper {
         let mut sum = 0i32;
         let n = order.len();
         for i in 0..n {
-            let prev_idx = if i > 0 { i - 1 } else { n - 1};
+            let prev_idx = if i > 0 { i - 1 } else { n - 1 };
             let prev = (order[i], order[prev_idx]);
             let next = (order[i], order[(i + 1) % n]);
             if let (Some(val1), Some(val2)) = (self.graph.get(&prev), self.graph.get(&next)) {
@@ -85,8 +86,9 @@ impl Solution for AoC2015_13 {
     fn part_one(&self) -> String {
         Helper {
             graph: self.graph.clone(),
-            count: self.count
-        }.calculate()
+            count: self.count,
+        }
+        .calculate()
     }
 
     fn part_two(&self) -> String {
@@ -97,10 +99,7 @@ impl Solution for AoC2015_13 {
             graph.insert((i, my_id), 0);
         }
         let count = my_id + 1;
-        Helper {
-            graph,
-            count
-        }.calculate()
+        Helper { graph, count }.calculate()
     }
 
     fn description(&self) -> String {

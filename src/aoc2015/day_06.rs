@@ -6,7 +6,7 @@ use std::io;
 enum Command {
     TurnOn,
     TurnOff,
-    Toggle
+    Toggle,
 }
 
 impl Command {
@@ -28,10 +28,12 @@ struct Coordinate(usize, usize);
 impl Coordinate {
     fn parse(s: &str) -> Self {
         let items: Vec<&str> = s.split(',').collect();
-        let x = items[0].parse::<usize>()
-                .expect("Wrong x value, expected usize");
-        let y = items[1].parse::<usize>()
-                .expect("Wrong y value, expected usize");
+        let x = items[0]
+            .parse::<usize>()
+            .expect("Wrong x value, expected usize");
+        let y = items[1]
+            .parse::<usize>()
+            .expect("Wrong y value, expected usize");
         Self(x, y)
     }
 }
@@ -50,7 +52,7 @@ impl Instruction {
         Self {
             command: Command::parse(s),
             from: Coordinate::parse(from_str),
-            to: Coordinate::parse(to_str)
+            to: Coordinate::parse(to_str),
         }
     }
 }
@@ -64,17 +66,15 @@ pub struct AoC2015_06 {
 impl AoC2015_06 {
     pub fn new() -> io::Result<Self> {
         Ok(Self {
-            input: Self::load_input()?
+            input: Self::load_input()?,
         })
     }
 
     fn load_input() -> io::Result<Vec<Instruction>> {
-        Ok(
-            read_file_as_lines("input/aoc2015_06")?
-                .iter()
-                .map(|line| Instruction::from_str(line))
-                .collect()
-        )
+        Ok(read_file_as_lines("input/aoc2015_06")?
+            .iter()
+            .map(|line| Instruction::from_str(line))
+            .collect())
     }
 
     fn create_matrix() -> Matrix {
@@ -83,11 +83,12 @@ impl AoC2015_06 {
     }
 
     fn get_lit_count(matrix: &Matrix) -> usize {
-        matrix.iter()
+        matrix
+            .iter()
             .map(|v| {
                 v.iter()
-                 .map(|u| if *u > 0 { *u } else { 0 } as usize)
-                 .sum::<usize>()
+                    .map(|u| if *u > 0 { *u } else { 0 } as usize)
+                    .sum::<usize>()
             })
             .sum()
     }
@@ -101,9 +102,9 @@ impl Solution for AoC2015_06 {
             for row in from.0..=to.0 {
                 for col in from.1..=to.1 {
                     matrix[row][col] = match &cmd.command {
-                      Command::TurnOn => 1,
-                      Command::TurnOff => 0,
-                      Command::Toggle => 1 - matrix[row][col],
+                        Command::TurnOn => 1,
+                        Command::TurnOff => 0,
+                        Command::Toggle => 1 - matrix[row][col],
                     };
                 }
             }
@@ -119,9 +120,9 @@ impl Solution for AoC2015_06 {
             for row in from.0..=to.0 {
                 for col in from.1..=to.1 {
                     matrix[row][col] += match &cmd.command {
-                      Command::TurnOn => 1,
-                      Command::TurnOff => -1,
-                      Command::Toggle => 2,
+                        Command::TurnOn => 1,
+                        Command::TurnOff => -1,
+                        Command::Toggle => 2,
                     };
                     matrix[row][col] = matrix[row][col].max(0);
                 }

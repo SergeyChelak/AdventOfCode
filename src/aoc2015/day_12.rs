@@ -7,10 +7,7 @@ use serde_json::*;
 type Json = Map<String, Value>;
 
 fn sum_in_object(json: &Json, skip: &str) -> i64 {
-    let skip_count = json.iter()
-        .map(|(_, v)| v)
-        .filter(|v| *v == skip)
-        .count();
+    let skip_count = json.iter().map(|(_, v)| v).filter(|v| *v == skip).count();
     if skip_count == 0 {
         json.iter()
             .fold(0, |acc, (_, value)| acc + sum_in_value(value, skip))
@@ -24,7 +21,7 @@ fn sum_in_value(value: &Value, skip: &str) -> i64 {
         Value::Number(number) => number.as_i64().unwrap_or(0),
         Value::Object(map) => sum_in_object(map, skip),
         Value::Array(items) => items.iter().fold(0, |acc, v| acc + sum_in_value(v, skip)),
-        _ => 0
+        _ => 0,
     }
 }
 pub struct AoC2015_12 {
@@ -35,21 +32,17 @@ impl AoC2015_12 {
     pub fn new() -> io::Result<Self> {
         let json_str = read_to_string("input/aoc2015_12")?;
         let json: Json = serde_json::from_str(&json_str)?;
-        Ok(Self {
-            json
-        })
+        Ok(Self { json })
     }
 }
 
 impl Solution for AoC2015_12 {
     fn part_one(&self) -> String {
-        sum_in_object(&self.json, "")
-            .to_string()
+        sum_in_object(&self.json, "").to_string()
     }
 
     fn part_two(&self) -> String {
-        sum_in_object(&self.json, "red")
-            .to_string()
+        sum_in_object(&self.json, "red").to_string()
     }
 
     fn description(&self) -> String {

@@ -3,13 +3,13 @@ use crate::solution::Solution;
 use std::io;
 
 pub struct AoC2015_10 {
-    input: String
+    input: String,
 }
 
 impl AoC2015_10 {
     pub fn new() -> io::Result<Self> {
         Ok(Self {
-            input: "3113322113".to_string()
+            input: "3113322113".to_string(),
         })
     }
 }
@@ -27,7 +27,7 @@ fn look_say(s: &str) -> String {
             buffer.push(count.to_string());
             buffer.push(prev.to_string());
             prev = ch;
-            count = 1;            
+            count = 1;
         }
     }
     buffer[2..].join("")
@@ -51,7 +51,7 @@ impl Solution for AoC2015_10 {
     }
 
     fn description(&self) -> String {
-    	"AoC 2015/Day 10: Elves Look, Elves Say".to_string()
+        "AoC 2015/Day 10: Elves Look, Elves Say".to_string()
     }
 }
 

@@ -3,14 +3,14 @@ use crate::utils::*;
 
 use std::collections::HashMap;
 use std::io;
-use std::str::FromStr;
 use std::num::ParseIntError;
+use std::str::FromStr;
 
 struct Reindeer {
     name: String,
     speed: i32,
     fly_time: i32,
-    rest_time: i32
+    rest_time: i32,
 }
 
 impl Reindeer {
@@ -32,14 +32,12 @@ impl FromStr for Reindeer {
         let speed = items[3].parse::<i32>()?;
         let fly_time = items[6].parse::<i32>()?;
         let rest_time = items[items.len() - 2].parse::<i32>()?;
-        Ok(
-            Self {
-                name,
-                speed,
-                fly_time,
-                rest_time,
-            }
-        )
+        Ok(Self {
+            name,
+            speed,
+            fly_time,
+            rest_time,
+        })
     }
 }
 
@@ -53,20 +51,23 @@ impl AoC2015_14 {
         let lines = read_file_as_lines("input/aoc2015_14")?;
         let mut reindeers: Vec<Reindeer> = Vec::with_capacity(lines.len());
         for line in lines {
-            let item = line.parse::<Reindeer>().ok()
+            let item = line
+                .parse::<Reindeer>()
+                .ok()
                 .expect("Failed to parse reindeer data");
             reindeers.push(item)
         }
         Ok(Self {
             duration: 2503,
-            reindeers
+            reindeers,
         })
     }
 }
 
 impl Solution for AoC2015_14 {
     fn part_one(&self) -> String {
-        self.reindeers.iter()
+        self.reindeers
+            .iter()
             .map(|r| r.distance(self.duration))
             .max()
             .expect("Not found")
@@ -94,7 +95,8 @@ impl Solution for AoC2015_14 {
                 scores.insert(name.clone(), total);
             }
         }
-        scores.iter()
+        scores
+            .iter()
             .map(|(_, v)| v)
             .max()
             .expect("value")
@@ -131,7 +133,7 @@ mod test {
             name: String::from(""),
             speed: 8,
             fly_time: 8,
-            rest_time: 53
+            rest_time: 53,
         };
         assert_eq!(reindeer.distance(1), 8);
         assert_eq!(reindeer.distance(2), 16);
@@ -147,7 +149,7 @@ mod test {
             name: String::from(""),
             speed: 14,
             fly_time: 10,
-            rest_time: 127
+            rest_time: 127,
         };
         assert_eq!(reindeer.distance(1), 14);
         assert_eq!(reindeer.distance(11), 140);
@@ -161,7 +163,7 @@ mod test {
             name: String::from(""),
             speed: 16,
             fly_time: 11,
-            rest_time: 162
+            rest_time: 162,
         };
         assert_eq!(reindeer.distance(1), 16);
         assert_eq!(reindeer.distance(10), 160);

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 pub struct String2IdMapper {
-    map: HashMap<String, usize>
+    map: HashMap<String, usize>,
 }
 
 impl String2IdMapper {
