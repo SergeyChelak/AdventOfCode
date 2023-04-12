@@ -2,6 +2,7 @@ use crate::solution::Solution;
 use crate::utils::*;
 
 use std::io;
+use std::cmp::Ordering;
 
 struct RoomCode {
     encrypted_name: String,
@@ -28,7 +29,39 @@ impl RoomCode {
     }
 
     fn calc_checksum(&self) -> String {
-        todo!()
+        let mut freq = [0i32; 26];
+        let offset = 'a' as u8 as usize;
+        for ch in self.encrypted_name.chars() {
+            let index = ch as u8 as usize - offset;
+            freq[index] += 1;
+        }
+        let mut char_data: Vec<(usize, i32)> = Vec::new();
+        for i in 0..freq.len() {
+            let val = freq[i];
+            if val == 0 { continue; }
+            char_data.push((i, val));
+        }
+        char_data.sort_by(|(a_code, a_freq), (b_code, b_freq)| {
+            let ordering = b_freq.partial_cmp(a_freq)
+                .expect("Frequencies should be comparable");
+            if ordering == Ordering::Equal {
+                a_code.partial_cmp(b_code)
+                    .expect("Frequencies should be comparable")
+            } else {
+                ordering
+            }
+        });
+        char_data
+            .iter()
+            .take(5)
+            .map(|(chr, _)| {
+                (chr + offset) as u8 as char
+            })
+            .collect::<String>()
+    }
+
+    fn is_valid_checksum(&self) -> bool {
+        self.stored_checksum == self.calc_checksum()
     }
 }
 
@@ -49,8 +82,14 @@ impl AoC2016_04 {
 }
 
 impl Solution for AoC2016_04 {
-    // fn part_one(&self) -> String {
-    // }
+    fn part_one(&self) -> String {
+        self.input
+            .iter()
+            .filter(|&code| code.is_valid_checksum())
+            .map(|code| code.sector_id)
+            .sum::<i32>()
+            .to_string()
+    }
 
     // fn part_two(&self) -> String {
     // }
@@ -74,7 +113,7 @@ mod test {
     #[test]
     fn aoc2016_04_correctness() -> io::Result<()> {
         let sol = AoC2016_04::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "409147");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
@@ -85,5 +124,17 @@ mod test {
         assert_eq!(room.encrypted_name, "aaaaabbbzyx");
         assert_eq!(room.sector_id, 123);
         assert_eq!(room.stored_checksum, "abxyz");
+    }
+
+    #[test]
+    fn aoc2016_04_calc_checksum() {
+        let room = RoomCode::from_str("aaaaa-bbb-z-y-x-123[abxyz]");
+        assert_eq!(room.calc_checksum(), "abxyz");
+
+        let room = RoomCode::from_str("a-b-c-d-e-f-g-h-987[abcde]");
+        assert_eq!(room.calc_checksum(), "abcde");
+
+        let room = RoomCode::from_str("not-a-real-room-404[oarel]");
+        assert_eq!(room.calc_checksum(), "oarel");
     }
 }
