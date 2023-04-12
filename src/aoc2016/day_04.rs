@@ -71,22 +71,18 @@ impl RoomCode {
     }
 
     fn decrypt_name(&self) -> String {
-        let offset = 'a' as u8;
-        let mut value = self.encrypted_name.clone();
-        for _ in 0..self.sector_id {
-            value = value
-                .chars()
-                .map(|ch| match ch {
-                    'a'..='z' => {
-                        let code = (ch as u8 - offset + 1) % 26;
-                        (code + offset) as char
-                    }
-                    ' ' | '-' => ' ',
-                    _ => ch,
-                })
-                .collect();
-        }
-        value
+        let offset = 'a' as u8 as i32;
+        self.encrypted_name
+            .chars()
+            .map(|ch| match ch {
+                'a'..='z' => {
+                    let code = (ch as u8 as i32 - offset + self.sector_id) % 26;
+                    (code + offset) as u8 as char
+                }
+                ' ' | '-' => ' ',
+                _ => ch,
+            })
+            .collect()
     }
 }
 
