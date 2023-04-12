@@ -37,7 +37,7 @@ impl RoomCode {
         let mut freq = [0i32; 26];
         let offset = 'a' as u8 as usize;
         for ch in self.encrypted_name.chars() {
-            if ch == '-' {
+            if !ch.is_alphabetic() {
                 continue;
             }
             let index = ch as u8 as usize - offset;
@@ -52,13 +52,9 @@ impl RoomCode {
             char_data.push((i, val));
         }
         char_data.sort_by(|(a_code, a_freq), (b_code, b_freq)| {
-            let ordering = b_freq
-                .partial_cmp(a_freq)
-                .expect("Frequencies should be comparable");
+            let ordering = b_freq.cmp(a_freq);
             if ordering == Ordering::Equal {
-                a_code
-                    .partial_cmp(b_code)
-                    .expect("Frequencies should be comparable")
+                a_code.cmp(b_code)
             } else {
                 ordering
             }
