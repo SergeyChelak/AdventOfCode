@@ -3,8 +3,8 @@ use super::solution::Solution;
 mod day_01;
 use day_01::*;
 
-pub mod day_02;
-pub use day_02::*;
+mod day_02;
+use day_02::*;
 
 mod day_03;
 use day_03::*;

@@ -44,8 +44,6 @@ impl Solution for AoC2016_05 {
                 let index = index as usize;
                 if index < len && password[index] == '\0' {
                     password[index] = hash[6];
-
-                    println!("{password:?}");
                     if !password.contains(&'\0') {
                         return password.iter().collect();
                     }

@@ -1,79 +1,79 @@
 use super::solution::Solution;
 
-pub mod day_01;
-pub use day_01::*;
+mod day_01;
+use day_01::*;
 
-pub mod day_02;
-pub use day_02::*;
+mod day_02;
+use day_02::*;
 
-pub mod day_03;
-pub use day_03::*;
+mod day_03;
+use day_03::*;
 
-pub mod day_04;
-pub use day_04::*;
+mod day_04;
+use day_04::*;
 
-pub mod day_05;
-pub use day_05::*;
+mod day_05;
+use day_05::*;
 
-pub mod day_06;
-pub use day_06::*;
+mod day_06;
+use day_06::*;
 
-pub mod day_07;
-pub use day_07::*;
+mod day_07;
+use day_07::*;
 
-pub mod day_08;
-pub use day_08::*;
+mod day_08;
+use day_08::*;
 
-pub mod day_09;
-pub use day_09::*;
+mod day_09;
+use day_09::*;
 
-pub mod day_10;
-pub use day_10::*;
+mod day_10;
+use day_10::*;
 
-pub mod day_11;
-pub use day_11::*;
+mod day_11;
+use day_11::*;
 
-pub mod day_12;
-pub use day_12::*;
+mod day_12;
+use day_12::*;
 
-pub mod day_13;
-pub use day_13::*;
+mod day_13;
+use day_13::*;
 
-pub mod day_14;
-pub use day_14::*;
+mod day_14;
+use day_14::*;
 
-pub mod day_15;
-pub use day_15::*;
+mod day_15;
+use day_15::*;
 
-pub mod day_16;
-pub use day_16::*;
+mod day_16;
+use day_16::*;
 
-pub mod day_17;
-pub use day_17::*;
+mod day_17;
+use day_17::*;
 
-pub mod day_18;
-pub use day_18::*;
+mod day_18;
+use day_18::*;
 
-pub mod day_19;
-pub use day_19::*;
+mod day_19;
+use day_19::*;
 
-pub mod day_20;
-pub use day_20::*;
+mod day_20;
+use day_20::*;
 
-pub mod day_21;
-pub use day_21::*;
+mod day_21;
+use day_21::*;
 
-pub mod day_22;
-pub use day_22::*;
+mod day_22;
+use day_22::*;
 
-pub mod day_23;
-pub use day_23::*;
+mod day_23;
+use day_23::*;
 
-pub mod day_24;
-pub use day_24::*;
+mod day_24;
+use day_24::*;
 
-pub mod day_25;
-pub use day_25::*;
+mod day_25;
+use day_25::*;
 
 pub fn all_days() -> std::io::Result<Vec<Box<dyn Solution>>> {
     Ok(vec![
