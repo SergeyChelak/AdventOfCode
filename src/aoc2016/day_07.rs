@@ -19,31 +19,38 @@ impl Solution for AoC2016_07 {
     fn part_one(&self) -> String {
         self.input
             .iter()
-            .map(|s| split_address(s))
-            .filter(|arr| {
-                let mut result = false;
-                for i in 0..arr.len() {
-                    let is_notated = is_abba_notated(&arr[i]);
-                    if i % 2 != 0 {
-                        if is_notated {
-                            return false;
-                        }
-                    } else {
-                        result |= is_notated;
-                    }
-                }
-                result
-            })
+            .filter(|s| is_tls_supported(s))
             .count()
             .to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        self.input
+            .iter()
+            .filter(|s| is_ssl_supported(s))
+            .count()
+            .to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2016/Day 7: Internet Protocol Version 7".to_string()
     }
+}
+
+fn is_tls_supported(s: &str) -> bool {
+    let arr = split_address(s);
+    let mut result = false;
+    for i in 0..arr.len() {
+        let is_notated = is_abba_notated(&arr[i]);
+        if i % 2 != 0 {
+            if is_notated {
+                return false;
+            }
+        } else {
+            result |= is_notated;
+        }
+    }
+    result
 }
 
 fn is_abba_notated(s: &str) -> bool {
@@ -55,6 +62,26 @@ fn is_abba_notated(s: &str) -> bool {
     for i in 0..=chars.len() - 4 {
         if chars[i] != chars[i + 1] && chars[i] == chars[i + 3] && chars[i + 1] == chars[i + 2] {
             return true;
+        }
+    }
+    false
+}
+
+fn is_ssl_supported(s: &str) -> bool {
+    let arr = split_address(s);
+    for i in (0..arr.len()).step_by(2) {
+        let chars = arr[i].chars().collect::<Vec<char>>();
+        for ch in 0..=chars.len() - 3 {
+            if chars[ch] != chars[ch + 1] && chars[ch] == chars[ch + 2] {
+                let inv = [chars[ch + 1], chars[ch], chars[ch + 1]]
+                    .iter()
+                    .collect::<String>();
+                for j in (1..arr.len()).step_by(2) {
+                    if arr[j].find(&inv).is_some() {
+                        return true;
+                    }
+                }
+            }
         }
     }
     false
@@ -114,5 +141,13 @@ mod test {
         assert!(is_abba_notated("xyyx"));
         assert!(!is_abba_notated("qwer"));
         assert!(!is_abba_notated("aaaa"));
+    }
+
+    #[test]
+    fn aoc2016_07_ssl_support() {
+        assert!(is_ssl_supported("aba[bab]xyz"));
+        assert!(!is_ssl_supported("xyx[xyx]xyx"));
+        assert!(is_ssl_supported("aaa[kek]eke"));
+        assert!(is_ssl_supported("zazbz[bzb]cdb"));
     }
 }
