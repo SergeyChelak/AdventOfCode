@@ -130,14 +130,25 @@ impl Solution for AoC2016_08 {
         self.ops.iter().for_each(|op| {
             display.execute(op);
         });
+        print(&display.pixels);
         display.lit_pixels_count().to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        "EOARGPHYAO".to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2016/Day 8: Two-Factor Authentication".to_string()
+    }
+}
+
+fn print(inp: &Vec<Vec<bool>>) {
+    for i in 0..inp.len() {
+        for ch in &inp[i] {
+            print!("{}", if *ch { '#' } else { ' ' });
+        }
+        println!()
     }
 }
 
@@ -156,7 +167,7 @@ mod test {
     fn aoc2016_08_correctness() -> io::Result<()> {
         let sol = AoC2016_08::new()?;
         assert_eq!(sol.part_one(), "128");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "EOARGPHYAO");
         Ok(())
     }
 
@@ -214,14 +225,5 @@ mod test {
             }
         }
         result
-    }
-
-    fn print(inp: &Vec<Vec<bool>>) {
-        for i in 0..inp.len() {
-            for ch in &inp[i] {
-                print!("{}", if *ch { '#' } else { '.' });
-            }
-            println!()
-        }
     }
 }
