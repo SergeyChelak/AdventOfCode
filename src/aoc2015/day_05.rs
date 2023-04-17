@@ -94,7 +94,7 @@ mod test {
     #[test]
     fn aoc2015_05_input_load_test() -> io::Result<()> {
         let sol = AoC2015_05::new()?;
-        assert!(sol.input.len() > 0);
+        assert!(!sol.input.is_empty());
         Ok(())
     }
 

@@ -53,7 +53,7 @@ impl Equipment {
     }
 }
 
-fn find_battle_cost(initial: i32, fit_cost: &dyn Fn(&Vec<Equipment>, i32) -> i32) -> i32 {
+fn find_battle_cost(initial: i32, fit_cost: &dyn Fn(&[Equipment], i32) -> i32) -> i32 {
     let mut equip: Vec<Equipment> = Vec::new();
     let mut cost = initial;
     for w in Equipment::weapons() {
@@ -82,7 +82,7 @@ fn find_battle_cost(initial: i32, fit_cost: &dyn Fn(&Vec<Equipment>, i32) -> i32
     cost
 }
 
-fn min_win_cost(equip: &Vec<Equipment>, current: i32) -> i32 {
+fn min_win_cost(equip: &[Equipment], current: i32) -> i32 {
     let mut player = Player::with_equipment(equip);
     let mut boss = Player::boss();
     battle(&mut player, &mut boss);
@@ -93,7 +93,7 @@ fn min_win_cost(equip: &Vec<Equipment>, current: i32) -> i32 {
     }
 }
 
-fn max_lose_cost(equip: &Vec<Equipment>, current: i32) -> i32 {
+fn max_lose_cost(equip: &[Equipment], current: i32) -> i32 {
     let mut player = Player::with_equipment(equip);
     let mut boss = Player::boss();
     battle(&mut player, &mut boss);
@@ -116,7 +116,7 @@ fn battle(first: &mut Player, second: &mut Player) {
     }
 }
 
-fn equip_cost(equip: &Vec<Equipment>) -> i32 {
+fn equip_cost(equip: &[Equipment]) -> i32 {
     equip.iter().map(|eq| eq.cost).sum::<i32>()
 }
 
@@ -127,7 +127,7 @@ struct Player {
 }
 
 impl Player {
-    fn with_equipment(equip: &Vec<Equipment>) -> Self {
+    fn with_equipment(equip: &[Equipment]) -> Self {
         let params = equip
             .iter()
             .map(|e| (e.damage, e.armor))

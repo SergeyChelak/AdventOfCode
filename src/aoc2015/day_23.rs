@@ -15,7 +15,7 @@ enum Instruction {
 
 impl Instruction {
     fn from_str(s: &str) -> Self {
-        let (instr, param) = s.split_once(" ").expect("Incorrect instruction");
+        let (instr, param) = s.split_once(' ').expect("Incorrect instruction");
         match instr {
             "hlf" => Self::Hlf(Self::parse_reg(param)),
             "tpl" => Self::Tpl(Self::parse_reg(param)),

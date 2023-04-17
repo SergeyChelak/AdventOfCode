@@ -102,15 +102,15 @@ struct Battlefield {
 }
 
 impl Battlefield {
-    pub fn with_spells(spells: &Vec<Spell>, is_hard: bool) -> Self {
+    pub fn with_spells(spells: &[Spell], is_hard: bool) -> Self {
         Self::new(Wizard::new(), Boss::new(), spells, is_hard)
     }
 
-    fn new(wizard: Wizard, boss: Boss, spells: &Vec<Spell>, is_hard: bool) -> Self {
+    fn new(wizard: Wizard, boss: Boss, spells: &[Spell], is_hard: bool) -> Self {
         let spells = spells
-            .into_iter()
+            .iter()
             .rev()
-            .map(|el| el.clone())
+            .copied()
             .collect::<Vec<Spell>>();
         Self {
             wizard,
