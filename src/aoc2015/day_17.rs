@@ -1,6 +1,7 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
+use std::cmp::Ordering;
 use std::io;
 
 pub struct AoC2015_17 {
@@ -12,7 +13,7 @@ impl AoC2015_17 {
     pub fn new() -> io::Result<Self> {
         let values = read_file_as_lines("input/aoc2015_17")?
             .iter()
-            .map(|s| s.parse::<i32>().ok().expect("non integer value found"))
+            .map(|s| s.parse::<i32>().expect("non integer value found"))
             .collect::<Vec<i32>>();
         Ok(Self {
             values,
@@ -32,11 +33,13 @@ impl AoC2015_17 {
 
     fn calc_min(&self, idx: usize, sum: i32, depth: i32, min_depth: &mut i32, count: &mut i32) {
         if sum == self.target {
-            if depth == *min_depth {
-                *count += 1;
-            } else if depth < *min_depth {
-                *min_depth = depth;
-                *count = 1;
+            match depth.cmp(min_depth) {
+                Ordering::Equal => *count += 1,
+                Ordering::Less => {
+                    *min_depth = depth;
+                    *count = 1;
+                }
+                _ => {}
             }
         } else if sum < self.target && idx < self.values.len() {
             for i in idx..self.values.len() {

@@ -53,7 +53,7 @@ impl Profile {
                 "trees" => profile.trees = value,
                 "cars" => profile.cars = value,
                 "perfumes" => profile.perfumes = value,
-                _ => panic!("unexpected property name: {}", property),
+                _ => panic!("unexpected property name: {property}"),
             }
         }
         profile

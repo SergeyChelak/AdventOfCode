@@ -19,9 +19,7 @@ fn increment(s: &str) -> String {
 
 fn is_valid(s: &str) -> bool {
     let chars = s.chars().collect::<Vec<char>>();
-    let has_forbidden_chars = ['i', 'o', 'l']
-        .iter()
-        .any(|ch| chars.contains(ch));
+    let has_forbidden_chars = ['i', 'o', 'l'].iter().any(|ch| chars.contains(ch));
     if has_forbidden_chars {
         return false;
     }

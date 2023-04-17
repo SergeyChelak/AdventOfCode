@@ -85,11 +85,11 @@ impl Solution for AoC2015_14 {
                     Ordering::Greater => {
                         best.clear();
                         score = distance;
-                        best.push(reindeer.name.clone());    
-                    },
+                        best.push(reindeer.name.clone());
+                    }
                     Ordering::Equal => {
-                        best.push(reindeer.name.clone());    
-                    },
+                        best.push(reindeer.name.clone());
+                    }
                     _ => {}
                 }
             }
@@ -99,11 +99,7 @@ impl Solution for AoC2015_14 {
                 scores.insert(name.clone(), total);
             }
         }
-        scores
-            .values()
-            .max()
-            .expect("value")
-            .to_string()
+        scores.values().max().expect("value").to_string()
     }
 
     fn description(&self) -> String {

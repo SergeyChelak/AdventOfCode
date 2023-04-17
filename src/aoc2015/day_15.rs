@@ -18,10 +18,9 @@ impl FromStr for Ingredient {
         let values = elems
             .iter()
             .map(|item| {
-                let props = item.split(" ").collect::<Vec<&str>>();
+                let props = item.split(' ').collect::<Vec<&str>>();
                 props[1]
                     .parse::<i32>()
-                    .ok()
                     .expect("Failed to parse ingedient value")
             })
             .collect::<Vec<i32>>();
@@ -29,7 +28,7 @@ impl FromStr for Ingredient {
     }
 }
 
-fn scores(amount: &Vec<usize>, ingredients: &Vec<Ingredient>, fields: &Vec<usize>) -> i64 {
+fn scores(amount: &[usize], ingredients: &[Ingredient], fields: &[usize]) -> i64 {
     let mut result = 1i64;
     for field in fields {
         let value = amount
@@ -114,7 +113,6 @@ impl AoC2015_15 {
         for line in lines {
             let ingr = line
                 .parse::<Ingredient>()
-                .ok()
                 .expect("Failed to parse ingedient");
             ingredients.push(ingr);
         }
@@ -137,7 +135,7 @@ impl Solution for AoC2015_15 {
         let size = self.ingredients.len();
         let fields = vec![0usize, 1, 2, 3];
         let best = IndexSumIterator::new(100, size).fold(0, |acc, counters| {
-            let cals = scores(&counters, &self.ingredients, &vec![4]) as i64;
+            let cals = scores(&counters, &self.ingredients, &[4]);
             if cals == 500 {
                 let val = scores(&counters, &self.ingredients, &fields);
                 acc.max(val)
