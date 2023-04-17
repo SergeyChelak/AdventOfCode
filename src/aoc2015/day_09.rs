@@ -23,10 +23,10 @@ impl AoC2015_09 {
         })
     }
 
-    fn parse_input(lines: &Vec<String>) -> (usize, Graph) {
+    fn parse_input(lines: &[String]) -> (usize, Graph) {
         let distances = lines
             .iter()
-            .map(|s| Self::parse_line(&s))
+            .map(|s| Self::parse_line(s))
             .collect::<Vec<Distance>>();
         let mut cities = String2IdMapper::new();
         let mut graph = Graph::new();
@@ -64,6 +64,7 @@ impl AoC2015_09 {
         Some(sum)
     }
 
+    #[allow(clippy::needless_range_loop)]
     fn find_path(&self, criteria: &Criteria) -> String {
         let mut order = vec![0usize; self.cities_count];
         for i in 0..self.cities_count {

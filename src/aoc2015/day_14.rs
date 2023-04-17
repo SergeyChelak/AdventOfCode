@@ -1,6 +1,7 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
+use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::io;
 use std::num::ParseIntError;
@@ -27,7 +28,7 @@ impl FromStr for Reindeer {
     type Err = ParseIntError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let items = s.split(" ").collect::<Vec<&str>>();
+        let items = s.split(' ').collect::<Vec<&str>>();
         let name = items[0].to_string();
         let speed = items[3].parse::<i32>()?;
         let fly_time = items[6].parse::<i32>()?;
@@ -53,7 +54,6 @@ impl AoC2015_14 {
         for line in lines {
             let item = line
                 .parse::<Reindeer>()
-                .ok()
                 .expect("Failed to parse reindeer data");
             reindeers.push(item)
         }
@@ -81,12 +81,16 @@ impl Solution for AoC2015_14 {
             let mut best: Vec<String> = Vec::new();
             for reindeer in self.reindeers.iter() {
                 let distance = reindeer.distance(i);
-                if distance > score {
-                    best.clear();
-                    score = distance;
-                    best.push(reindeer.name.clone());
-                } else if distance == score {
-                    best.push(reindeer.name.clone());
+                match distance.cmp(&score) {
+                    Ordering::Greater => {
+                        best.clear();
+                        score = distance;
+                        best.push(reindeer.name.clone());    
+                    },
+                    Ordering::Equal => {
+                        best.push(reindeer.name.clone());    
+                    },
+                    _ => {}
                 }
             }
             for name in best.iter() {
@@ -96,8 +100,7 @@ impl Solution for AoC2015_14 {
             }
         }
         scores
-            .iter()
-            .map(|(_, v)| v)
+            .values()
             .max()
             .expect("value")
             .to_string()

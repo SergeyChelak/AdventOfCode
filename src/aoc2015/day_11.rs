@@ -3,7 +3,7 @@ use crate::solution::Solution;
 use std::io;
 
 fn increment(s: &str) -> String {
-    let offset = 'a' as u8;
+    let offset = b'a';
     let mut carry = 1;
     let mut chars = s.chars().collect::<Vec<char>>();
     for ch in chars.iter_mut().rev() {
@@ -21,7 +21,7 @@ fn is_valid(s: &str) -> bool {
     let chars = s.chars().collect::<Vec<char>>();
     let has_forbidden_chars = ['i', 'o', 'l']
         .iter()
-        .fold(false, |acc, ch| acc || chars.contains(ch));
+        .any(|ch| chars.contains(ch));
     if has_forbidden_chars {
         return false;
     }

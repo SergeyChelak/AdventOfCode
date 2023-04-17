@@ -11,6 +11,7 @@ struct Helper {
 }
 
 impl Helper {
+    #[allow(clippy::needless_range_loop)]
     fn calculate(&self) -> String {
         let mut arr: Vec<usize> = vec![0; self.count];
         for i in 0..self.count {
@@ -70,7 +71,7 @@ impl AoC2015_13 {
 
     fn parse_line(line: &str) -> (String, String, i32) {
         let line = &line[..line.len() - 1];
-        let arr = line.split(" ").collect::<Vec<&str>>();
+        let arr = line.split(' ').collect::<Vec<&str>>();
         let from = arr[0].to_string();
         let to = arr[arr.len() - 1].to_string();
         let sign = if arr[2] == "lose" { -1 } else { 1 };
