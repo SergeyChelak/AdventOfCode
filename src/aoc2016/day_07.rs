@@ -110,7 +110,7 @@ mod test {
     #[test]
     fn aoc2016_07_input_load_test() -> io::Result<()> {
         let sol = AoC2016_07::new()?;
-        assert!(sol.input.len() > 0);
+        assert!(!sol.input.is_empty());
         Ok(())
     }
 

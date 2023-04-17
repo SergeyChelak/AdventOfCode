@@ -319,7 +319,7 @@ mod test {
         let mut bf = Battlefield::new(
             wizard,
             boss,
-            &vec![Spell::Poison, Spell::MagicMissile],
+            &[Spell::Poison, Spell::MagicMissile],
             false,
         );
         bf.battle();
