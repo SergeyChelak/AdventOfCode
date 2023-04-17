@@ -37,6 +37,7 @@ impl Solution for AoC2016_07 {
     }
 }
 
+#[allow(clippy::needless_range_loop)]
 fn is_tls_supported(s: &str) -> bool {
     let arr = split_address(s);
     let mut result = false;
@@ -77,7 +78,7 @@ fn is_ssl_supported(s: &str) -> bool {
                     .iter()
                     .collect::<String>();
                 for j in (1..arr.len()).step_by(2) {
-                    if arr[j].find(&inv).is_some() {
+                    if arr[j].contains(&inv) {
                         return true;
                     }
                 }
@@ -90,10 +91,10 @@ fn is_ssl_supported(s: &str) -> bool {
 fn split_address(s: &str) -> Vec<String> {
     let mut result = Vec::new();
     let mut s = s;
-    while let Some((p1, rest)) = s.split_once("[") {
+    while let Some((p1, rest)) = s.split_once('[') {
         result.push(p1.to_string());
         let (p2, r) = rest
-            .split_once("]")
+            .split_once(']')
             .expect("Close square bracket should be present");
         result.push(p2.to_string());
         s = r;

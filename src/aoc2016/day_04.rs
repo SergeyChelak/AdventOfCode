@@ -12,7 +12,7 @@ struct RoomCode {
 
 impl RoomCode {
     fn from_str(s: &str) -> Self {
-        let components = s.split("-").collect::<Vec<&str>>();
+        let components = s.split('-').collect::<Vec<&str>>();
         let last_idx = components.len() - 1;
         let name = components[..last_idx]
             .iter()
@@ -33,9 +33,10 @@ impl RoomCode {
         }
     }
 
+    #[allow(clippy::needless_range_loop)]
     fn calc_checksum(&self) -> String {
         let mut freq = [0i32; 26];
-        let offset = 'a' as u8 as usize;
+        let offset = b'a' as usize;
         for ch in self.encrypted_name.chars() {
             if !ch.is_alphabetic() {
                 continue;
@@ -71,7 +72,7 @@ impl RoomCode {
     }
 
     fn decrypt_name(&self) -> String {
-        let offset = 'a' as u8 as i32;
+        let offset = b'a' as i32;
         self.encrypted_name
             .chars()
             .map(|ch| match ch {

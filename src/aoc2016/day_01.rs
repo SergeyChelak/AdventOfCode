@@ -16,7 +16,7 @@ impl Maneuver {
         match dir {
             "L" => Maneuver::Left(steps),
             "R" => Maneuver::Right(steps),
-            _ => panic!("unexpected direction {}", dir),
+            _ => panic!("unexpected direction {dir}"),
         }
     }
 }
@@ -30,11 +30,7 @@ enum Pole {
 
 impl Pole {
     fn next(&self, maneuver: &Maneuver) -> Self {
-        let is_left = if let Maneuver::Left(_) = maneuver {
-            true
-        } else {
-            false
-        };
+        let is_left = matches!(maneuver, Maneuver::Left(_));
         match self {
             Pole::North => {
                 if is_left {
@@ -117,7 +113,7 @@ impl<'a> Iterator for NavigationIterator<'a> {
             self.location[coord] += steps;
             self.pole = self.pole.next(item);
             self.position += 1;
-            Some(self.location.clone())
+            Some(self.location)
         } else {
             None
         }
@@ -139,7 +135,7 @@ impl AoC2016_01 {
         Ok(read_to_string(file)?
             .trim()
             .split(", ")
-            .map(|token| Maneuver::with_str(token))
+            .map(Maneuver::with_str)
             .collect::<Vec<Maneuver>>())
     }
 }
@@ -156,7 +152,7 @@ impl Solution for AoC2016_01 {
         for pos in NavigationIterator::new(Pole::North, &self.input) {
             let axe = if pos[0] == prev[0] { 1 } else { 0 };
             let step = if pos[axe] > prev[axe] { 1 } else { -1 };
-            let mut coord = prev.clone();
+            let mut coord = prev;
             while coord[axe] != pos[axe] {
                 coord[axe] += step;
                 if locations.contains(&coord) {

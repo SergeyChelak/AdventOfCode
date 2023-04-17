@@ -105,7 +105,7 @@ mod test {
     fn aoc2015_09_input_load_test() -> io::Result<()> {
         let sol = AoC2015_09::new()?;
         assert!(sol.cities_count > 0, "Cities mapping not loaded");
-        assert!(sol.graph.len() > 0, "Graph is empty");
+        assert!(!sol.graph.is_empty(), "Graph is empty");
         Ok(())
     }
 

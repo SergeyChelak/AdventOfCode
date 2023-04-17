@@ -57,7 +57,7 @@ mod test {
     #[test]
     fn aoc2015_12_input_load_test() -> io::Result<()> {
         let sol = AoC2015_12::new()?;
-        assert!(sol.json.len() > 0);
+        assert!(!sol.json.is_empty());
         Ok(())
     }
 
