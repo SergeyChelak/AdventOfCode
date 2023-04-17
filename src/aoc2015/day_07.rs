@@ -32,13 +32,13 @@ struct Interpreter {
 }
 
 impl Interpreter {
-    pub fn with_commands(lines: &Vec<String>) -> Self {
+    pub fn with_commands(lines: &[String]) -> Self {
         Self {
             tokens: Self::parse_lines(lines),
         }
     }
 
-    fn parse_lines(lines: &Vec<String>) -> HashMap<String, Token> {
+    fn parse_lines(lines: &[String]) -> HashMap<String, Token> {
         lines
             .iter()
             .map(|line| Self::parse_line(line))
@@ -56,23 +56,23 @@ impl Interpreter {
             3 => Self::parse_assign(&components),
             4 => Self::parse_unary(&components),
             5 => Self::parse_binary(&components),
-            _ => panic!("Invalid expression: {}", line),
+            _ => panic!("Invalid expression: {line}"),
         };
         (token_name.to_string(), token)
     }
 
-    fn parse_assign(comp: &Vec<&str>) -> Token {
+    fn parse_assign(comp: &[&str]) -> Token {
         let arg = Argument::from_str(comp[0]);
         Token::Value(arg)
     }
 
-    fn parse_unary(comp: &Vec<&str>) -> Token {
+    fn parse_unary(comp: &[&str]) -> Token {
         let fn_name = comp[0].to_string();
         let arg = Argument::from_str(comp[1]);
         Token::Function(fn_name, vec![arg])
     }
 
-    fn parse_binary(comp: &Vec<&str>) -> Token {
+    fn parse_binary(comp: &[&str]) -> Token {
         let arg1 = Argument::from_str(comp[0]);
         let fn_name = comp[1].to_string();
         let arg2 = Argument::from_str(comp[2]);
@@ -112,7 +112,7 @@ impl Interpreter {
         }
     }
 
-    fn compute(fn_name: &str, params: &Vec<Int>) -> Int {
+    fn compute(fn_name: &str, params: &[Int]) -> Int {
         match fn_name {
             "AND" => params[0] & params[1],
             "OR" => params[0] | params[1],
@@ -190,7 +190,7 @@ mod test {
         ]
         .iter()
         .map(|x| x.to_string())
-        .collect();
+        .collect::<Vec<String>>();
         let interpreter = Interpreter::with_commands(&input);
         assert_eq!(interpreter.get_signal("d"), 72);
         assert_eq!(interpreter.get_signal("e"), 507);

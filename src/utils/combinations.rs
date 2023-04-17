@@ -9,6 +9,7 @@ pub struct CombinationIterator<'a, T> {
 }
 
 impl<'a, T: Copy> CombinationIterator<'a, T> {
+    #[allow(clippy::needless_range_loop)]
     pub fn from_vector(array: &'a Vec<T>, k: usize) -> Self {
         let n = array.len();
         let mut c = vec![0; k + 3];
@@ -60,7 +61,7 @@ pub trait Combinable<T> {
 
 impl<T: Copy> Combinable<T> for Vec<T> {
     fn combination_iter(&self, k: usize) -> CombinationIterator<T> {
-        CombinationIterator::from_vector(&self, k)
+        CombinationIterator::from_vector(self, k)
     }
 }
 

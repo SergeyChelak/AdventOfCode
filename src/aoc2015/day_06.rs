@@ -93,6 +93,8 @@ impl AoC2015_06 {
             .sum()
     }
 }
+
+#[allow(clippy::needless_range_loop)]
 impl Solution for AoC2015_06 {
     fn part_one(&self) -> String {
         let mut matrix = Self::create_matrix();

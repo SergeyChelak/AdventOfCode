@@ -1,5 +1,4 @@
 use crate::solution::Solution;
-use md5;
 use std::io;
 
 pub struct AoC2016_05 {
