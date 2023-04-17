@@ -188,10 +188,7 @@ mod test {
             .parse::<Ingredient>()?;
         let i2 = "Cinnamon: capacity 2, durability 3, flavor -2, texture -1, calories 3"
             .parse::<Ingredient>()?;
-        assert_eq!(
-            scores(&[44, 56], &[i1, i2], &[0, 1, 2, 3]),
-            62842880
-        );
+        assert_eq!(scores(&[44, 56], &[i1, i2], &[0, 1, 2, 3]), 62842880);
         Ok(())
     }
 }

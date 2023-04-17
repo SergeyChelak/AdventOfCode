@@ -107,11 +107,7 @@ impl Battlefield {
     }
 
     fn new(wizard: Wizard, boss: Boss, spells: &[Spell], is_hard: bool) -> Self {
-        let spells = spells
-            .iter()
-            .rev()
-            .copied()
-            .collect::<Vec<Spell>>();
+        let spells = spells.iter().rev().copied().collect::<Vec<Spell>>();
         Self {
             wizard,
             boss,
@@ -316,12 +312,7 @@ mod test {
             hit_points: 13,
             damage: 8,
         };
-        let mut bf = Battlefield::new(
-            wizard,
-            boss,
-            &[Spell::Poison, Spell::MagicMissile],
-            false,
-        );
+        let mut bf = Battlefield::new(wizard, boss, &[Spell::Poison, Spell::MagicMissile], false);
         bf.battle();
         assert!(!bf.boss.is_alive());
         assert_eq!(bf.wizard.hit_points, 2);

@@ -128,17 +128,14 @@ mod test {
 
     #[test]
     fn aoc2015_18_case6x6() {
-        let mut grid = lines_to_grid(&[
-            ".#.#.#", "...##.", "#....#", "..#...", "#.#..#", "####..",
-        ]);
+        let mut grid = lines_to_grid(&[".#.#.#", "...##.", "#....#", "..#...", "#.#..#", "####.."]);
 
         for _ in 0..4 {
             grid = switch_lights(&grid);
         }
 
-        let expected_grid = lines_to_grid(&[
-            "......", "......", "..##..", "..##..", "......", "......",
-        ]);
+        let expected_grid =
+            lines_to_grid(&["......", "......", "..##..", "..##..", "......", "......"]);
 
         for i in 0..grid.len() {
             for j in 0..grid[i].len() {
