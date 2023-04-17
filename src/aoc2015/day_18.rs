@@ -37,12 +37,10 @@ fn switch_lights(input: &Grid) -> Grid {
                 } else {
                     0
                 }
+            } else if on_count == 3 {
+                1
             } else {
-                if on_count == 3 {
-                    1
-                } else {
-                    0
-                }
+                0
             }
         }
     }

@@ -53,10 +53,7 @@ impl AoC2015_13 {
     pub fn new() -> io::Result<Self> {
         let lines = read_file_as_lines("input/aoc2015_13")?;
         let (graph, count) = Self::parse_input(&lines);
-        Ok(Self {
-            graph: graph,
-            count: count,
-        })
+        Ok(Self { graph, count })
     }
 
     fn parse_input(lines: &Vec<String>) -> (Graph, usize) {
