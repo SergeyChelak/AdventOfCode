@@ -113,7 +113,7 @@ mod test {
     fn aoc2015_13_input_load_test() -> io::Result<()> {
         let sol = AoC2015_13::new()?;
         assert!(sol.count > 0);
-        assert!(sol.graph.len() > 0);
+        assert!(!sol.graph.is_empty());
         Ok(())
     }
 

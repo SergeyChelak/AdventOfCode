@@ -11,7 +11,7 @@ enum Operation {
 
 impl Operation {
     fn from_str(s: &str) -> Self {
-        let (cmd, rest) = s.split_once(" ").expect("Incorrect input format");
+        let (cmd, rest) = s.split_once(' ').expect("Incorrect input format");
         match cmd {
             "rect" => Self::rect_from(rest),
             "rotate" => Self::rotate_from(rest),
@@ -30,7 +30,7 @@ impl Operation {
 
     fn rotate_from(s: &str) -> Self {
         let (dir, rest) = s
-            .split_once("=")
+            .split_once('=')
             .expect("Incorrect format for 'rotate' operation");
         let is_row = dir.starts_with("row");
         let (number, count) = rest
@@ -75,6 +75,7 @@ impl Display {
         }
     }
 
+    #[allow(clippy::needless_range_loop)]
     fn execute_rotate_col(&mut self, x: usize, count: usize) {
         let mut arr = Vec::new();
         for r in 0..self.pixels.len() {
@@ -143,6 +144,7 @@ impl Solution for AoC2016_08 {
     }
 }
 
+#[allow(clippy::needless_range_loop)]
 fn print(inp: &Vec<Vec<bool>>) {
     for i in 0..inp.len() {
         for ch in &inp[i] {

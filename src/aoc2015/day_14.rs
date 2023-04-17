@@ -114,7 +114,7 @@ mod test {
     #[test]
     fn aoc2015_14_input_load_test() -> io::Result<()> {
         let sol = AoC2015_14::new()?;
-        assert!(sol.reindeers.len() > 0);
+        assert!(!sol.reindeers.is_empty());
         Ok(())
     }
 

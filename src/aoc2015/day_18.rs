@@ -128,7 +128,7 @@ mod test {
 
     #[test]
     fn aoc2015_18_case6x6() {
-        let mut grid = lines_to_grid(&vec![
+        let mut grid = lines_to_grid(&[
             ".#.#.#", "...##.", "#....#", "..#...", "#.#..#", "####..",
         ]);
 
@@ -136,7 +136,7 @@ mod test {
             grid = switch_lights(&grid);
         }
 
-        let expected_grid = lines_to_grid(&vec![
+        let expected_grid = lines_to_grid(&[
             "......", "......", "..##..", "..##..", "......", "......",
         ]);
 

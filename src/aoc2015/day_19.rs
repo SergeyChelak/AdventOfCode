@@ -108,7 +108,7 @@ mod test {
     #[test]
     fn aoc2015_19_input_load_test() -> io::Result<()> {
         let sol = AoC2015_19::new()?;
-        assert!(sol.molecule.len() > 0);
+        assert!(!sol.molecule.is_empty());
         assert_eq!(sol.replacement.len(), 43);
         Ok(())
     }

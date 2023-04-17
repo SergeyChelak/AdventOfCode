@@ -158,7 +158,7 @@ mod test {
     #[test]
     fn aoc2015_15_input_load_test() -> io::Result<()> {
         let sol = AoC2015_15::new()?;
-        assert!(sol.ingredients.len() > 0);
+        assert!(!sol.ingredients.is_empty());
         Ok(())
     }
 
@@ -189,7 +189,7 @@ mod test {
         let i2 = "Cinnamon: capacity 2, durability 3, flavor -2, texture -1, calories 3"
             .parse::<Ingredient>()?;
         assert_eq!(
-            scores(&vec![44, 56], &vec![i1, i2], &vec![0, 1, 2, 3]),
+            scores(&[44, 56], &[i1, i2], &[0, 1, 2, 3]),
             62842880
         );
         Ok(())
