@@ -48,6 +48,8 @@ fn run_collection(days: io::Result<Vec<Box<dyn Solution>>>) {
     days.expect("Data isn't valid").iter().for_each(execute);
 }
 
+// TODO: rewrite
+#[allow(clippy::borrowed_box)]
 fn execute(solution: &Box<dyn Solution>) {
     println!();
     println!("{}", solution.description());
