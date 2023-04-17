@@ -15,22 +15,18 @@ impl AoC2016_09 {
         })
     }
 
-    fn decoded_len(&self, decoder: &dyn Fn(&str) -> String) -> usize {
-        self.lines
-            .iter()
-            .map(|s| decoder(s))
-            .map(|s| s.len())
-            .sum::<usize>()
+    fn decoded_len(&self, decoder: &dyn Fn(&str) -> usize) -> usize {
+        self.lines.iter().map(|s| decoder(s)).sum::<usize>()
     }
 }
 
 impl Solution for AoC2016_09 {
     fn part_one(&self) -> String {
-        self.decoded_len(&decompress_v1).to_string()
+        self.decoded_len(&decompressed_len_v1).to_string()
     }
 
     fn part_two(&self) -> String {
-        self.decoded_len(&decompress_v2).to_string()
+        self.decoded_len(&decompressed_len_v2).to_string()
     }
 
     fn description(&self) -> String {
@@ -38,40 +34,32 @@ impl Solution for AoC2016_09 {
     }
 }
 
-fn decompress_v2(s: &str) -> String {
-    let mut inp = String::from(s);
-    loop {
-        let (output, is_final) = decompress(&inp);
-        if is_final {
-            break output;
-        }
-        inp = output;
-    }
+fn decompressed_len_v2(s: &str) -> usize {
+    decompressed(s, true)
 }
 
-fn decompress_v1(s: &str) -> String {
-    decompress(s).0
+fn decompressed_len_v1(s: &str) -> usize {
+    decompressed(s, false)
 }
 
-fn decompress(s: &str) -> (String, bool) {
+fn decompressed(s: &str, parse_inner: bool) -> usize {
     let regex = Regex::new(r"[(]\d*[x]\d*[)]").expect("regex format should be valid");
-    let mut result = String::new();
+    let mut result = 0;
     let mut rest = s;
-    let mut is_final = true;
     while let Some(reg_match) = regex.find(rest) {
-        is_final = false;
-        let prefix = &rest[0..reg_match.start()];
-        result.push_str(prefix);
+        result += reg_match.start();
         let marker = &rest[reg_match.start()..reg_match.end()];
         let (count, reps) = parse_marker(marker);
-        let rep_str = &rest[reg_match.end()..reg_match.end() + count];
-        for _ in 0..reps {
-            result.push_str(rep_str);
-        }
+        let len = if parse_inner {
+            decompressed(&rest[reg_match.end()..reg_match.end() + count], parse_inner)
+        } else {
+            count
+        };
+        result += len * reps;
         rest = &rest[reg_match.end() + count..];
     }
-    result.push_str(rest);
-    (result, is_final)
+    result += rest.len();
+    result
 }
 
 fn parse_marker(marker: &str) -> (usize, usize) {
@@ -104,24 +92,33 @@ mod test {
 
     #[test]
     fn aoc2016_09_decompress_v1() {
-        assert_eq!(decompress_v1("ADVENT"), "ADVENT");
-        assert_eq!(decompress_v1("A(1x5)BC"), "ABBBBBC");
-        assert_eq!(decompress_v1("(3x3)XYZ"), "XYZXYZXYZ");
-        assert_eq!(decompress_v1("A(2x2)BCD(2x2)EFG"), "ABCBCDEFEFG");
-        assert_eq!(decompress_v1("(6x1)(1x3)A"), "(1x3)A");
-        assert_eq!(decompress_v1("X(8x2)(3x3)ABCY"), "X(3x3)ABC(3x3)ABCY");
+        assert_eq!(decompressed_len_v1("ADVENT"), "ADVENT".len());
+        assert_eq!(decompressed_len_v1("A(1x5)BC"), "ABBBBBC".len());
+        assert_eq!(decompressed_len_v1("(3x3)XYZ"), "XYZXYZXYZ".len());
+        assert_eq!(
+            decompressed_len_v1("A(2x2)BCD(2x2)EFG"),
+            "ABCBCDEFEFG".len()
+        );
+        assert_eq!(decompressed_len_v1("(6x1)(1x3)A"), "(1x3)A".len());
+        assert_eq!(
+            decompressed_len_v1("X(8x2)(3x3)ABCY"),
+            "X(3x3)ABC(3x3)ABCY".len()
+        );
     }
 
     #[test]
     fn aoc2016_09_decompress_v2() {
-        assert_eq!(decompress_v2("(3x3)XYZ"), "XYZXYZXYZ");
-        assert_eq!(decompress_v2("X(8x2)(3x3)ABCY"), "XABCABCABCABCABCABCY");
+        assert_eq!(decompressed_len_v2("(3x3)XYZ"), "XYZXYZXYZ".len());
         assert_eq!(
-            decompress_v2("(27x12)(20x12)(13x14)(7x10)(1x12)A").len(),
+            decompressed_len_v2("X(8x2)(3x3)ABCY"),
+            "XABCABCABCABCABCABCY".len()
+        );
+        assert_eq!(
+            decompressed_len_v2("(27x12)(20x12)(13x14)(7x10)(1x12)A"),
             241920
         );
         assert_eq!(
-            decompress_v2("(25x3)(3x3)ABC(2x3)XY(5x2)PQRSTX(18x9)(3x2)TWO(5x7)SEVEN").len(),
+            decompressed_len_v2("(25x3)(3x3)ABC(2x3)XY(5x2)PQRSTX(18x9)(3x2)TWO(5x7)SEVEN"),
             445
         );
     }
