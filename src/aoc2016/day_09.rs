@@ -65,7 +65,7 @@ fn decompressed(s: &str, parse_inner: bool) -> usize {
 fn parse_marker(marker: &str) -> (usize, usize) {
     let (count, reps) = &marker[1..marker.len() - 1]
         .split_once('x')
-        .expect("delimited 'x' should be present in marker");
+        .expect("delimiter 'x' should be present in marker");
     let count = count.parse::<usize>().expect("count should be integer");
     let reps = reps.parse::<usize>().expect("reps should be integer");
     (count, reps)
