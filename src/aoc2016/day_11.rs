@@ -2,7 +2,7 @@ use crate::solution::Solution;
 
 use std::{
     io, 
-    collections::{HashMap, hash_map::DefaultHasher},
+    collections::{HashMap, hash_map::DefaultHasher, HashSet},
     hash::{Hash, Hasher}
 };
 
@@ -11,110 +11,140 @@ const F: bool = false;
 
 type Level = Vec<bool>;
 type Facility = Vec<Level>;
-type FacilityHash = u64;
+type StateHash = u64;
 
-fn min_steps(facility: &mut Facility, level: usize, steps: usize, output: &mut usize, memo: &mut HashMap<FacilityHash, usize>) {
-    let last_idx = facility.len() - 1;
-    if level == last_idx && is_level_completed(&facility[last_idx]) {
-        *output = steps.min(*output);
-    } else {
-        // if steps >= *output {
-        //     return;
-        // }
-        let hash = get_hash(facility);
-        if let Some(prev_steps) = memo.get(&hash) {
-            if *prev_steps <= steps {
+fn dbg_print(step: usize, level: usize, facility: &Facility) {
+    println!("Step #{step}");
+    for i in (0..facility.len()).rev() {
+        let row = &facility[i];
+        let ch = if i == level { '>' } else { ' ' };
+        print!("{ch:3}");
+        for j in 0..row.len() {
+            let el = row[j];
+            let sym = if j % 2 == 0 { 'G' } else { 'M' };
+            let ch = if el { sym } else { '.' };
+            print!("{ch:3}");
+        }
+        println!();
+    }
+    println!();
+}
+
+fn min_steps(facility: &Facility) -> usize {
+    fn perform(facility: Facility,
+        level: usize, 
+        steps: usize, 
+        backtrack: &mut usize, 
+        memo: &mut HashSet<StateHash>) {       
+            // dbg_print(steps, level, &facility);
+            
+            let hash = get_hash(&facility, level);
+            if memo.contains(&hash) { return; }
+            
+            let last_idx = facility.len() - 1;
+            if last_idx == level && is_level_completed(&facility[last_idx]) {
+                *backtrack = steps.min(*backtrack);
+                println!("{backtrack}");            
                 return;
             }
+            
+        if steps < *backtrack {
+            memo.insert(hash);
+            let adjacent = adjacent_levels(level, last_idx);
+            let possible_idx = possible_comp_idx(&facility, level);
+            for pos in possible_idx {
+                for adj in &adjacent {
+                    if let Some(next) = transfer(&facility, level, *adj, &pos) {
+                        perform(next, *adj, steps + 1, backtrack, memo);                                                    
+                    }
+                }
+            }
         }
-        memo.insert(hash, steps);
-        let positions = safe_indices(&mut facility[level]);
-        // println!("{:?}", positions);
-        let allowed_levels = if level == 0 {
-            vec![1]
-        } else if level == last_idx {
-            vec![level - 1]
-        } else {
-            vec![level - 1, level + 1]
-        };
-        for lvl in allowed_levels {
-            for pos in &positions {
-                if !is_safe_move(pos, &mut facility[level]) {
+    }
+
+    fn possible_comp_idx(facility: &Facility, level: usize) -> Vec<Vec<usize>> {
+        let mut result = Vec::new();
+        let len = facility.len();
+        for a in 0..len - 1 {
+            if !facility[level][a] {
+                continue;
+            }
+            result.push(vec![a]);
+            for b in a + 1..len {
+                if !facility[level][b] {
                     continue;
                 }
-                apply_position(pos, &mut facility[level]);
-                apply_position(pos, &mut facility[lvl]);
-                min_steps(facility, lvl, steps + 1, output, memo);
-                // revert
-                apply_position(pos, &mut facility[level]);
-                apply_position(pos, &mut facility[lvl]);
+                result.push(vec![a, b]);
             }
         }
+        result
     }
-}
 
-fn get_hash(facility: &Facility) -> FacilityHash {
-    let mut hasher = DefaultHasher::new();
-    facility.hash(&mut hasher);
-    hasher.finish()
-}
-
-fn safe_indices(level: &mut Level) -> Vec<Vec<usize>> {
-    let mut result = Vec::new();
-    let len = level.len();
-    // singles
-    for i in 0..len {
-        if level[i] {            
-            result.push(vec![i]);
+    fn transfer(facility: &Facility, from: usize, to: usize, position: &[usize]) -> Option<Facility> {
+        let mut next = facility.clone();
+        for i in position {
+            next[from][*i] = !next[from][*i];
+            next[to][*i] = !next[to][*i];
+        }
+        if is_valid(&next) {
+            Some(next)
+        } else {
+            None
         }
     }
-    // pairs
-    for i in 0..len - 1 {
-        for j in i + 1..len {
-            if !(level[i] && level[j]) { continue; }
-            let mod_i = i % 2;
-            let mod_j = j % 2;
-            // 2 generators or 2 chips or generator + compatible chip
-            let is_safe = mod_i == mod_j || mod_i == 0 && j - i == 1;
-            if is_safe {
-                result.push(vec![i, j]);
+
+    fn adjacent_levels(level: usize, last_level: usize) -> Vec<usize> {
+        let mut levels = Vec::with_capacity(2);
+        if level > 0 {
+            levels.push(level - 1);
+        }
+        if level < last_level {
+            levels.push(level + 1);
+        }
+        levels
+    }
+
+    fn get_hash(facility: &Facility, level: usize) -> StateHash {
+        let mut hasher = DefaultHasher::new();
+        facility.hash(&mut hasher);
+        // TODO: not sure...
+        level.hash(&mut hasher);
+        hasher.finish()
+    }
+
+    fn is_level_completed(level: &Level) -> bool {
+        level.iter().map(|v| *v as usize).sum::<usize>() == level.len()
+    }
+
+    fn is_valid(facility: &Facility) -> bool {
+        for level in facility {
+            if !is_valid_level(level) {
+                return false;
             }
         }
+        true
     }
-    result.into_iter()
-        .filter(|pos| is_safe_move(pos, level))
-        .collect()
-}
 
-fn is_level_completed(level: &Level) -> bool {
-    level.iter().map(|v| *v as usize).sum::<usize>() == level.len()
-}
-
-fn is_safe_move(position: &[usize], level: &mut Level) -> bool {
-    apply_position(position, level);
-    let is_safe = is_safe_level(level);
-    apply_position(position, level);
-    is_safe
-}
-
-fn is_safe_level(level: &Level) -> bool {
-    let len = level.len();
-    let has_generators = (0..len).step_by(2)
-        .filter(|v| level[*v])
-        .count() > 0;
-    for i in (1..len).step_by(2) {
-        if !level[i] {
-            continue;
-        } else if !level[i - 1] && has_generators {
-            return false;
+    fn is_valid_level(level: &Level) -> bool {
+        let len = level.len();
+        let has_generators = (0..len).step_by(2)
+            .filter(|v| level[*v])
+            .count() > 0;
+        for i in (1..len).step_by(2) {
+            if !level[i] {
+                continue;
+            } else if !level[i - 1] && has_generators {
+                return false;
+            }
         }
+        true
     }
-    true
+
+    let mut output = usize::MAX;
+    perform(facility.clone(), 0, 0, &mut output, &mut HashSet::new());
+    output
 }
 
-fn apply_position(position: &[usize], level: &mut Level) {
-    position.iter().for_each(|&i| level[i] = !level[i]);
-}
 
 pub struct AoC2016_11 {
     input: Facility
@@ -134,7 +164,7 @@ impl AoC2016_11 {
             vec![F, F, F, F, F, F, F, F, F, F],
         ];
 
-        let mut facility = vec![
+        let facility = vec![
             vec![F, T, F, T],
             vec![T, F, F, F],
             vec![F, F, T, F],
@@ -148,10 +178,8 @@ impl AoC2016_11 {
 
 impl Solution for AoC2016_11 {
     fn part_one(&self) -> String {
-        let mut facility = self.input.clone();
-        let mut output = usize::MAX;
-        min_steps(&mut facility, 0, 0, &mut output, &mut HashMap::new());
-        output.to_string()
+        min_steps(&self.input.clone())
+            .to_string()
     }
 
     // fn part_two(&self) -> String {
