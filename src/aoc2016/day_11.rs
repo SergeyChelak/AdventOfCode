@@ -2,7 +2,7 @@ use crate::solution::Solution;
 
 use std::{
     io, 
-    collections::{HashMap, hash_map::DefaultHasher, HashSet},
+    collections::{hash_map::DefaultHasher, HashSet},
     hash::{Hash, Hasher}
 };
 
@@ -43,14 +43,15 @@ impl State {
 
     fn all_movable_indices(&self) -> Vec<Vec<usize>> {
         let mut result = Vec::new();
-        let len = self.facility.len();
-        for a in 0..len - 1 {
-            if !self.facility[self.level][a] {
+        let level = &self.facility[self.level];
+        let len = level.len();
+        for a in 0..len {
+            if !level[a] {
                 continue;
             }
             result.push(vec![a]);
             for b in a + 1..len {
-                if !self.facility[self.level][b] {
+                if !level[b] {
                     continue;
                 }
                 result.push(vec![a, b]);
@@ -111,12 +112,11 @@ impl State {
     fn hash(&self) -> StateHash {
         let mut hasher = DefaultHasher::new();
         self.facility.hash(&mut hasher);
-        // TODO: not sure...
         self.level.hash(&mut hasher);
         hasher.finish()
     }
 
-    fn dbg_print(&self) {
+    fn _dbg_print(&self) {
         for i in (0..self.facility.len()).rev() {
             let row = &self.facility[i];
             let ch = if i == self.level { '>' } else { ' ' };
@@ -137,7 +137,7 @@ fn min_steps(facility: &Facility) -> usize {
     let mut visited: HashSet<StateHash> = HashSet::new();
     let mut step = 0;
     let mut states = vec![State::new(facility, 0)];
-    'ml: while states.len() > 0 {        
+    'ml: while !states.is_empty() {        
         let mut next_states = Vec::new();
         for state in &states {
             if state.is_completed() {
@@ -168,26 +168,21 @@ pub struct AoC2016_11 {
 
 impl AoC2016_11 {
     pub fn new() -> io::Result<Self> {
-        // The first floor contains a thulium generator, a thulium-compatible microchip, a plutonium generator, and a strontium generator.
-        // The second floor contains a plutonium-compatible microchip and a strontium-compatible microchip.
-        // The third floor contains a promethium generator, a promethium-compatible microchip, a ruthenium generator, and a ruthenium-compatible microchip.
-        // The fourth floor contains nothing relevant.
         let input = vec![
-            //   |T |  |P |  |S |  |Pr|  |Rut
             vec![G, M, G, O, G, O, O, O, O, O],
             vec![O, O, O, M, O, M, O, O, O, O],
             vec![O, O, O, O, O, O, G, M, G, M],
             vec![O, O, O, O, O, O, O, O, O, O],
         ];
 
-        let facility = vec![
+        let _facility = vec![
             vec![O, M, O, M],
             vec![G, O, O, O],
             vec![O, O, G, O],
             vec![O, O, O, O],
         ];
         Ok(Self {
-            input, //: facility,
+            input
         })
     }
 }
@@ -213,7 +208,7 @@ mod test {
     #[test]
     fn aoc2016_11_correctness() -> io::Result<()> {
         let sol = AoC2016_11::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "31");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
