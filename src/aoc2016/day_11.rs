@@ -6,8 +6,13 @@ use std::{
     hash::{Hash, Hasher}
 };
 
-const T: bool = true;
-const F: bool = false;
+// generator
+const G: bool = true;
+// microchip
+const M: bool = true;
+// open cell
+const O: bool = false;
+
 
 type Level = Vec<bool>;
 type Facility = Vec<Level>;
@@ -169,20 +174,20 @@ impl AoC2016_11 {
         // The fourth floor contains nothing relevant.
         let input = vec![
             //   |T |  |P |  |S |  |Pr|  |Rut
-            vec![T, T, T, F, T, F, F, F, F, F],
-            vec![F, F, F, T, F, T, F, F, F, F],
-            vec![F, F, F, F, F, F, T, T, T, T],
-            vec![F, F, F, F, F, F, F, F, F, F],
+            vec![G, M, G, O, G, O, O, O, O, O],
+            vec![O, O, O, M, O, M, O, O, O, O],
+            vec![O, O, O, O, O, O, G, M, G, M],
+            vec![O, O, O, O, O, O, O, O, O, O],
         ];
 
         let facility = vec![
-            vec![F, T, F, T],
-            vec![T, F, F, F],
-            vec![F, F, T, F],
-            vec![F, F, F, F],
+            vec![O, M, O, M],
+            vec![G, O, O, O],
+            vec![O, O, G, O],
+            vec![O, O, O, O],
         ];
         Ok(Self {
-            input: facility,
+            input, //: facility,
         })
     }
 }
