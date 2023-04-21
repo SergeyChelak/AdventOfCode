@@ -174,7 +174,6 @@ impl Solution for AoC2016_10 {
         let mut conv = Conveyor::new(&self.input, &self.bot_instr);
         conv.run(&|_, _| false);
         (0usize..3)
-            .into_iter()
             .map(|key| conv.output.get(&key).unwrap().first().expect("no value"))
             .product::<usize>()
             .to_string()

@@ -33,7 +33,7 @@ fn correct_message(lines: &Vec<String>, ordering: Ordering) -> String {
     let len = lines[0].len();
     let mut freq_matrix = vec![vec![0; 26]; len];
     for line in lines {
-        let chars = line.chars().into_iter().collect::<Vec<char>>();
+        let chars = line.chars().collect::<Vec<char>>();
         for i in 0..chars.len() {
             let pos = chars[i] as u8 - b'a';
             freq_matrix[i][pos as usize] += 1;

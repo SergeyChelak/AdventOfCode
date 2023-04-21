@@ -41,6 +41,7 @@ impl State {
         true
     }
 
+    #[allow(clippy::needless_range_loop)]
     fn all_movable_indices(&self) -> Vec<Vec<usize>> {
         let mut result = Vec::new();
         let level = &self.facility[self.level];
