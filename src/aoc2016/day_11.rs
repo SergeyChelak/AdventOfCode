@@ -125,14 +125,14 @@ fn min_steps(facility: &Facility) -> usize {
             if state.is_completed() {
                 break 'ml;
             }
-            let hash = state.hash();
-            if visited.contains(&hash) {
-                continue;
-            }
-            visited.insert(hash);
             for pos in state.all_movable_indices() {
                 for level in state.adjacent_levels() {
                     if let Some(next) = state.with_move(level, &pos) {
+                        let hash = next.hash();
+                        if visited.contains(&hash) {
+                            continue;
+                        }
+                        visited.insert(hash);
                         next_states.push(next);
                     }
                 }
