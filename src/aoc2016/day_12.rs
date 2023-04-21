@@ -13,7 +13,7 @@ enum Op {
     Inc(Reg),
     Dec(Reg),
     JnzReg(Reg, Val),
-    Jnz(Val, Val)
+    Jnz(Val, Val),
 }
 
 impl Op {
@@ -47,8 +47,7 @@ impl Op {
     }
 
     fn parse_jnz(tokens: &[&str]) -> Self {
-        let offset = tokens[2].parse::<Val>()
-            .expect("jnz offset should be int");
+        let offset = tokens[2].parse::<Val>().expect("jnz offset should be int");
         if let Ok(value) = tokens[1].parse::<Val>() {
             Self::Jnz(value, offset)
         } else {
@@ -63,7 +62,7 @@ impl Op {
             "b" => 1,
             "c" => 2,
             "d" => 3,
-            _ => panic!("Unsupported register name {s}")
+            _ => panic!("Unsupported register name {s}"),
         }
     }
 }
@@ -148,9 +147,7 @@ impl AoC2016_12 {
             .iter()
             .map(|s| Op::parse(s))
             .collect();
-        Ok(Self {
-            program
-        })
+        Ok(Self { program })
     }
 }
 
