@@ -8,8 +8,8 @@ type Val = i32;
 
 #[derive(Clone)]
 enum Op {
-    CpyReg(Reg, Reg),     // copies value from register to register
-    CpyVal(Val, Reg),     // copies value to dest register
+    CpyReg(Reg, Reg),
+    CpyVal(Val, Reg),
     Inc(Reg),
     Dec(Reg),
     JnzReg(Reg, Val),
@@ -18,7 +18,53 @@ enum Op {
 
 impl Op {
     fn parse(s: &str) -> Self {
-        todo!()
+        let tokens = s.split(' ').collect::<Vec<&str>>();
+        match tokens[0] {
+            "cpy" => Self::parse_cpy(&tokens),
+            "inc" => Self::parse_inc(&tokens),
+            "dec" => Self::parse_dec(&tokens),
+            "jnz" => Self::parse_jnz(&tokens),
+            _ => panic!("Unexpected instruction {}", tokens[0]),
+        }
+    }
+
+    fn parse_inc(tokens: &[&str]) -> Self {
+        Self::Inc(Self::parse_reg(tokens[1]))
+    }
+
+    fn parse_dec(tokens: &[&str]) -> Self {
+        Self::Dec(Self::parse_reg(tokens[1]))
+    }
+
+    fn parse_cpy(tokens: &[&str]) -> Self {
+        let dest_reg = Self::parse_reg(tokens[2]);
+        if let Ok(value) = tokens[1].parse::<Val>() {
+            Self::CpyVal(value, dest_reg)
+        } else {
+            let src_reg = Self::parse_reg(tokens[1]);
+            Self::CpyReg(src_reg, dest_reg)
+        }
+    }
+
+    fn parse_jnz(tokens: &[&str]) -> Self {
+        let offset = tokens[2].parse::<Val>()
+            .expect("jnz offset should be int");
+        if let Ok(value) = tokens[1].parse::<Val>() {
+            Self::JnzVal(value, offset)
+        } else {
+            let reg = Self::parse_reg(tokens[1]);
+            Self::JnzReg(reg, offset)
+        }
+    }
+
+    fn parse_reg(s: &str) -> Reg {
+        match s {
+            "a" => 0,
+            "b" => 1,
+            "c" => 2,
+            "d" => 3,
+            _ => panic!("Unsupported register name {s}")
+        }
     }
 }
 
@@ -40,14 +86,47 @@ impl Machine {
     fn run(&mut self) {
         while self.pc < self.program.len() {
             match self.program[self.pc] {
-                Op::CpyReg(src, dest) => todo!(),
-                Op::CpyVal(value, dest) => todo!(),
-                Op::Inc(reg) => todo!(),
-                Op::Dec(reg) => todo!(),
-                Op::JnzReg(reg, offset) => todo!(),
-                Op::JnzVal(value, offset) => todo!(),
+                Op::CpyReg(src, dest) => self.op_copy_reg(src, dest),
+                Op::CpyVal(value, dest) => self.op_copy(value, dest),
+                Op::Inc(reg) => self.op_inc(reg),
+                Op::Dec(reg) => self.op_dec(reg),
+                Op::JnzReg(reg, offset) => self.op_jnz_reg(reg, offset),
+                Op::JnzVal(value, offset) => self.op_jnz(value, offset),
             }
         }
+    }
+
+    fn op_inc(&mut self, reg: Reg) {
+        self.reg[reg] += 1;
+        self.pc += 1;
+    }
+
+    fn op_dec(&mut self, reg: Reg) {
+        self.reg[reg] -= 1;
+        self.pc += 1;
+    }
+
+    fn op_copy(&mut self, val: Val, reg: Reg) {
+        self.reg[reg] = val;
+        self.pc += 1;
+    }
+
+    fn op_copy_reg(&mut self, src: Reg, dest: Reg) {
+        let val = self.reg[src];
+        self.op_copy(val, dest);
+    }
+
+    fn op_jnz(&mut self, val: Val, offset: Val) {
+        if val != 0 {
+            let new_pc = self.pc as Val + offset;
+            self.pc = new_pc as usize;
+        } else {
+            self.pc += 1;
+        }
+    }
+
+    fn op_jnz_reg(&mut self, reg: Reg, offset: Val) {
+        self.op_jnz(self.reg[reg], offset)
     }
 
     fn reg_a(&self) -> Val {
@@ -100,7 +179,7 @@ mod test {
     #[test]
     fn aoc2016_12_correctness() -> io::Result<()> {
         let sol = AoC2016_12::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "318007");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
