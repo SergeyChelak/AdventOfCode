@@ -132,6 +132,10 @@ impl Machine {
     fn reg_a(&self) -> Val {
         self.reg[0]
     }
+
+    fn set_reg_c(&mut self, value: Val) {
+        self.reg[2] = value
+    }
 }
 
 pub struct AoC2016_12 {
@@ -157,8 +161,12 @@ impl Solution for AoC2016_12 {
         machine.reg_a().to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut machine = Machine::with_program(self.program.clone());
+        machine.set_reg_c(1);
+        machine.run();
+        machine.reg_a().to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2016/Day 12: Leonardo's Monorail".to_string()
@@ -180,7 +188,7 @@ mod test {
     fn aoc2016_12_correctness() -> io::Result<()> {
         let sol = AoC2016_12::new()?;
         assert_eq!(sol.part_one(), "318007");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "9227661");
         Ok(())
     }
 }
