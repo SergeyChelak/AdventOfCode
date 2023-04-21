@@ -1,9 +1,9 @@
 use crate::solution::Solution;
 
 use std::{
-    io, 
     collections::{hash_map::DefaultHasher, HashSet},
-    hash::{Hash, Hasher}
+    hash::{Hash, Hasher},
+    io,
 };
 
 // generator
@@ -13,7 +13,6 @@ const M: bool = true;
 // open cell
 const O: bool = false;
 
-
 type Level = Vec<bool>;
 type Facility = Vec<Level>;
 type StateHash = u64;
@@ -21,7 +20,7 @@ type StateHash = u64;
 #[derive(Hash)]
 struct State {
     facility: Facility,
-    level: usize
+    level: usize,
 }
 
 impl State {
@@ -71,7 +70,7 @@ impl State {
         }
         adjacent
     }
-    
+
     fn is_completed(&self) -> bool {
         if self.level != self.facility.len() - 1 {
             false
@@ -79,7 +78,7 @@ impl State {
             let lvl = &self.facility[self.level];
             lvl.iter().map(|v| *v as usize).sum::<usize>() == lvl.len()
         }
-    }    
+    }
 
     fn with_move(&self, next_level: usize, position: &[usize]) -> Option<State> {
         let mut next = self.facility.clone();
@@ -97,9 +96,7 @@ impl State {
 
     fn is_valid_level(level: &Level) -> bool {
         let len = level.len();
-        let has_generators = (0..len).step_by(2)
-            .filter(|v| level[*v])
-            .count() > 0;
+        let has_generators = (0..len).step_by(2).filter(|v| level[*v]).count() > 0;
         for i in (1..len).step_by(2) {
             if !level[i] {
                 continue;
@@ -122,7 +119,7 @@ fn min_steps(facility: &Facility) -> usize {
     let mut visited: HashSet<StateHash> = HashSet::new();
     let mut step = 0;
     let mut states = vec![State::new(facility, 0)];
-    'ml: while !states.is_empty() {        
+    'ml: while !states.is_empty() {
         let mut next_states = Vec::new();
         for state in &states {
             if state.is_completed() {
@@ -163,8 +160,7 @@ impl Solution for AoC2016_11 {
             vec![O, O, O, O, O, O, G, M, G, M],
             vec![O, O, O, O, O, O, O, O, O, O],
         ];
-        min_steps(&input)
-            .to_string()
+        min_steps(&input).to_string()
     }
 
     fn part_two(&self) -> String {
@@ -174,8 +170,7 @@ impl Solution for AoC2016_11 {
             vec![O, O, O, O, O, O, G, M, G, M, O, O, O, O],
             vec![O, O, O, O, O, O, O, O, O, O, O, O, O, O],
         ];
-        min_steps(&input)
-            .to_string()
+        min_steps(&input).to_string()
     }
 
     fn description(&self) -> String {
