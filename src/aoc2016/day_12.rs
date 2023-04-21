@@ -9,11 +9,11 @@ type Val = i32;
 #[derive(Clone)]
 enum Op {
     CpyReg(Reg, Reg),
-    CpyVal(Val, Reg),
+    Cpy(Val, Reg),
     Inc(Reg),
     Dec(Reg),
     JnzReg(Reg, Val),
-    JnzVal(Val, Val)
+    Jnz(Val, Val)
 }
 
 impl Op {
@@ -39,7 +39,7 @@ impl Op {
     fn parse_cpy(tokens: &[&str]) -> Self {
         let dest_reg = Self::parse_reg(tokens[2]);
         if let Ok(value) = tokens[1].parse::<Val>() {
-            Self::CpyVal(value, dest_reg)
+            Self::Cpy(value, dest_reg)
         } else {
             let src_reg = Self::parse_reg(tokens[1]);
             Self::CpyReg(src_reg, dest_reg)
@@ -50,7 +50,7 @@ impl Op {
         let offset = tokens[2].parse::<Val>()
             .expect("jnz offset should be int");
         if let Ok(value) = tokens[1].parse::<Val>() {
-            Self::JnzVal(value, offset)
+            Self::Jnz(value, offset)
         } else {
             let reg = Self::parse_reg(tokens[1]);
             Self::JnzReg(reg, offset)
@@ -87,11 +87,11 @@ impl Machine {
         while self.pc < self.program.len() {
             match self.program[self.pc] {
                 Op::CpyReg(src, dest) => self.op_copy_reg(src, dest),
-                Op::CpyVal(value, dest) => self.op_copy(value, dest),
+                Op::Cpy(value, dest) => self.op_copy(value, dest),
                 Op::Inc(reg) => self.op_inc(reg),
                 Op::Dec(reg) => self.op_dec(reg),
                 Op::JnzReg(reg, offset) => self.op_jnz_reg(reg, offset),
-                Op::JnzVal(value, offset) => self.op_jnz(value, offset),
+                Op::Jnz(value, offset) => self.op_jnz(value, offset),
             }
         }
     }
