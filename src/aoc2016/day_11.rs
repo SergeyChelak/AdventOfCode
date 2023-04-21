@@ -28,7 +28,7 @@ impl State {
     fn new(facility: &Facility, level: usize) -> Self {
         Self {
             facility: facility.clone(),
-            level: level,
+            level,
         }
     }
 
@@ -115,22 +115,6 @@ impl State {
         self.level.hash(&mut hasher);
         hasher.finish()
     }
-
-    fn _dbg_print(&self) {
-        for i in (0..self.facility.len()).rev() {
-            let row = &self.facility[i];
-            let ch = if i == self.level { '>' } else { ' ' };
-            print!("{ch:3}");
-            for j in 0..row.len() {
-                let el = row[j];
-                let sym = if j % 2 == 0 { 'G' } else { 'M' };
-                let ch = if el { sym } else { '.' };
-                print!("{ch:3}");
-            }
-            println!();
-        }
-        println!();
-    }
 }
 
 fn min_steps(facility: &Facility) -> usize {
@@ -162,39 +146,36 @@ fn min_steps(facility: &Facility) -> usize {
     step
 }
 
-pub struct AoC2016_11 {
-    input: Facility
-}
+pub struct AoC2016_11;
 
 impl AoC2016_11 {
     pub fn new() -> io::Result<Self> {
+        Ok(Self)
+    }
+}
+
+impl Solution for AoC2016_11 {
+    fn part_one(&self) -> String {
         let input = vec![
             vec![G, M, G, O, G, O, O, O, O, O],
             vec![O, O, O, M, O, M, O, O, O, O],
             vec![O, O, O, O, O, O, G, M, G, M],
             vec![O, O, O, O, O, O, O, O, O, O],
         ];
-
-        let _facility = vec![
-            vec![O, M, O, M],
-            vec![G, O, O, O],
-            vec![O, O, G, O],
-            vec![O, O, O, O],
-        ];
-        Ok(Self {
-            input
-        })
-    }
-}
-
-impl Solution for AoC2016_11 {
-    fn part_one(&self) -> String {
-        min_steps(&self.input.clone())
+        min_steps(&input)
             .to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let input = vec![
+            vec![G, M, G, O, G, O, O, O, O, O, G, M, G, M],
+            vec![O, O, O, M, O, M, O, O, O, O, O, O, O, O],
+            vec![O, O, O, O, O, O, G, M, G, M, O, O, O, O],
+            vec![O, O, O, O, O, O, O, O, O, O, O, O, O, O],
+        ];
+        min_steps(&input)
+            .to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2016/Day 11: Radioisotope Thermoelectric Generators".to_string()
@@ -209,7 +190,7 @@ mod test {
     fn aoc2016_11_correctness() -> io::Result<()> {
         let sol = AoC2016_11::new()?;
         assert_eq!(sol.part_one(), "31");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "55");
         Ok(())
     }
 }
