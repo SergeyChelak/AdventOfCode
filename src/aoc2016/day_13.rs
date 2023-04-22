@@ -26,14 +26,13 @@ impl Maze {
 
     fn is_open(&self, pos: &Position) -> bool {
         let (x, y) = (pos.0, pos.1);
-        let val = x * x + 3 * x + 2 * x * y + y + y * y + self.fav_number;
-        let mut mask = 1u32;
+        let mut val = x * x + 3 * x + 2 * x * y + y + y * y + self.fav_number;
         let mut bits = 0;
-        while mask > 0 {
-            if val & mask > 0 {
+        while val > 0 {
+            if val & 1 == 1 {
                 bits += 1;
             }
-            mask <<= 1;
+            val >>= 1;
         }
         bits % 2 == 0
     }
