@@ -45,7 +45,7 @@ impl Iterator for HashGenerator {
     fn next(&mut self) -> Option<Self::Item> {
         for index in self._index..usize::MAX {
             let hash = (self.hasher)(&self.salt, index);
-            let (reps, ch) = longest_char_sequence(&hash);
+            let (reps, ch) = find_char_sequence(&hash);
             if reps > 2 {
                 self._index = index + 1;
                 return Some(HashInfo {
@@ -59,7 +59,7 @@ impl Iterator for HashGenerator {
     }
 }
 
-fn longest_char_sequence(s: &str) -> (usize, char) {
+fn find_char_sequence(s: &str) -> (usize, char) {
     let mut count = 0;
     let mut prev = '\0';
     let mut res_count = 0;
@@ -72,6 +72,8 @@ fn longest_char_sequence(s: &str) -> (usize, char) {
                 res_char = prev;
             }
         } else {
+            // Only consider the first triplet in a hash
+            if res_count == 3 { break; }
             count = 1;
         }
         prev = ch;
@@ -158,10 +160,16 @@ mod test {
     }
 
     #[test]
-    fn aoc2016_14_longest_char_sequence() {
-        assert_eq!(longest_char_sequence("cc38887a5"), (3, '8'));
-        assert_eq!(longest_char_sequence("abbccc"), (3, 'c'));
-        assert_eq!(longest_char_sequence("aaaabbbccd"), (4, 'a'));
+    fn aoc2016_14_find_char_sequence() {
+        assert_eq!(find_char_sequence("cc38887a5"), (3, '8'));
+        assert_eq!(find_char_sequence("abbccc"), (3, 'c'));
+        assert_eq!(find_char_sequence("aaaabbbccd"), (4, 'a'));
+    }
+
+    #[test]
+    fn aoc2016_14_example() {
+        let index = find_key_index("abc", &hash);
+        assert_eq!(index.unwrap(), 22728);
     }
 
     #[test]
