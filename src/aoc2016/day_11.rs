@@ -14,8 +14,6 @@ const M: bool = true;
 const O: bool = false;
 
 type Level = Vec<bool>;
-type Facility = Vec<Level>;
-type StateHash = u64;
 
 trait Validable {
     fn is_valid(&self) -> bool;
@@ -28,15 +26,16 @@ impl Validable for Level {
             return true;
         }
         for i in (1..len).step_by(2) {
-            if !self[i] {
-                continue;
-            } else if !self[i - 1] {
+            if self[i] && !self[i - 1] {
                 return false;
             }
         }
         true
     }
 }
+
+type Facility = Vec<Level>;
+type StateHash = u64;
 
 #[derive(Hash)]
 struct State {
