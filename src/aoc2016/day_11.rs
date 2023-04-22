@@ -96,11 +96,13 @@ impl State {
 
     fn is_valid_level(level: &Level) -> bool {
         let len = level.len();
-        let has_generators = (0..len).step_by(2).filter(|v| level[*v]).count() > 0;
+        if (0..len).step_by(2).filter(|v| level[*v]).count() == 0 {
+            return true;
+        }
         for i in (1..len).step_by(2) {
             if !level[i] {
                 continue;
-            } else if !level[i - 1] && has_generators {
+            } else if !level[i - 1] {
                 return false;
             }
         }
