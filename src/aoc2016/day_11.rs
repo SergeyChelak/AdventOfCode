@@ -44,9 +44,9 @@ struct State {
 }
 
 impl State {
-    fn new(facility: &Facility, level: usize) -> Self {
+    fn new(facility: Facility, level: usize) -> Self {
         Self {
-            facility: facility.clone(),
+            facility,
             level,
         }
     }
@@ -97,7 +97,7 @@ impl State {
             next[self.level][*i] = !next[self.level][*i];
             next[next_level][*i] = !next[next_level][*i];
         }
-        let state = State::new(&next, next_level);
+        let state = State::new(next, next_level);
         if state.is_valid() {
             Some(state)
         } else {
@@ -127,9 +127,9 @@ impl Validable for State {
 fn min_steps(facility: &Facility) -> usize {
     let mut visited: HashSet<StateHash> = HashSet::new();
     let mut step = 0;
-    let mut states = vec![State::new(facility, 0)];
+    let mut states = vec![State::new(facility.clone(), 0)];
     'ml: while !states.is_empty() {
-        let mut next_states = Vec::new();
+        let mut next_states = Vec::with_capacity(2 * states.len());
         step += 1;
         for state in &states {
             for pos in state.all_movable_indices() {
