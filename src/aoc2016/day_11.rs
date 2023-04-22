@@ -17,6 +17,27 @@ type Level = Vec<bool>;
 type Facility = Vec<Level>;
 type StateHash = u64;
 
+trait Validable {
+    fn is_valid(&self) -> bool;
+}
+
+impl Validable for Level {
+    fn is_valid(&self) -> bool {
+        let len = self.len();
+        if (0..len).step_by(2).filter(|v| self[*v]).count() == 0 {
+            return true;
+        }
+        for i in (1..len).step_by(2) {
+            if !self[i] {
+                continue;
+            } else if !self[i - 1] {
+                return false;
+            }
+        }
+        true
+    }
+}
+
 #[derive(Hash)]
 struct State {
     facility: Facility,
@@ -29,15 +50,6 @@ impl State {
             facility: facility.clone(),
             level,
         }
-    }
-
-    fn is_valid(&self) -> bool {
-        for row in &self.facility {
-            if !Self::is_valid_level(row) {
-                return false;
-            }
-        }
-        true
     }
 
     #[allow(clippy::needless_range_loop)]
@@ -94,26 +106,22 @@ impl State {
         }
     }
 
-    fn is_valid_level(level: &Level) -> bool {
-        let len = level.len();
-        if (0..len).step_by(2).filter(|v| level[*v]).count() == 0 {
-            return true;
-        }
-        for i in (1..len).step_by(2) {
-            if !level[i] {
-                continue;
-            } else if !level[i - 1] {
-                return false;
-            }
-        }
-        true
-    }
-
     fn hash(&self) -> StateHash {
         let mut hasher = DefaultHasher::new();
         self.facility.hash(&mut hasher);
         self.level.hash(&mut hasher);
         hasher.finish()
+    }
+}
+
+impl Validable for State {
+    fn is_valid(&self) -> bool {
+        for row in &self.facility {
+            if !row.is_valid() {
+                return false;
+            }
+        }
+        true
     }
 }
 
