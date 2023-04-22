@@ -34,6 +34,12 @@ impl Validable for Level {
     }
 }
 
+fn copy(src: &Level, dest: &mut Level) {
+    for (place, data) in dest.iter_mut().zip(src.iter()) {
+        *place = *data
+    }
+}
+
 type Facility = Vec<Level>;
 type StateHash = u64;
 
@@ -41,13 +47,18 @@ type StateHash = u64;
 struct State {
     facility: Facility,
     level: usize,
+    _buf1: Level,
+    _buf2: Level,
 }
 
 impl State {
     fn new(facility: Facility, level: usize) -> Self {
+        let buf_size = facility[0].len();
         Self {
             facility,
             level,
+            _buf1: vec![O; buf_size],
+            _buf2: vec![O; buf_size],
         }
     }
 
@@ -91,13 +102,19 @@ impl State {
         }
     }
 
-    fn with_move(&self, next_level: usize, position: &[usize]) -> Option<State> {
-        let mut next = self.facility.clone();
+    fn with_move(&mut self, next_level: usize, position: &[usize]) -> Option<State> {
+        copy(&self.facility[self.level], &mut self._buf1);
+        copy(&self.facility[next_level], &mut self._buf2);
+
         for i in position {
-            next[self.level][*i] = !next[self.level][*i];
-            next[next_level][*i] = !next[next_level][*i];
+            self._buf1[*i] = !self._buf1[*i];
+            self._buf2[*i] = !self._buf2[*i];
         }
-        if next[self.level].is_valid() && next[next_level].is_valid() {
+
+        if self._buf1.is_valid() && self._buf2.is_valid() {
+            let mut next = self.facility.clone();
+            copy(&self._buf1, &mut next[self.level]);
+            copy(&self._buf2, &mut next[next_level]);
             Some(State::new(next, next_level))
         } else {
             None
@@ -119,7 +136,7 @@ fn min_steps(facility: &Facility) -> usize {
     'ml: while !states.is_empty() {
         let mut next_states = Vec::with_capacity(2 * states.len());
         step += 1;
-        for state in &states {
+        for state in states.iter_mut() {
             for pos in state.all_movable_indices() {
                 for level in state.adjacent_levels() {
                     if let Some(next) = state.with_move(level, &pos) {
