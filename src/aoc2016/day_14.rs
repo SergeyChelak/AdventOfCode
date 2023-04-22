@@ -48,7 +48,7 @@ impl Iterator for HashGenerator {
             let (reps, ch) = longest_char_sequence(&hash);
             if reps > 2 {
                 self._index = index + 1;
-                return Some(HashInfo{
+                return Some(HashInfo {
                     symbol: ch,
                     reps,
                     index,
@@ -116,13 +116,13 @@ fn find_key_index(salt: &str, hasher: &'static FnHasher) -> Option<usize> {
 }
 
 pub struct AoC2016_14 {
-    salt: String
+    salt: String,
 }
 
 impl AoC2016_14 {
     pub fn new() -> io::Result<Self> {
         Ok(Self {
-            salt: "ihaygndm".to_string()
+            salt: "ihaygndm".to_string(),
         })
     }
 }
