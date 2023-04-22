@@ -162,14 +162,7 @@ mod test {
         assert_eq!(longest_char_sequence("cc38887a5"), (3, '8'));
         assert_eq!(longest_char_sequence("abbccc"), (3, 'c'));
         assert_eq!(longest_char_sequence("aaaabbbccd"), (4, 'a'));
-        //assert_eq!(longest_char_sequence(""), (, ''));
     }
-
-    // #[test]
-    // fn aoc2016_14_example() {
-    //     let index = find_key_index("abc");
-    //     assert_eq!(index.unwrap(), 22728);
-    // }
 
     #[test]
     fn aoc2016_14_calc_stretched_hash() {
