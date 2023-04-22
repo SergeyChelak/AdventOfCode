@@ -97,9 +97,8 @@ impl State {
             next[self.level][*i] = !next[self.level][*i];
             next[next_level][*i] = !next[next_level][*i];
         }
-        let state = State::new(next, next_level);
-        if state.is_valid() {
-            Some(state)
+        if next[self.level].is_valid() && next[next_level].is_valid() {
+            Some(State::new(next, next_level))
         } else {
             None
         }
@@ -110,17 +109,6 @@ impl State {
         self.facility.hash(&mut hasher);
         self.level.hash(&mut hasher);
         hasher.finish()
-    }
-}
-
-impl Validable for State {
-    fn is_valid(&self) -> bool {
-        for row in &self.facility {
-            if !row.is_valid() {
-                return false;
-            }
-        }
-        true
     }
 }
 
