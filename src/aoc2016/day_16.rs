@@ -12,15 +12,20 @@ impl AoC2016_16 {
             input: "11110010111001001".to_string(),
         })
     }
+
+    fn fill(&self, size: usize) -> String {
+        checksum(&fill(&self.input, size))
+    }
 }
 
 impl Solution for AoC2016_16 {
     fn part_one(&self) -> String {
-        checksum(&fill(&self.input, 272))
+        self.fill(272)
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        self.fill(35651584)
+    }
 
     fn description(&self) -> String {
         "AoC 2016/Day 16: Dragon Checksum".to_string()
@@ -36,17 +41,20 @@ fn fill(s: &str, size: usize) -> String {
 }
 
 fn transform(s: &str) -> String {
-    let b = s.chars()
-            .rev()
-            .map(|ch| if ch == '0' { '1' } else { '0' })
-            .collect::<String>();
+    let b = s
+        .chars()
+        .rev()
+        .map(|ch| if ch == '0' { '1' } else { '0' })
+        .collect::<String>();
     format!("{s}0{b}")
 }
 
 fn checksum(s: &str) -> String {
     let mut data = s.to_string();
     while data.len() % 2 == 0 {
-        data = data.chars().step_by(2)
+        data = data
+            .chars()
+            .step_by(2)
             .zip(data.chars().skip(1).step_by(2))
             .map(|(a, b)| if a == b { '1' } else { '0' })
             .collect::<String>();
@@ -62,7 +70,7 @@ mod test {
     fn aoc2016_16_correctness() -> io::Result<()> {
         let sol = AoC2016_16::new()?;
         assert_eq!(sol.part_one(), "01110011101111011");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "11001111011000111");
         Ok(())
     }
 
