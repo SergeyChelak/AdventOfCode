@@ -73,7 +73,9 @@ fn find_char_sequence(s: &str) -> (usize, char) {
             }
         } else {
             // Only consider the first triplet in a hash
-            if res_count == 3 { break; }
+            if res_count == 3 {
+                break;
+            }
             count = 1;
         }
         prev = ch;
