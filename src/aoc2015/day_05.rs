@@ -21,18 +21,18 @@ impl AoC2015_05 {
                 return false;
             }
         }
-        let mut vovel_count = 0;
-        let vovels: HashSet<char> = vec!['a', 'e', 'i', 'o', 'u'].into_iter().collect();
+        let mut vowel_count = 0;
+        let vowels: HashSet<char> = vec!['a', 'e', 'i', 'o', 'u'].into_iter().collect();
         let mut prev_char = '\0';
         let mut has_rep = false;
         for ch in s.chars() {
-            if vovels.contains(&ch) {
-                vovel_count += 1;
+            if vowels.contains(&ch) {
+                vowel_count += 1;
             }
             has_rep = has_rep || prev_char == ch;
             prev_char = ch;
         }
-        vovel_count > 2 && has_rep
+        vowel_count > 2 && has_rep
     }
 
     fn is_nice_str_pt2(s: &str) -> bool {

@@ -134,13 +134,13 @@ impl AoC2016_14 {
 impl Solution for AoC2016_14 {
     fn part_one(&self) -> String {
         find_key_index(&self.salt, &hash)
-            .expect("Correspoding hash index not found")
+            .expect("Corresponding hash index not found")
             .to_string()
     }
 
     fn part_two(&self) -> String {
         find_key_index(&self.salt, &stretched_hash)
-            .expect("Correspoding hash index not found")
+            .expect("Corresponding hash index not found")
             .to_string()
     }
 

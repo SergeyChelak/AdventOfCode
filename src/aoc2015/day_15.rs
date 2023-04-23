@@ -21,7 +21,7 @@ impl FromStr for Ingredient {
                 let props = item.split(' ').collect::<Vec<&str>>();
                 props[1]
                     .parse::<i32>()
-                    .expect("Failed to parse ingedient value")
+                    .expect("Failed to parse ingredient value")
             })
             .collect::<Vec<i32>>();
         Ok(Self { components: values })
@@ -113,7 +113,7 @@ impl AoC2015_15 {
         for line in lines {
             let ingr = line
                 .parse::<Ingredient>()
-                .expect("Failed to parse ingedient");
+                .expect("Failed to parse ingredient");
             ingredients.push(ingr);
         }
         Ok(Self { ingredients })

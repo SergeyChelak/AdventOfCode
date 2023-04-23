@@ -78,26 +78,21 @@ impl Computer {
     fn do_instruction(&mut self, inst: Instruction) {
         match inst {
             Instruction::Hlf(reg) => {
-                // hlf r sets register r to half its current value, then continues with the next instruction.
                 self.register[reg] >>= 1;
                 self.pc += 1;
             }
             Instruction::Tpl(reg) => {
-                // tpl r sets register r to triple its current value, then continues with the next instruction.
                 self.register[reg] *= 3;
                 self.pc += 1;
             }
             Instruction::Inc(reg) => {
-                // inc r increments register r, adding 1 to it, then continues with the next instruction.
                 self.register[reg] += 1;
                 self.pc += 1;
             }
             Instruction::Jmp(offset) => {
-                // jmp offset is a jump; it continues with the instruction offset away relative to itself.
                 self.pc = (self.pc as isize + offset) as usize;
             }
             Instruction::Jie(reg, offset) => {
-                // jie r, offset is like jmp, but only jumps if register r is even ("jump if even").
                 if self.register[reg] % 2 == 0 {
                     self.pc = (self.pc as isize + offset) as usize;
                 } else {
@@ -105,7 +100,6 @@ impl Computer {
                 }
             }
             Instruction::Jio(reg, offset) => {
-                // jio r, offset is like jmp, but only jumps if register r is 1 ("jump if one", not odd).
                 if self.register[reg] == 1 {
                     self.pc = (self.pc as isize + offset) as usize;
                 } else {
