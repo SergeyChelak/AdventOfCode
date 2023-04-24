@@ -37,7 +37,8 @@ fn fill(s: &str, size: usize) -> String {
     while data.len() < size {
         data = transform(&data);
     }
-    data[..size].to_string()
+    data.truncate(size);
+    data
 }
 
 fn transform(s: &str) -> String {
@@ -54,9 +55,9 @@ fn checksum(s: &str) -> String {
     while data.len() % 2 == 0 {
         data = data
             .chars()
-            .step_by(2)
-            .zip(data.chars().skip(1).step_by(2))
-            .map(|(a, b)| if a == b { '1' } else { '0' })
+            .collect::<Vec<char>>()
+            .chunks(2)
+            .map(|chunk| if chunk[0] == chunk[1] { '1' } else { '0' })
             .collect::<String>();
     }
     data
