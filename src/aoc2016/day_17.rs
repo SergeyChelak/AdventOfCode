@@ -16,11 +16,15 @@ impl AoC2016_17 {
 
 impl Solution for AoC2016_17 {
     fn part_one(&self) -> String {
-        find_path(&self.prefix).expect("Path to exit should exist")
+        find_path(&self.prefix, true).expect("Path to exit should exist")
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        find_path(&self.prefix, false)
+            .expect("Path to exit should exist")
+            .len()
+            .to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2016/Day 17: Two Steps Forward".to_string()
@@ -118,24 +122,27 @@ impl Room {
     }
 }
 
-fn find_path(prefix: &str) -> Option<String> {
+fn find_path(prefix: &str, is_min_mode: bool) -> Option<String> {
+    let mut path = None;
     let mut locations = vec![Room::new()];
-    while !locations.is_empty() {
+    'outer: while !locations.is_empty() {
         let mut next_locations = Vec::with_capacity(2 * locations.len());
         for loc in &locations {
-            let mut adjacent = loc.adjacent_rooms(prefix);
-            let exit_cells = adjacent
-                .iter()
-                .filter(|room| room.is_exit())
-                .collect::<Vec<&Room>>();
-            if let Some(room) = exit_cells.first() {
-                return Some(room.path.clone());
+            let adjacent = loc.adjacent_rooms(prefix);
+            for room in adjacent {
+                if room.is_exit() {
+                    path = Some(room.path.clone());
+                    if is_min_mode {
+                        break 'outer;
+                    }
+                } else {
+                    next_locations.push(room);
+                }
             }
-            next_locations.append(&mut adjacent);
         }
         locations = next_locations;
     }
-    None
+    path
 }
 
 #[cfg(test)]
@@ -146,16 +153,16 @@ mod test {
     fn aoc2016_17_correctness() -> io::Result<()> {
         let sol = AoC2016_17::new()?;
         assert_eq!(sol.part_one(), "DRRDRLDURD");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "618");
         Ok(())
     }
 
     #[test]
     fn aoc2016_17_examples() {
-        assert_eq!(find_path("ihgpwlah").unwrap(), "DDRRRD");
-        assert_eq!(find_path("kglvqrro").unwrap(), "DDUDRLRRUDRD");
+        assert_eq!(find_path("ihgpwlah", true).unwrap(), "DDRRRD");
+        assert_eq!(find_path("kglvqrro", true).unwrap(), "DDUDRLRRUDRD");
         assert_eq!(
-            find_path("ulqzkmiv").unwrap(),
+            find_path("ulqzkmiv", true).unwrap(),
             "DRURDRUDDLLDLUURRDULRLDUUDDDRR"
         );
     }
