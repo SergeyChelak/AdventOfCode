@@ -14,43 +14,27 @@ impl AoC2016_19 {
 
 impl Solution for AoC2016_19 {
     fn part_one(&self) -> String {
-        play_white_elephant_adjacent(self.elves).to_string()
+        // https://en.wikipedia.org/wiki/Josephus_problem
+        let prev = self.elves - (self.elves.next_power_of_two() >> 1);
+        (2 * prev + 1).to_string()
     }
 
     fn part_two(&self) -> String {
-        play_white_elephant_cross(self.elves).to_string()
+        // this solved by https://www.youtube.com/watch?v=5Zqs6e5DwWQ
+        let mut i = 1;
+        while 3 * i < self.elves {
+            i *= 3;
+        }
+        i = if self.elves < 2 * i {
+            self.elves - i
+        } else {
+            2 * self.elves - 3 * i
+        };
+        i.to_string()
     }
 
     fn description(&self) -> String {
         "AoC 2016/Day 19: An Elephant Named Joseph".to_string()
-    }
-}
-
-fn play_white_elephant_adjacent(participants: usize) -> usize {
-    let mut table = vec![1; participants];
-    let mut ptr = 0usize;
-    loop {
-        let mut next = (ptr + 1) % participants;
-        while table[next] == 0 {
-            next = (next + 1) % participants;
-        }
-        if next == ptr {
-            break next + 1;
-        }
-        table[ptr] += table[next];
-        table[next] = 0;
-        ptr = next;
-        while table[ptr] == 0 {
-            ptr = (ptr + 1) % participants;
-        }
-    }
-}
-
-fn play_white_elephant_cross(participants: usize) -> usize {
-    let mut table = vec![1; participants];
-    let mut ptr = 0usize;
-    loop {
-        todo!()
     }
 }
 
@@ -62,17 +46,19 @@ mod test {
     fn aoc2016_19_correctness() -> io::Result<()> {
         let sol = AoC2016_19::new()?;
         assert_eq!(sol.part_one(), "1830117");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "1417887");
         Ok(())
     }
 
     #[test]
     fn aoc2016_19_example1() {
-        assert_eq!(play_white_elephant_adjacent(5), 3);
+        let res = AoC2016_19 { elves: 5 }.part_one();
+        assert_eq!(res, "3");
     }
 
     #[test]
     fn aoc2016_19_example2() {
-        assert_eq!(play_white_elephant_cross(5), 2);
+        let res = AoC2016_19 { elves: 5 }.part_one();
+        assert_eq!(res, "2");
     }
 }
