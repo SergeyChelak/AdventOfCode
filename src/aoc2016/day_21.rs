@@ -174,18 +174,8 @@ fn rotate_letter_position(inp: &str, x: char) -> String {
 // This method is acceptable to pass the puzzle but it's incorrect in general case
 fn rotate_letter_position_inv(inp: &str, x: char) -> String {
     if let Some(index) = inp.find(x) {
-        let len = inp.len();
-        let prev = if index % 2 == 0 {
-            let mut a = (len + index - 2) % len;
-            if a / 2 < 4 {
-                a += len;
-            }
-            a / 2
-        } else {
-            (len + index - 1) % len / 2
-        };
-        let steps = (len + index - prev) % len;
-        rotate_left(inp, steps)
+        let tab = [1, 1, 6, 2, 7, 3, 0, 4];
+        rotate_left(inp, tab[index])
     } else {
         inp.to_string()
     }
