@@ -173,18 +173,14 @@ fn rotate_letter_position(inp: &str, x: char) -> String {
 fn rotate_letter_position_inv(inp: &str, x: char) -> String {
     if let Some(index) = inp.find(x) {
         let len = inp.len();
-        let prev = if len > 3 {
-            if index % 2 == 0 {
-                let mut a = (len + index - 2) % len;
-                if a / 2 < 4 {
-                    a += len;
-                }
-                a / 2
-            } else {
-                (len + index - 1) % len / 2
+        let prev = if index % 2 == 0 {
+            let mut a = (len + index - 2) % len;
+            if a / 2 < 4 {
+                a += len;
             }
+            a / 2
         } else {
-            todo!()
+            (len + index - 1) % len / 2
         };
         let steps = (len + index - prev) % len;
         rotate_left(inp, steps)
