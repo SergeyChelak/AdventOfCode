@@ -3,6 +3,7 @@ use crate::utils::*;
 
 use std::io;
 
+#[derive(Debug)]
 enum Operation {
     SwapPosition(usize, usize),    // swap position X with position Y
     SwapLetter(char, char),        // swap letter X with letter Y
@@ -107,9 +108,21 @@ impl Operation {
             Self::SwapLetter(x, y) => swap_letter(inp, *x, *y),
             Self::RotateLeft(x) => rotate_right(inp, *x),
             Self::RotateRight(x) => rotate_left(inp, *x),
-            Self::RotateLetterPosition(x) => undo_rotate_letter_position(inp, *x),
+            Self::RotateLetterPosition(x) => rotate_letter_position_inv(inp, *x),
             Self::ReversePosition(x, y) => reverse_position(inp, *x, *y),
             Self::MovePosition(x, y) => move_position(inp, *y, *x),
+        }
+    }
+
+    fn descr(&self) -> String {
+        match self {
+            Self::SwapPosition(x, y) => format!("swap_position {x} {y}"),
+            Self::SwapLetter(x, y) => format!("swap_letter {x} {y}"),
+            Self::RotateLeft(x) => format!("rotate_right {x}"),
+            Self::RotateRight(x) => format!("rotate_left {x}"),
+            Self::RotateLetterPosition(x) => format!("rotate_letter_position {x}"),
+            Self::ReversePosition(x, y) => format!("reverse_position {x} {y}"),
+            Self::MovePosition(x, y) => format!("move_position {x} {y}"),
         }
     }
 }
@@ -171,13 +184,13 @@ fn rotate_letter_position(inp: &str, x: char) -> String {
     }
 }
 
-fn undo_rotate_letter_position(inp: &str, x: char) -> String {
+fn rotate_letter_position_inv(inp: &str, x: char) -> String {
     if let Some(index) = inp.find(x) {
         let len = inp.len();
         let prev = if len > 3 {
             if index % 2 == 0 {
                 let mut a = (len + index - 2) % len;
-                if a % 2 != 0 {
+                if a / 2 < 4 {
                     a += len;
                 }
                 a / 2
@@ -242,6 +255,32 @@ impl AoC2016_21 {
             .rev()
             .fold(input.to_string(), |acc, v| v.unscramble(&acc))
     }
+
+    fn inversion(&self, inp: &str) {
+        let mut forward = Vec::new();
+        let mut s = inp.to_string();
+        for op in &self.operations {
+            let arg = s.clone();
+            s = op.scramble(&s);
+            forward.push([arg, op.descr().clone(), s.clone()]);
+        }
+
+        let mut backward = Vec::new();
+        for op in self.operations.iter().rev() {
+            let arg = s.clone();
+            s = op.unscramble(&s);
+            backward.push([arg, op.descr(), s.clone()]);
+        }
+        
+        for (f, b) in forward.iter().rev().zip(backward.iter()) {
+            let is_ok = f[0] == b[2] && f[2] == b[0];
+            let check = if is_ok { "[OK]" } else { "[FAILED]" };
+            println!("F: {:10} {:25} -> {:10} B: {:10} {:25} -> {:10}  {:10}", f[0], f[1], f[2], b[0], b[1], b[2], check);
+            if !is_ok {
+                break;
+            }
+        }
+    }
 }
 
 impl Solution for AoC2016_21 {
@@ -250,6 +289,7 @@ impl Solution for AoC2016_21 {
     }
 
     fn part_two(&self) -> String {
+        self.inversion("abcdefgh");
         self.unscramble("fbgdceah")
     }
 
@@ -273,7 +313,7 @@ mod test {
     fn aoc2016_21_correctness() -> io::Result<()> {
         let sol = AoC2016_21::new()?;
         assert_eq!(sol.part_one(), "bgfacdeh");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "bdgheacf");
         Ok(())
     }
 
@@ -381,13 +421,13 @@ mod test {
         {
             let original = "abdec";
             let modified = rotate_letter_position(original, 'b');
-            assert_eq!(undo_rotate_letter_position(&modified, 'b'), original);
+            assert_eq!(rotate_letter_position_inv(&modified, 'b'), original);
         }
 
         {
             let original = "ecabd";
             let modified = rotate_letter_position(original, 'd');
-            assert_eq!(undo_rotate_letter_position(&modified, 'd'), original);
+            assert_eq!(rotate_letter_position_inv(&modified, 'd'), original);
         }
     }
 }
