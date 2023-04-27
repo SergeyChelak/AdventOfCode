@@ -16,7 +16,6 @@ struct Node {
 impl Node {
     fn parse(s: &str) -> Self {
         let tokens = s.split_whitespace().collect::<Vec<&str>>();
-        println!("{:?}", tokens);
         let (x, y) = {
             let name = tokens[0].split('-').collect::<Vec<&str>>();
             let x = name[1][1..]
@@ -34,8 +33,8 @@ impl Node {
 
         let size = value_of(1).expect("Size should be integer value");
         let used = value_of(2).expect("Used should be integer value");
-        let used_percent = value_of(4).expect("Percentage should be integer value");
         let avail = value_of(3).expect("Avail should be integer value");
+        let used_percent = value_of(4).expect("Percentage should be integer value");
         Self {
             x,
             y,
@@ -62,8 +61,20 @@ impl AoC2016_22 {
 }
 
 impl Solution for AoC2016_22 {
-    // fn part_one(&self) -> String {
-    // }
+    fn part_one(&self) -> String {
+        let mut count = 0usize;
+        for i in 0..self.nodes.len() {
+            if self.nodes[i].used == 0 {
+                continue;
+            }
+            for j in 0..self.nodes.len() {
+                if i != j && self.nodes[i].used <= self.nodes[j].avail {
+                    count += 1;
+                }
+            }
+        }
+        count.to_string()
+    }
 
     // fn part_two(&self) -> String {
     // }
@@ -80,7 +91,7 @@ mod test {
     #[test]
     fn aoc2016_22_input_load_test() -> io::Result<()> {
         let sol = AoC2016_22::new()?;
-        assert!(!sol.nodes.is_empty());
+        assert_eq!(sol.nodes.len(), 990);
         Ok(())
     }
 
@@ -98,7 +109,7 @@ mod test {
     #[test]
     fn aoc2016_22_correctness() -> io::Result<()> {
         let sol = AoC2016_22::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "960");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
