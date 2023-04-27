@@ -170,6 +170,8 @@ fn rotate_letter_position(inp: &str, x: char) -> String {
     }
 }
 
+// TODO: fix it
+// This method is acceptable to pass the puzzle but it's incorrect in general case
 fn rotate_letter_position_inv(inp: &str, x: char) -> String {
     if let Some(index) = inp.find(x) {
         let len = inp.len();
