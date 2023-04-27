@@ -100,6 +100,18 @@ impl Operation {
             Self::MovePosition(x, y) => move_position(inp, *x, *y),
         }
     }
+
+    fn unscramble(&self, inp: &str) -> String {
+        match self {
+            Self::SwapPosition(x, y) => swap_position(inp, *x, *y),
+            Self::SwapLetter(x, y) => swap_letter(inp, *x, *y),
+            Self::RotateLeft(x) => rotate_right(inp, *x),
+            Self::RotateRight(x) => rotate_left(inp, *x),
+            Self::RotateLetterPosition(x) => undo_rotate_letter_position(inp, *x),
+            Self::ReversePosition(x, y) => reverse_position(inp, *x, *y),
+            Self::MovePosition(x, y) => move_position(inp, *y, *x),
+        }
+    }
 }
 
 fn swap_position(inp: &str, x: usize, y: usize) -> String {
@@ -147,11 +159,36 @@ fn rotate_right(inp: &str, x: usize) -> String {
 }
 
 fn rotate_letter_position(inp: &str, x: char) -> String {
-    if let Some(mut index) = inp.find(x) {
-        if index > 3 {
-            index += 1;
+    if let Some(index) = inp.find(x) {
+        let mut steps = index;
+        if steps > 3 {
+            steps += 1;
         }
-        rotate_right(inp, index + 1)
+        steps = steps + 1;
+        rotate_right(inp, steps)
+    } else {
+        inp.to_string()
+    }
+}
+
+fn undo_rotate_letter_position(inp: &str, x: char) -> String {
+    if let Some(index) = inp.find(x) {
+        let len = inp.len();
+        let prev = if len > 3 {
+            if index % 2 == 0 {
+                let mut a = (len + index - 2) % len;
+                if a % 2 != 0 {
+                    a += len;
+                }
+                a / 2
+            } else {
+                (len + index - 1) % len / 2
+            }
+        } else {
+            todo!()
+        };
+        let steps = (len + index - prev) % len;
+        return rotate_left(inp, steps);
     } else {
         inp.to_string()
     }
@@ -192,17 +229,29 @@ impl AoC2016_21 {
             .collect::<Vec<Operation>>();
         Ok(Self { operations })
     }
+
+    fn scramble(&self, input: &str) -> String {
+        self.operations
+            .iter()
+            .fold(input.to_string(), |acc, v| v.scramble(&acc))
+    }
+
+    fn unscramble(&self, input: &str) -> String {
+        self.operations
+            .iter()
+            .rev()
+            .fold(input.to_string(), |acc, v| v.unscramble(&acc))
+    }
 }
 
 impl Solution for AoC2016_21 {
     fn part_one(&self) -> String {
-        self.operations
-            .iter()
-            .fold("abcdefgh".to_string(), |acc, v| v.scramble(&acc))
+        self.scramble("abcdefgh")
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        self.unscramble("fbgdceah")
+    }
 
     fn description(&self) -> String {
         "AoC 2016/Day 21: Scrambled Letters and Hash".to_string()
@@ -267,5 +316,78 @@ mod test {
     fn aoc2016_21_op_move_position() {
         assert_eq!(move_position("bcdea", 1, 4), "bdeac");
         assert_eq!(move_position("bdeac", 3, 0), "abdec");
+    }
+
+    #[test]
+    fn aoc2016_21_unscramble()  -> io::Result<()> {
+        let sol = AoC2016_21::new()?;
+        assert_eq!(sol.unscramble("bgfacdeh"), "abcdefgh");
+        Ok(())
+    }
+
+    #[test]
+    fn aoc2016_21_invertible() {
+        {
+            let original = "abcde";
+            let modified = swap_position(original, 4, 0);
+            assert_eq!(swap_position(&modified, 4, 0), original);
+        }
+
+        {
+            let original = "ebcda";
+            let modified = swap_letter(original, 'd', 'b');
+            assert_eq!(swap_letter(&modified, 'd', 'b'), original);
+        }
+
+        {
+            let original = "edcba";
+            let modified = reverse_position(original, 0, 4);
+            assert_eq!(reverse_position(&modified, 0, 4), original);
+        }
+
+        {
+            let original = "abcde";
+            let modified = rotate_left(original, 3);
+            assert_eq!(rotate_right(&modified, 3), original);
+        }
+
+        {
+            // NO!!
+            let original = "abcde";
+            let modified = rotate_right(original, 3);
+            assert_eq!(rotate_left(&modified, 3), original);
+        }
+
+        {
+            // NO!!
+            let original = "edcba";
+            let modified = reverse_position(original, 0, 4);
+            assert_eq!(reverse_position(&modified, 0, 4), original);
+        }
+
+        {
+            // REVERSE ARGUMENTS
+            let original = "bcdea";
+            let modified = move_position(original, 1, 4);
+            assert_eq!(move_position(&modified, 4, 1), original);
+        }
+
+        {
+            let original = "bdeac";
+            let modified = move_position(original, 3, 0);
+            assert_eq!(move_position(&modified, 0, 3), original);
+        }
+
+        {
+            let original = "abdec";
+            let modified = rotate_letter_position(original, 'b');
+            assert_eq!(undo_rotate_letter_position(&modified, 'b'), original);
+        }
+
+        {
+            let original = "ecabd";
+            let modified = rotate_letter_position(original, 'd');
+            assert_eq!(undo_rotate_letter_position(&modified, 'd'), original);
+        }
     }
 }
