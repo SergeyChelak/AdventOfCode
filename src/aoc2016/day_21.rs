@@ -318,77 +318,45 @@ mod test {
     }
 
     #[test]
-    fn aoc2016_21_unscramble()  -> io::Result<()> {
+    fn aoc2016_21_unscramble() -> io::Result<()> {
         let sol = AoC2016_21::new()?;
-        assert_eq!(sol.unscramble("bgfacdeh"), "abcdefgh");
+
+        let mut forward = Vec::new();
+        let mut s = "abcdefgh".to_string();
+        for op in &sol.operations {
+            let arg = s.clone();
+            s = op.scramble(&s);
+            forward.push([arg, op_description(op), s.clone()]);
+        }
+
+        let mut backward = Vec::new();
+        for op in sol.operations.iter().rev() {
+            let arg = s.clone();
+            s = op.unscramble(&s);
+            backward.push([arg, op_description(op), s.clone()]);
+        }
+
+        for (f, b) in forward.iter().rev().zip(backward.iter()) {
+            let is_ok = f[0] == b[2] && f[2] == b[0];
+            let check = if is_ok { "[OK]" } else { "[FAILED]" };
+            println!(
+                "F: {:10} {:25} -> {:10} B: {:10} {:25} -> {:10}  {:10}",
+                f[0], f[1], f[2], b[0], b[1], b[2], check
+            );
+            assert!(is_ok);
+        }
         Ok(())
     }
 
-    #[test]
-    fn aoc2016_21_invertible() {
-        {
-            let original = "abcde";
-            let modified = swap_position(original, 4, 0);
-            assert_eq!(swap_position(&modified, 4, 0), original);
-        }
-
-        {
-            let original = "ebcda";
-            let modified = swap_letter(original, 'd', 'b');
-            assert_eq!(swap_letter(&modified, 'd', 'b'), original);
-        }
-
-        {
-            let original = "edcba";
-            let modified = reverse_position(original, 0, 4);
-            assert_eq!(reverse_position(&modified, 0, 4), original);
-        }
-
-        {
-            let original = "abcde";
-            let modified = rotate_left(original, 3);
-            assert_eq!(rotate_right(&modified, 3), original);
-        }
-
-        {
-            // Inverse function
-            let original = "abcde";
-            let modified = rotate_right(original, 3);
-            assert_eq!(rotate_left(&modified, 3), original);
-        }
-
-        {
-            // Inverse function
-            let original = "edcba";
-            let modified = reverse_position(original, 0, 4);
-            assert_eq!(reverse_position(&modified, 0, 4), original);
-        }
-
-        {
-            // REVERSE ARGUMENTS
-            let original = "bcdea";
-            let modified = move_position(original, 1, 4);
-            assert_eq!(move_position(&modified, 4, 1), original);
-        }
-
-        {
-            let original = "bdeac";
-            let modified = move_position(original, 3, 0);
-            assert_eq!(move_position(&modified, 0, 3), original);
-        }
-
-        {   
-            // Inverse function
-            let original = "abdec";
-            let modified = rotate_letter_position(original, 'b');
-            assert_eq!(rotate_letter_position_inv(&modified, 'b'), original);
-        }
-
-        {
-            // Inverse function
-            let original = "ecabd";
-            let modified = rotate_letter_position(original, 'd');
-            assert_eq!(rotate_letter_position_inv(&modified, 'd'), original);
+    fn op_description(op: &Operation) -> String {
+        match op {
+            Operation::SwapPosition(x, y) => format!("swap_position {x} {y}"),
+            Operation::SwapLetter(x, y) => format!("swap_letter {x} {y}"),
+            Operation::RotateLeft(x) => format!("rotate_right {x}"),
+            Operation::RotateRight(x) => format!("rotate_left {x}"),
+            Operation::RotateLetterPosition(x) => format!("rotate_letter_position {x}"),
+            Operation::ReversePosition(x, y) => format!("reverse_position {x} {y}"),
+            Operation::MovePosition(x, y) => format!("move_position {x} {y}"),
         }
     }
 }
