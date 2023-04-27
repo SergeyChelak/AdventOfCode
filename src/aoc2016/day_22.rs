@@ -9,8 +9,6 @@ struct Node {
     y: usize,
     size: usize,
     used: usize,
-    used_percent: usize,
-    avail: usize,
 }
 
 impl Node {
@@ -33,16 +31,11 @@ impl Node {
 
         let size = value_of(1).expect("Size should be integer value");
         let used = value_of(2).expect("Used should be integer value");
-        let avail = value_of(3).expect("Avail should be integer value");
-        let used_percent = value_of(4).expect("Percentage should be integer value");
-        Self {
-            x,
-            y,
-            size,
-            used,
-            used_percent,
-            avail,
-        }
+        Self { x, y, size, used }
+    }
+
+    fn avail(&self) -> usize {
+        self.size - self.used
     }
 }
 
@@ -52,11 +45,13 @@ pub struct AoC2016_22 {
 
 impl AoC2016_22 {
     pub fn new() -> io::Result<Self> {
-        let nodes = read_file_as_lines("input/aoc2016_22")?[2..]
-            .iter()
-            .map(|s| Node::parse(s))
-            .collect::<Vec<Node>>();
-        Ok(Self { nodes })
+        let lines = &read_file_as_lines("input/aoc2016_22")?[2..];
+        Ok(Self::with_lines(lines))
+    }
+
+    fn with_lines(lines: &[String]) -> Self {
+        let nodes = lines.iter().map(|s| Node::parse(s)).collect::<Vec<Node>>();
+        Self { nodes }
     }
 }
 
@@ -68,7 +63,7 @@ impl Solution for AoC2016_22 {
                 continue;
             }
             for j in 0..self.nodes.len() {
-                if i != j && self.nodes[i].used <= self.nodes[j].avail {
+                if i != j && self.nodes[i].used <= self.nodes[j].avail() {
                     count += 1;
                 }
             }
@@ -80,7 +75,7 @@ impl Solution for AoC2016_22 {
     // }
 
     fn description(&self) -> String {
-        "".to_string()
+        "AoC 2016/Day 22: Grid Computing".to_string()
     }
 }
 
@@ -102,8 +97,6 @@ mod test {
         assert_eq!(node.y, 5);
         assert_eq!(node.size, 87);
         assert_eq!(node.used, 65);
-        assert_eq!(node.avail, 22);
-        assert_eq!(node.used_percent, 74);
     }
 
     #[test]
@@ -112,5 +105,25 @@ mod test {
         assert_eq!(sol.part_one(), "960");
         assert_eq!(sol.part_two(), "");
         Ok(())
+    }
+
+    #[test]
+    fn aoc2016_22_fewest_steps() {
+        let lines = [
+            "/dev/grid/node-x0-y0   10T    8T     2T   80%",
+            "/dev/grid/node-x0-y1   11T    6T     5T   54%",
+            "/dev/grid/node-x0-y2   32T   28T     4T   87%",
+            "/dev/grid/node-x1-y0    9T    7T     2T   77%",
+            "/dev/grid/node-x1-y1    8T    0T     8T    0%",
+            "/dev/grid/node-x1-y2   11T    7T     4T   63%",
+            "/dev/grid/node-x2-y0   10T    6T     4T   60%",
+            "/dev/grid/node-x2-y1    9T    8T     1T   88%",
+            "/dev/grid/node-x2-y2    9T    6T     3T   66%",
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect::<Vec<String>>();
+        let sol = AoC2016_22::with_lines(&lines);
+        assert_eq!(sol.part_two(), "7");
     }
 }
