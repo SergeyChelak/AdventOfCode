@@ -43,7 +43,6 @@ fn copy(src: &Level, dest: &mut Level) {
 type Facility = Vec<Level>;
 type StateHash = u64;
 
-#[derive(Hash)]
 struct State {
     facility: Facility,
     level: usize,
