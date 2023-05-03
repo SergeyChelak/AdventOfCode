@@ -1,8 +1,8 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::collections::HashSet;
 use std::collections::hash_map::DefaultHasher;
+use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
 use std::io;
 use std::num::ParseIntError;
@@ -91,60 +91,65 @@ fn grid_hash(grid: &Grid) -> u64 {
     hasher.finish()
 }
 
-fn find_fewest_steps(grid: &mut Grid, step: usize, steps: &mut usize, visited: &mut HashSet<u64>) {
-    if grid[0][0].is_target {
-        *steps = step.min(*steps);
-        println!("Found steps: {}", steps);
-        return;
+fn find_fewest_steps(initial: &Grid) -> usize {
+    let mut steps = 0usize;
+    let mut visited = HashSet::new();
+    let mut grids = Vec::new();
+    {
+        if initial[0][0].is_target {
+            return 0;
+        }
+        let hash = grid_hash(&initial);
+        visited.insert(hash);
+        grids.push(initial.clone());
     }
-    let hash = grid_hash(grid);
-    visited.insert(hash);
-    if step >= *steps {
-        return;
-    }
-    for i in 0..grid.len() {
-        for j in 0..grid[i].len() {            
-            let mut nodes = Vec::with_capacity(4);
-            let mut add_if_fit = |row: usize, col: usize| {
-                let node = &grid[i][j];
-                let adjacent = &grid[row][col];
-                if node.is_fit(adjacent) {
-                    nodes.push((row, col));
+    'main: while !grids.is_empty() {
+        steps += 1;
+        println!("Step = {steps}");
+        let mut next_grids = Vec::new();
+        for grid in grids {
+            for i in 0..grid.len() {
+                for j in 0..grid[i].len() {
+                    let mut positions = Vec::with_capacity(4);
+                    if i > 0 {
+                        positions.push((i - 1, j));
+                    }
+                    if i < grid.len() - 1 {
+                        positions.push((i + 1, j));
+                    }
+                    if j > 0 {
+                        positions.push((i, j - 1));
+                    }
+                    if j < grid[i].len() - 1 {
+                        positions.push((i, j + 1));
+                    }
+                    for (x, y) in positions {
+                        if grid[i][j].is_fit(&grid[x][y]) {
+                            let mut next = grid.clone();
+                            next[x][y].used += next[i][j].used;
+                            next[i][j].used = 0;
+                            next[x][y].is_target = next[i][j].is_target;
+                            next[i][j].is_target = false;
+                            if next[0][0].is_target {
+                                break 'main;
+                            }
+                            let hash = grid_hash(&next);
+                            if visited.contains(&hash) {
+                                continue;
+                            }
+                            visited.insert(hash);
+                            next_grids.push(next);
+                        }
+                    }
                 }
-            };
-            if i > 0 {
-                add_if_fit(i - 1, j);
-            }
-            if i < grid.len() - 1 {
-                add_if_fit(i + 1, j);
-
-            }
-            if j > 0 {
-                add_if_fit(i, j - 1);
-
-            }
-            if j < grid[i].len() - 1 {
-                add_if_fit(i, j + 1);
-            }
-            let source = grid[i][j];
-            for (row, col) in nodes {
-                let destination = grid[row][col];
-                grid[row][col].is_target = grid[i][j].is_target;
-                grid[i][j].is_target = false;
-                grid[row][col].used += grid[i][j].used;
-                grid[i][j].used = 0;
-                let new_hash = grid_hash(grid);
-                if !visited.contains(&new_hash) {
-                    find_fewest_steps(grid, step + 1, steps, visited);
-                }
-                grid[i][j] = source;
-                grid[row][col] = destination;
             }
         }
+        grids = next_grids;
     }
+    steps
 }
 
-fn print_grid(grid: &Grid) {
+fn _print_grid(grid: &Grid) {
     for row in grid {
         for item in row {
             print!("{}/{}\t", item.used, item.size);
@@ -195,10 +200,8 @@ impl Solution for AoC2016_22 {
         let (mut grid, size) = make_grid(&self.nodes);
         println!("Size = {size:?}");
         grid[0][size.1 - 1].is_target = true;
-        print_grid(&grid);
-        let mut steps = usize::MAX;
-        find_fewest_steps(&mut grid, 0, &mut steps, &mut HashSet::new());
-        steps.to_string()
+        // print_grid(&grid);
+        find_fewest_steps(&grid).to_string()
     }
 
     fn description(&self) -> String {
