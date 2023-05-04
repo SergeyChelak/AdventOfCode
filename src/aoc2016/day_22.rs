@@ -1,15 +1,13 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::collections::hash_map::DefaultHasher;
-use std::collections::{HashSet, HashMap};
-use std::hash::{Hash, Hasher};
+use std::collections::{HashMap, HashSet};
+use std::hash::Hash;
 use std::io;
 use std::num::ParseIntError;
 
-#[derive(Default, Copy, Clone, Hash)]
+#[derive(Copy, Clone)]
 struct StorageInfo {
-    is_target: bool,
     size: usize,
     used: usize,
 }
@@ -35,51 +33,139 @@ struct Position {
     y: usize,
 }
 
-// find zero node location
-// build node's grid
-// mark target node
-// reduce node's grid to movable/empty/target/permanent
-// search with hashing empty position + target data position
+impl Position {
+    fn left(&self) -> Option<Self> {
+        if self.x > 0 {
+            Some(Self {
+                x: self.x - 1,
+                y: self.y,
+            })
+        } else {
+            None
+        }
+    }
 
-// fn make_grid(nodes: &[Node]) -> Grid {
-//     let max_x = 1 + nodes
-//         .iter()
-//         .map(|node| node.x)
-//         .max()
-//         .expect("Max X should be computable");
-//     let max_y = 1 + nodes
-//         .iter()
-//         .map(|node| node.y)
-//         .max()
-//         .expect("Max Y should be computable");
-//     let mut grid = vec![vec![StorageInfo::default(); max_x]; max_y];
-//     nodes.iter().for_each(|node| {
-//         grid[node.y][node.x] = node.node;
-//     });
-//     grid[0][max_x - 1].is_target = true;
-//     grid
-// }
+    fn right(&self) -> Option<Self> {
+        Some(Self {
+            x: self.x + 1,
+            y: self.y,
+        })
+    }
 
-// fn grid_hash(grid: &Grid) -> u64 {
-//     let mut hasher = DefaultHasher::new();
-//     grid.hash(&mut hasher);
-//     hasher.finish()
-// }
+    fn up(&self) -> Option<Self> {
+        if self.y > 0 {
+            Some(Self {
+                x: self.x,
+                y: self.y - 1,
+            })
+        } else {
+            None
+        }
+    }
 
-// fn _print_grid(grid: &Grid) {
-//     for row in grid {
-//         for item in row {
-//             print!("{}/{}\t", item.used, item.size);
-//             if item.is_target {
-//                 print!("#");
-//             }
-//         }
-//         println!();
-//     }
-// }
+    fn down(&self) -> Option<Self> {
+        Some(Self {
+            x: self.x,
+            y: self.y + 1,
+        })
+    }
+}
+
+#[derive(Copy, Clone, Hash, Eq, PartialEq)]
+struct SearchState {
+    empty: Position,
+    target: Position,
+}
+
+type Grid = HashMap<Position, StorageInfo>;
+
+fn make_search_state(grid: &Grid) -> SearchState {
+    let target = {
+        let max_x = grid
+            .iter()
+            .map(|(pos, _)| *pos)
+            .max_by(|&a, &b| a.x.cmp(&b.x))
+            .expect("Max X should be computable")
+            .x;
+        Position { x: max_x, y: 0 }
+    };
+
+    let empty = *grid
+        .iter()
+        .find(|(_, info)| info.is_empty())
+        .expect("Empty node should be present")
+        .0;
+
+    SearchState { empty, target }
+}
+
+fn bfs_fewest_steps(grid: &Grid) -> usize {
+    let mut visited: HashSet<SearchState> = HashSet::new();
+    let mut states = Vec::new();
+    let state = make_search_state(grid);
+    states.push(state);
+    let empty = grid
+        .get(&state.empty)
+        .expect("Empty node should be present");
+    let grid = grid
+        .iter()
+        .filter(|(_, info)| info.is_fit(empty))
+        .map(|(&pos, &info)| (pos, info))
+        .collect::<Grid>();
+    let mut steps = 0;
+    'outer: while !states.is_empty() {
+        steps += 1;
+        let mut next_states = Vec::new();
+        for state in states {            
+            let adjacent = adjacent_nodes(&grid, &state.empty);
+            for pos in adjacent {
+                let target = if pos == state.target {
+                    state.empty
+                } else {
+                    state.target
+                };
+                let state = SearchState {
+                    empty: pos,
+                    target,
+                };
+                if visited.contains(&state) {
+                    continue;
+                }
+                if target.x == 0 && target.y == 0 {
+                    break 'outer;
+                }
+                visited.insert(state);
+                next_states.push(state);
+            }
+        }
+        states = next_states;
+    }
+    steps
+}
+
+fn adjacent_nodes(grid: &Grid, position: &Position) -> Vec<Position> {
+    vec![
+        position.left(),
+        position.right(),
+        position.up(),
+        position.down(),
+    ]
+    .into_iter()
+    .map(|opt| {
+        if let Some(pos) = opt {
+            if grid.contains_key(&pos) {
+                return Some(pos);
+            }
+        }
+        None
+    })
+    .filter(|opt| opt.is_some())
+    .map(|opt| opt.unwrap())
+    .collect()
+}
 
 pub struct AoC2016_22 {
-    nodes: HashMap<Position, StorageInfo>,
+    grid: Grid,
 }
 
 impl AoC2016_22 {
@@ -89,14 +175,12 @@ impl AoC2016_22 {
     }
 
     fn with_lines(lines: &[String]) -> Self {
-        let mut nodes = HashMap::new();
-        lines
-            .iter()
-            .for_each(|s| {
-                let (pos, info) = Self::parse_node_info(s);
-                nodes.insert(pos, info);
-            });
-        Self { nodes }
+        let mut grid = HashMap::new();
+        lines.iter().for_each(|s| {
+            let (pos, info) = Self::parse_node_info(s);
+            grid.insert(pos, info);
+        });
+        Self { grid }
     }
 
     fn parse_node_info(s: &str) -> (Position, StorageInfo) {
@@ -112,17 +196,13 @@ impl AoC2016_22 {
             Position { x, y }
         };
         let value_of = |index: usize| -> Result<usize, ParseIntError> {
-        let len = tokens[index].len();
+            let len = tokens[index].len();
             tokens[index][0..len - 1].parse::<usize>()
         };
 
         let size = value_of(1).expect("Size should be integer value");
         let used = value_of(2).expect("Used should be integer value");
-        let info = StorageInfo {
-            is_target: false,
-            size,
-            used,
-        };
+        let info = StorageInfo { size, used };
         (position, info)
     }
 }
@@ -130,11 +210,11 @@ impl AoC2016_22 {
 impl Solution for AoC2016_22 {
     fn part_one(&self) -> String {
         let mut count = 0usize;
-        for (i, (_, info_i)) in self.nodes.iter().enumerate() {
+        for (i, (_, info_i)) in self.grid.iter().enumerate() {
             if info_i.is_empty() {
                 continue;
             }
-            for (j, (_, info_j)) in self.nodes.iter().enumerate() {
+            for (j, (_, info_j)) in self.grid.iter().enumerate() {
                 if i != j && info_i.is_fit(&info_j) {
                     count += 1;
                 }
@@ -144,7 +224,7 @@ impl Solution for AoC2016_22 {
     }
 
     fn part_two(&self) -> String {
-        "".to_string()
+        bfs_fewest_steps(&self.grid).to_string()
     }
 
     fn description(&self) -> String {
@@ -159,13 +239,14 @@ mod test {
     #[test]
     fn aoc2016_22_input_load_test() -> io::Result<()> {
         let sol = AoC2016_22::new()?;
-        assert_eq!(sol.nodes.len(), 990);
+        assert_eq!(sol.grid.len(), 990);
         Ok(())
     }
 
     #[test]
     fn aoc2016_22_parse() {
-        let (pos, info) = AoC2016_22::parse_node_info("/dev/grid/node-x2-y5     87T   65T    22T   74%");
+        let (pos, info) =
+            AoC2016_22::parse_node_info("/dev/grid/node-x2-y5     87T   65T    22T   74%");
         assert_eq!(pos.x, 2);
         assert_eq!(pos.y, 5);
         assert_eq!(info.size, 87);
@@ -176,7 +257,7 @@ mod test {
     fn aoc2016_22_correctness() -> io::Result<()> {
         let sol = AoC2016_22::new()?;
         assert_eq!(sol.part_one(), "960");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "225");
         Ok(())
     }
 
