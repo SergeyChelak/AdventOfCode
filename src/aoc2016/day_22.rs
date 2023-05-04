@@ -151,7 +151,7 @@ fn adjacent_nodes(grid: &Grid, position: &Position) -> Vec<Position> {
         position.down(),
     ]
     .into_iter()
-    .map(|opt| {
+    .filter_map(|opt| {
         if let Some(pos) = opt {
             if grid.contains_key(&pos) {
                 return Some(pos);
@@ -159,8 +159,6 @@ fn adjacent_nodes(grid: &Grid, position: &Position) -> Vec<Position> {
         }
         None
     })
-    .filter(|opt| opt.is_some())
-    .map(|opt| opt.unwrap())
     .collect()
 }
 
@@ -215,7 +213,7 @@ impl Solution for AoC2016_22 {
                 continue;
             }
             for (j, (_, info_j)) in self.grid.iter().enumerate() {
-                if i != j && info_i.is_fit(&info_j) {
+                if i != j && info_i.is_fit(info_j) {
                     count += 1;
                 }
             }
