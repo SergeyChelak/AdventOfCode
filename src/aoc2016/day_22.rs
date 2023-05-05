@@ -116,7 +116,7 @@ fn bfs_fewest_steps(grid: &Grid) -> usize {
     'outer: while !states.is_empty() {
         steps += 1;
         let mut next_states = Vec::new();
-        for state in states {            
+        for state in states {
             let adjacent = adjacent_nodes(&grid, &state.empty);
             for pos in adjacent {
                 let target = if pos == state.target {
@@ -124,10 +124,7 @@ fn bfs_fewest_steps(grid: &Grid) -> usize {
                 } else {
                     state.target
                 };
-                let state = SearchState {
-                    empty: pos,
-                    target,
-                };
+                let state = SearchState { empty: pos, target };
                 if visited.contains(&state) {
                     continue;
                 }
