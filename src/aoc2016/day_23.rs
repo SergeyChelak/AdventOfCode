@@ -207,8 +207,12 @@ impl Solution for AoC2016_23 {
         machine.reg_a().to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut machine = Machine::with_program(self.program.clone());
+        machine.set_reg_a(12);
+        machine.run();
+        machine.reg_a().to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2016/Day 23: Safe Cracking".to_string()
@@ -222,6 +226,7 @@ mod test {
     #[test]
     fn aoc2016_23_input_load_test() -> io::Result<()> {
         let sol = AoC2016_23::new()?;
+        assert!(!sol.program.is_empty());
         Ok(())
     }
 
@@ -229,7 +234,7 @@ mod test {
     fn aoc2016_23_correctness() -> io::Result<()> {
         let sol = AoC2016_23::new()?;
         assert_eq!(sol.part_one(), "11500");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "479008060");
         Ok(())
     }
 }
