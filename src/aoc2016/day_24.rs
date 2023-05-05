@@ -51,9 +51,10 @@ fn bfs_path_len(grid: &Grid, start: &Position, finish: &Position) -> usize {
     steps
 }
 
+type Weights = Vec<Vec<usize>>;
+
 pub struct AoC2016_24 {
-    grid: Grid,
-    points: Vec<Position>,
+    weights: Weights,
 }
 
 impl AoC2016_24 {
@@ -81,27 +82,25 @@ impl AoC2016_24 {
             .iter()
             .map(|(_, pos)| *pos)
             .collect::<Vec<Position>>();
-        Self { grid, points }
+
+        let len = points.len();
+        let mut weights = vec![vec![usize::MAX; len]; len];
+        for i in 0..len - 1 {
+            for j in i + 1..len {
+                let a = points[i];
+                let b = points[j];
+                let dist = bfs_path_len(&grid, &a, &b);
+                weights[i][j] = dist;
+                weights[j][i] = dist;
+            }
+        }
+        Self { weights }
     }
 }
 
 impl Solution for AoC2016_24 {
     fn part_one(&self) -> String {
-        let len = self.points.len();
-        let mut weights = vec![vec![usize::MAX; len]; len];
-        for i in 0..len - 1 {
-            for j in i + 1..len {
-                let a = self.points[i];
-                let b = self.points[j];
-                let dist = bfs_path_len(&self.grid, &a, &b);
-                weights[i][j] = dist;
-                weights[j][i] = dist;
-                // println!(
-                //     "{i} [{};{}] -> {j} [{};{}] = {}",
-                //     a.row, a.col, b.row, b.col, dist
-                // );
-            }
-        }
+        let len = self.weights.len();
         let mut total = usize::MAX;
         (1..len)
             .collect::<Vec<usize>>()
@@ -110,7 +109,7 @@ impl Solution for AoC2016_24 {
                 let mut sum = 0usize;
                 let mut prev = 0;
                 for idx in arr {
-                    sum += weights[prev][idx];
+                    sum += self.weights[prev][idx];
                     prev = idx;
                 }
                 total = total.min(sum);
@@ -118,8 +117,24 @@ impl Solution for AoC2016_24 {
         total.to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let len = self.weights.len();
+        let mut total = usize::MAX;
+        (1..len)
+            .collect::<Vec<usize>>()
+            .permut_iter()
+            .for_each(|arr| {
+                let mut sum = 0usize;
+                let mut prev = 0;
+                for idx in arr {
+                    sum += self.weights[prev][idx];
+                    prev = idx;
+                }
+                sum += self.weights[prev][0];
+                total = total.min(sum);
+            });
+        total.to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2016/Day 24: Air Duct Spelunking".to_string()
@@ -133,7 +148,7 @@ mod test {
     #[test]
     fn aoc2016_24_input_load_test() -> io::Result<()> {
         let sol = AoC2016_24::new()?;
-        assert!(!sol.grid.is_empty());
+        assert!(!sol.weights.is_empty());
         Ok(())
     }
 
@@ -141,7 +156,7 @@ mod test {
     fn aoc2016_24_correctness() -> io::Result<()> {
         let sol = AoC2016_24::new()?;
         assert_eq!(sol.part_one(), "464");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "652");
         Ok(())
     }
 
