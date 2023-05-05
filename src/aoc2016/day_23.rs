@@ -1,6 +1,7 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
+use std::cmp::Ordering;
 use std::io;
 
 type Reg = usize;
@@ -158,20 +159,25 @@ impl Machine {
     }
 
     fn offset_pointer(&self, offset: Val) -> Option<usize> {
-        if offset == 0 {
-            return Some(self.pc);
-        } else if offset > 0 {
-            let position = offset as usize + self.pc;
-            if position < self.program.len() {
-                return Some(position);
+        match offset.cmp(&0) {
+            Ordering::Equal => Some(self.pc),
+            Ordering::Greater => {
+                let position = offset as usize + self.pc;
+                if position < self.program.len() {
+                    Some(position)
+                } else {
+                    None
+                }
             }
-        } else {
-            let offset = (-offset) as usize;
-            if offset < self.pc {
-                return Some(self.pc - offset);
+            Ordering::Less => {
+                let offset = (-offset) as usize;
+                if offset < self.pc {
+                    Some(self.pc - offset)
+                } else {
+                    None
+                }
             }
         }
-        None
     }
 
     fn reg_a(&self) -> Val {
