@@ -66,11 +66,11 @@ impl AoC2016_24 {
     fn with_lines(lines: &[String]) -> Self {
         let mut grid = Grid::new();
         let mut points = Vec::new();
-        for row in 0..lines.len() {
-            let chars = lines[row].chars().collect::<Vec<char>>();
-            for col in 0..chars.len() {
-                if chars[col].is_numeric() {
-                    let number = chars[col].to_digit(10).expect("Numeric char expected");
+        for (row, item) in lines.iter().enumerate() {
+            let chars = item.chars().collect::<Vec<char>>();
+            for (col, ch) in chars.iter().enumerate() {
+                if ch.is_numeric() {
+                    let number = ch.to_digit(10).expect("Numeric char expected");
                     let pos = Position { row, col };
                     points.push((number as usize, pos));
                 }
