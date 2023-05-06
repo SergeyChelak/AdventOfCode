@@ -58,7 +58,7 @@ mod test {
 
     #[test]
     fn aoc2016_19_example2() {
-        let res = AoC2016_19 { elves: 5 }.part_one();
+        let res = AoC2016_19 { elves: 5 }.part_two();
         assert_eq!(res, "2");
     }
 }
