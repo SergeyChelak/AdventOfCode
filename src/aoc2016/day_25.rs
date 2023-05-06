@@ -42,8 +42,9 @@ impl Solution for AoC2016_25 {
         reg_a.to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        "".to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2016/Day 25: Clock Signal".to_string()
