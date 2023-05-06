@@ -1,8 +1,8 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::io;
 use super::assembunny_vm::*;
+use std::io;
 
 pub struct AoC2016_12 {
     program: Vec<String>,

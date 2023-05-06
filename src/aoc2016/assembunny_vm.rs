@@ -1,4 +1,4 @@
-// 
+//
 // Shared Assembunny Virtual Machine for AoC 2016
 // Applied to day 12, 23 and 25
 //
@@ -20,6 +20,7 @@ enum Op {
     Dec(Reg),
     Jnz(Arg, Arg),
     Tgl(Reg),
+    Out(Arg),
 }
 
 impl Op {
@@ -31,8 +32,13 @@ impl Op {
             "dec" => Self::parse_dec(&tokens),
             "jnz" => Self::parse_jnz(&tokens),
             "tgl" => Self::parse_tgl(&tokens),
+            "out" => Self::parse_out(&tokens),
             _ => panic!("Unexpected instruction {}", tokens[0]),
         }
+    }
+
+    fn parse_out(tokens: &[&str]) -> Self {
+        Self::Out(Self::parse_arg(tokens[1]))
     }
 
     fn parse_tgl(tokens: &[&str]) -> Self {
@@ -83,6 +89,7 @@ pub struct Machine {
     reg: [i32; 4],
     pc: usize,
     program: Vec<Op>,
+    output_buf: Vec<Val>,
 }
 
 impl Machine {
@@ -96,19 +103,45 @@ impl Machine {
             reg: [0; 4],
             pc: 0,
             program,
+            output_buf: Vec::with_capacity(1000),
         }
     }
 
+    pub fn get_output_buf(&self) -> &Vec<Val> {
+        &self.output_buf
+    }
+
     pub fn run(&mut self) {
-        while self.pc < self.program.len() {
-            match self.program[self.pc] {
-                Op::Cpy(src, dest) => self.op_copy(src, dest),
-                Op::Inc(reg) => self.op_inc(reg),
-                Op::Dec(reg) => self.op_dec(reg),
-                Op::Jnz(value, offset) => self.op_jnz(value, offset),
-                Op::Tgl(reg) => self.op_tgl(reg),
-            }
+        while self.is_running() {
+            self.do_step()
         }
+    }
+
+    pub fn is_running(&self) -> bool {
+        self.pc < self.program.len()
+    }
+
+    pub fn do_step(&mut self) {
+        match self.program[self.pc] {
+            Op::Cpy(src, dest) => self.op_copy(src, dest),
+            Op::Inc(reg) => self.op_inc(reg),
+            Op::Dec(reg) => self.op_dec(reg),
+            Op::Jnz(value, offset) => self.op_jnz(value, offset),
+            Op::Tgl(reg) => self.op_tgl(reg),
+            Op::Out(value) => self.op_out(value),
+        }
+    }
+
+    pub fn reset(&mut self) {
+        self.pc = 0;
+        self.reg.iter_mut().for_each(|reg| *reg = 0);
+        self.output_buf.clear();
+    }
+
+    fn op_out(&mut self, value: Arg) {
+        let val = self.value(value);
+        self.output_buf.push(val);
+        self.pc += 1;
     }
 
     fn op_tgl(&mut self, reg: Reg) {
@@ -118,6 +151,7 @@ impl Machine {
                 Op::Inc(reg) => self.program[pos] = Op::Dec(reg),
                 Op::Dec(reg) | Op::Tgl(reg) => self.program[pos] = Op::Inc(reg),
                 Op::Jnz(value, offset) => self.program[pos] = Op::Cpy(value, offset),
+                Op::Out(_) => {}
             }
         }
         self.pc += 1;
@@ -195,5 +229,27 @@ impl Machine {
 
     pub fn set_reg_c(&mut self, value: Val) {
         self.reg[2] = value
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn machine_reset() {
+        let mut vm = Machine::with_program(Vec::new());
+        vm.reg.iter_mut()
+            .enumerate()
+            .for_each(|(i, val)| *val = i as i32 + 1);
+        vm.pc = 123;
+        vm.output_buf.push(123);
+        assert_ne!(vm.pc, 0);
+        assert!(!vm.output_buf.is_empty());
+        vm.reg.iter().for_each(|val| assert_ne!(*val, 0));
+        vm.reset();
+        assert_eq!(vm.pc, 0);
+        assert!(vm.output_buf.is_empty());
+        vm.reg.iter().for_each(|val| assert_eq!(*val, 0));
     }
 }
