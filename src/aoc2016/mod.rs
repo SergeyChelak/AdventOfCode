@@ -1,4 +1,5 @@
 use super::solution::Solution;
+mod assembunny_vm;
 
 mod day_01;
 use day_01::*;

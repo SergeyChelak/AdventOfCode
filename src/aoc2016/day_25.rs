@@ -4,14 +4,13 @@ use crate::utils::*;
 use std::io;
 
 pub struct AoC2016_25 {
-    // place required fields here
+    program: Vec<String>,
 }
 
 impl AoC2016_25 {
     pub fn new() -> io::Result<Self> {
-        Ok(Self {
-            // initialize solution
-        })
+        let program = read_file_as_lines("input/aoc2016_25")?;
+        Ok(Self { program })
     }
 }
 
@@ -34,6 +33,7 @@ mod test {
     #[test]
     fn aoc2016_25_input_load_test() -> io::Result<()> {
         let sol = AoC2016_25::new()?;
+        assert!(!sol.program.is_empty());
         Ok(())
     }
 
