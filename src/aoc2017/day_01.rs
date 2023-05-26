@@ -34,8 +34,17 @@ impl Solution for AoC2017_01 {
         sum.to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut sum = 0usize;
+        let len = self.digits.len();
+        let mid = len >> 1;
+        for (i, _) in self.digits.iter().enumerate() {
+            if self.digits[i] == self.digits[(i + mid) % len] {
+                sum += self.digits[i] as usize;
+            }
+        }
+        sum.to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2017/Day 1: Inverse Captcha".to_string()
@@ -69,7 +78,7 @@ mod test {
     fn aoc2017_01_correctness() -> io::Result<()> {
         let sol = AoC2017_01::new()?;
         assert_eq!(sol.part_one(), "1047");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "982");
         Ok(())
     }
 }
