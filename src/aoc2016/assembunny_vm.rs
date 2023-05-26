@@ -239,7 +239,8 @@ mod test {
     #[test]
     fn machine_reset() {
         let mut vm = Machine::with_program(Vec::new());
-        vm.reg.iter_mut()
+        vm.reg
+            .iter_mut()
             .enumerate()
             .for_each(|(i, val)| *val = i as i32 + 1);
         vm.pc = 123;
