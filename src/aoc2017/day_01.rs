@@ -20,30 +20,27 @@ impl AoC2017_01 {
             .collect::<Vec<u32>>();
         Self { digits }
     }
+
+    fn matched_sum(&self, offset: usize) -> usize {
+        let mut sum = 0usize;
+        let len = self.digits.len();
+        for (i, _) in self.digits.iter().enumerate() {
+            if self.digits[i] == self.digits[(i + offset) % len] {
+                sum += self.digits[i] as usize;
+            }
+        }
+        sum
+    }
 }
 
 impl Solution for AoC2017_01 {
     fn part_one(&self) -> String {
-        let mut sum = 0usize;
-        let len = self.digits.len();
-        for (i, _) in self.digits.iter().enumerate() {
-            if self.digits[i] == self.digits[(i + 1) % len] {
-                sum += self.digits[i] as usize;
-            }
-        }
-        sum.to_string()
+        self.matched_sum(1).to_string()
     }
 
     fn part_two(&self) -> String {
-        let mut sum = 0usize;
-        let len = self.digits.len();
-        let mid = len >> 1;
-        for (i, _) in self.digits.iter().enumerate() {
-            if self.digits[i] == self.digits[(i + mid) % len] {
-                sum += self.digits[i] as usize;
-            }
-        }
-        sum.to_string()
+        let offset = self.digits.len() / 2;
+        self.matched_sum(offset).to_string()
     }
 
     fn description(&self) -> String {
