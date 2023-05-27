@@ -45,8 +45,34 @@ impl Solution for AoC2017_05 {
         steps.to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut ptr = 0usize;
+        let mut jumps = self.jumps.clone();
+        let len = jumps.len();
+        let mut steps = 0;
+        loop {
+            let val = jumps[ptr];
+            if val > 2 {
+                jumps[ptr] -= 1;
+            } else {
+                jumps[ptr] += 1;
+            }
+            steps += 1;
+            if val > 0 {
+                ptr += val as usize;
+                if ptr >= len {
+                    break;
+                }
+            } else if val < 0 {
+                let val = (-val) as usize;
+                if val > ptr {
+                    break;
+                }
+                ptr -= val;
+            }
+        }
+        steps.to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2017/Day 5: A Maze of Twisty Trampolines, All Alike".to_string()
@@ -76,7 +102,7 @@ mod test {
     fn aoc2017_05_correctness() -> io::Result<()> {
         let sol = AoC2017_05::new()?;
         assert_eq!(sol.part_one(), "343467");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "24774780");
         Ok(())
     }
 }
