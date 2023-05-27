@@ -1,6 +1,6 @@
 use crate::solution::Solution;
 
-use std::collections::HashSet;
+use std::collections::HashMap;
 use std::fs::read_to_string;
 use std::io;
 
@@ -17,13 +17,13 @@ impl AoC2017_06 {
         Ok(Self { banks })
     }
 
-    fn redistribute_steps(&self) -> usize {
-        let mut set = HashSet::new();
+    fn redistribute_steps(&self) -> (usize, usize) {
+        let mut map = HashMap::new();
         let mut banks = self.banks.clone();
         let len = banks.len();
-        let mut steps = 0;
+        let mut steps = 0usize;
         loop {
-            set.insert(banks.clone());
+            map.insert(banks.clone(), steps);
             steps += 1;
             let mut idx = 0;
             for i in 1..len {
@@ -36,21 +36,21 @@ impl AoC2017_06 {
             for i in 1..=val {
                 banks[(idx + i) % len] += 1;
             }
-            if set.contains(&banks) {
-                break;
+            if let Some(val) = map.get(&banks) {
+                break (steps, steps - *val);
             }
         }
-        steps
     }
 }
 
 impl Solution for AoC2017_06 {
     fn part_one(&self) -> String {
-        self.redistribute_steps().to_string()
+        self.redistribute_steps().0.to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        self.redistribute_steps().1.to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2017/Day 6: Memory Reallocation".to_string()
@@ -74,13 +74,14 @@ mod test {
             banks: vec![0, 2, 7, 0],
         };
         assert_eq!(sol.part_one(), "5");
+        assert_eq!(sol.part_two(), "4");
     }
 
     #[test]
     fn aoc2017_06_correctness() -> io::Result<()> {
         let sol = AoC2017_06::new()?;
         assert_eq!(sol.part_one(), "3156");
-        // assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "1610");
         Ok(())
     }
 }
