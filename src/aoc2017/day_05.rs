@@ -17,61 +17,46 @@ impl AoC2017_05 {
             jumps
         })
     }
+
+    fn do_jumps(&self, modifier: impl Fn(i32) -> i32) -> usize {
+        let mut ptr = 0usize;
+        let mut jumps = self.jumps.clone();
+        let len = jumps.len();
+        let mut steps = 0;
+        loop {
+            let val = jumps[ptr];
+            jumps[ptr] = modifier(val);
+            steps += 1;
+            if val > 0 {
+                ptr += val as usize;
+                if ptr >= len {
+                    break;
+                }
+            } else if val < 0 {
+                let val = (-val) as usize;
+                if val > ptr {
+                    break;
+                }
+                ptr -= val;
+            }
+        }
+        steps
+    }
 }
 
 impl Solution for AoC2017_05 {
     fn part_one(&self) -> String {
-        let mut ptr = 0usize;
-        let mut jumps = self.jumps.clone();
-        let len = jumps.len();
-        let mut steps = 0;
-        loop {
-            let val = jumps[ptr];
-            jumps[ptr] += 1;
-            steps += 1;
-            if val > 0 {
-                ptr += val as usize;
-                if ptr >= len {
-                    break;
-                }
-            } else if val < 0 {
-                let val = (-val) as usize;
-                if val > ptr {
-                    break;
-                }
-                ptr -= val;
-            }
-        }
-        steps.to_string()
+        self.do_jumps(|v| v + 1).to_string()
     }
 
     fn part_two(&self) -> String {
-        let mut ptr = 0usize;
-        let mut jumps = self.jumps.clone();
-        let len = jumps.len();
-        let mut steps = 0;
-        loop {
-            let val = jumps[ptr];
-            if val > 2 {
-                jumps[ptr] -= 1;
+        self.do_jumps(|v| {
+            if v > 2 {
+                v - 1
             } else {
-                jumps[ptr] += 1;
+               v + 1
             }
-            steps += 1;
-            if val > 0 {
-                ptr += val as usize;
-                if ptr >= len {
-                    break;
-                }
-            } else if val < 0 {
-                let val = (-val) as usize;
-                if val > ptr {
-                    break;
-                }
-                ptr -= val;
-            }
-        }
-        steps.to_string()
+        }).to_string()
     }
 
     fn description(&self) -> String {
