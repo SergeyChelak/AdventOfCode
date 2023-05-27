@@ -1,6 +1,7 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
+use std::collections::HashSet;
 use std::io;
 
 struct Node {
@@ -50,8 +51,19 @@ impl AoC2017_07 {
 }
 
 impl Solution for AoC2017_07 {
-    // fn part_one(&self) -> String {
-    // }
+    fn part_one(&self) -> String {
+        let siblings: HashSet<String> =
+            HashSet::from_iter(self.nodes.iter().flat_map(|node| &node.children).cloned());
+        
+        self.nodes.iter()
+            .filter(|node| !node.children.is_empty())
+            .map(|node| node.name.clone())
+            .filter(|name| !siblings.contains(name))
+            .collect::<Vec<String>>()
+            .first()
+            .expect("Root node not found")
+            .clone()
+    }
 
     // fn part_two(&self) -> String {
     // }
@@ -75,7 +87,7 @@ mod test {
     #[test]
     fn aoc2017_07_correctness() -> io::Result<()> {
         let sol = AoC2017_07::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "aapssr");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
