@@ -1,5 +1,6 @@
 use crate::solution::Solution;
 
+use std::collections::HashSet;
 use std::fs::read_to_string;
 use std::io;
 
@@ -13,15 +14,40 @@ impl AoC2017_06 {
             .split_whitespace()
             .map(|s| s.parse::<usize>().expect("Int value is expected"))
             .collect();
-        Ok(Self {
-            banks
-        })
+        Ok(Self { banks })
+    }
+
+    fn redistribute_steps(&self) -> usize {
+        let mut set = HashSet::new();
+        let mut banks = self.banks.clone();
+        let len = banks.len();
+        let mut steps = 0;
+        loop {
+            set.insert(banks.clone());
+            steps += 1;
+            let mut idx = 0;
+            for i in 1..len {
+                if banks[i] > banks[idx] {
+                    idx = i;
+                }
+            }
+            let val = banks[idx];
+            banks[idx] = 0;
+            for i in 1..=val {
+                banks[(idx + i) % len] += 1;
+            }
+            if set.contains(&banks) {
+                break;
+            }
+        }
+        steps
     }
 }
 
 impl Solution for AoC2017_06 {
-    // fn part_one(&self) -> String {
-    // }
+    fn part_one(&self) -> String {
+        self.redistribute_steps().to_string()
+    }
 
     // fn part_two(&self) -> String {
     // }
@@ -38,14 +64,23 @@ mod test {
     #[test]
     fn aoc2017_06_input_load_test() -> io::Result<()> {
         let sol = AoC2017_06::new()?;
+        assert!(!sol.banks.is_empty());
         Ok(())
+    }
+
+    #[test]
+    fn aoc2017_06_example1() {
+        let sol = AoC2017_06 {
+            banks: vec![0, 2, 7, 0],
+        };
+        assert_eq!(sol.part_one(), "5");
     }
 
     #[test]
     fn aoc2017_06_correctness() -> io::Result<()> {
         let sol = AoC2017_06::new()?;
-        assert_eq!(sol.part_one(), "");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_one(), "3156");
+        // assert_eq!(sol.part_two(), "");
         Ok(())
     }
 }

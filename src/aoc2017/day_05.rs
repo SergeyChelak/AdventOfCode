@@ -13,9 +13,7 @@ impl AoC2017_05 {
             .iter()
             .map(|s| s.parse::<i32>().expect("Integer value is expected"))
             .collect::<Vec<i32>>();
-        Ok(Self {
-            jumps
-        })
+        Ok(Self { jumps })
     }
 
     fn do_jumps(&self, modifier: impl Fn(i32) -> i32) -> usize {
@@ -50,13 +48,8 @@ impl Solution for AoC2017_05 {
     }
 
     fn part_two(&self) -> String {
-        self.do_jumps(|v| {
-            if v > 2 {
-                v - 1
-            } else {
-               v + 1
-            }
-        }).to_string()
+        self.do_jumps(|v| if v > 2 { v - 1 } else { v + 1 })
+            .to_string()
     }
 
     fn description(&self) -> String {
@@ -78,7 +71,7 @@ mod test {
     #[test]
     fn aoc2017_05_example1() {
         let sol = AoC2017_05 {
-            jumps: vec![0, 3,  0,  1,  -3]
+            jumps: vec![0, 3, 0, 1, -3],
         };
         assert_eq!(sol.part_one(), "5");
     }
