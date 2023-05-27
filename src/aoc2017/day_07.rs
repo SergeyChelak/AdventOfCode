@@ -54,15 +54,14 @@ impl Solution for AoC2017_07 {
     fn part_one(&self) -> String {
         let siblings: HashSet<String> =
             HashSet::from_iter(self.nodes.iter().flat_map(|node| &node.children).cloned());
-        
-        self.nodes.iter()
+
+        self.nodes
+            .iter()
             .filter(|node| !node.children.is_empty())
             .map(|node| node.name.clone())
             .filter(|name| !siblings.contains(name))
-            .collect::<Vec<String>>()
-            .first()
-            .expect("Root node not found")
-            .clone()
+            .take(1)
+            .collect::<String>()
     }
 
     // fn part_two(&self) -> String {
