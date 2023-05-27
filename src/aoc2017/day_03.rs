@@ -54,10 +54,8 @@ fn distance(num: u32) -> u32 {
         }
         pos += 1;
     }
-    let r = dim / 2;
-    let c = r;
-    let abs = |a: u32, b: u32| a.max(b) - a.min(b);
-    abs(r, x) + abs(c, y)
+    let m = dim / 2;
+    m.abs_diff(x) + m.abs_diff(y)
 }
 
 fn spiral_sum(num: u32) -> u32 {
