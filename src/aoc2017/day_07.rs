@@ -4,7 +4,6 @@ use crate::utils::*;
 use std::collections::HashSet;
 use std::io;
 
-#[derive(Clone)]
 struct Item {
     name: String,
     weight: u32,
@@ -15,7 +14,7 @@ impl Item {
     fn parse(s: &str) -> Self {
         let parts = s.split(" -> ").collect::<Vec<&str>>();
         let (name, weight) = parts[0]
-            .split_once(" ")
+            .split_once(' ')
             .expect("Node should contain name and weight");
         let name = name.to_string();
         let weight = weight[1..weight.len() - 1]
@@ -68,8 +67,8 @@ impl Node {
                 } else {
                     (min, true)
                 };
-                for i in 0..weights.len() {
-                    if weights[i] == val {
+                for (i, weight) in weights.iter().enumerate() {
+                    if *weight == val {
                         *w = if is_inc {
                             self.children[i].weight + delta
                         } else {
