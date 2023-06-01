@@ -16,6 +16,7 @@ impl AoC2017_05 {
         Ok(Self { jumps })
     }
 
+    #[allow(clippy::comparison_chain)]
     fn do_jumps(&self, modifier: impl Fn(i32) -> i32) -> usize {
         let mut ptr = 0usize;
         let mut jumps = self.jumps.clone();
