@@ -41,12 +41,14 @@ impl Expression {
 
 struct Machine {
     register: HashMap<String, Value>,
+    reg_max: Value,
 }
 
 impl Machine {
     fn new() -> Self {
         Self {
             register: HashMap::new(),
+            reg_max: Value::MIN,
         }
     }
 
@@ -72,6 +74,7 @@ impl Machine {
             reg_val += expr.op_sign * expr.op_value;
             self.register.insert(expr.target_reg.clone(), reg_val);
         }
+        self.reg_max = self.reg_max.max(reg_val);
     }
 
     fn largest_reg_value(&self) -> Value {
@@ -105,8 +108,11 @@ impl Solution for AoC2017_08 {
         machine.largest_reg_value().to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut machine = Machine::new();
+        machine.run(&self.expressions);
+        machine.reg_max.to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2017/Day 8: I Heard You Like Registers".to_string()
@@ -128,7 +134,7 @@ mod test {
     fn aoc2017_08_correctness() -> io::Result<()> {
         let sol = AoC2017_08::new()?;
         assert_eq!(sol.part_one(), "5966");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "6347");
         Ok(())
     }
 }
