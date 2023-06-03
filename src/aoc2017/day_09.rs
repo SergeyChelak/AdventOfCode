@@ -13,27 +13,27 @@ impl AoC2017_09 {
             .iter()
             .map(|b| *b as char)
             .collect::<Vec<char>>();
-        Ok(Self {
-            chars
-        })
+        Ok(Self { chars })
     }
 }
 
 impl Solution for AoC2017_09 {
     fn part_one(&self) -> String {
-        scores(&self.chars).to_string()
+        scores(&self.chars).0.to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        scores(&self.chars).1.to_string()
+    }
 
     fn description(&self) -> String {
         "".to_string()
     }
 }
 
-fn scores(chars: &[char]) -> usize {
+fn scores(chars: &[char]) -> (usize, usize) {
     let mut scores = 0;
+    let mut garbage_len = 0;
     let mut depth = 0;
     // flags
     let mut is_garbage = false;
@@ -46,16 +46,26 @@ fn scores(chars: &[char]) -> usize {
         match *ch {
             '!' => is_skip_next = true,
             '>' if is_garbage => is_garbage = false,
-            '<' => is_garbage = true,
+            '<' => {
+                if is_garbage {
+                    garbage_len += 1;
+                } else {
+                    is_garbage = true;
+                }
+            },
             '{' if !is_garbage => depth += 1,
             '}' if !is_garbage => {
                 scores += depth;
                 depth -= 1;
             }
-            _ => {}
+            _ => {
+                if is_garbage {
+                    garbage_len += 1;
+                }
+            }
         };
     }
-    scores
+    (scores, garbage_len)
 }
 
 #[cfg(test)]
@@ -70,7 +80,7 @@ mod test {
     }
 
     #[test]
-    fn aoc2017_09_example() {
+    fn aoc2017_09_example1() {
         assert_eq!(scores_from_str("{}"), 1);
         assert_eq!(scores_from_str("{{{}}}"), 6);
         assert_eq!(scores_from_str("{{},{}}"), 5);
@@ -82,15 +92,31 @@ mod test {
     }
 
     #[test]
+    fn aoc2017_09_example2() {
+        assert_eq!(garbage_len_from_str("<>,"), 0);
+        assert_eq!(garbage_len_from_str("<random characters>"), 17);
+        assert_eq!(garbage_len_from_str("<<<<>"), 3);
+        assert_eq!(garbage_len_from_str("<{!>}>"), 2);
+        assert_eq!(garbage_len_from_str("<!!>"), 0);
+        assert_eq!(garbage_len_from_str("<!!!>>"), 0);
+        assert_eq!(garbage_len_from_str("<{o\"i!a,<{i<a>"), 10);
+    }
+
+    #[test]
     fn aoc2017_09_correctness() -> io::Result<()> {
         let sol = AoC2017_09::new()?;
         assert_eq!(sol.part_one(), "7616");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "3838");
         Ok(())
     }
 
     fn scores_from_str(s: &str) -> usize {
         let chars = s.chars().collect::<Vec<char>>();
-        scores(&chars)
+        scores(&chars).0
+    }
+
+    fn garbage_len_from_str(s: &str) -> usize {
+        let chars = s.chars().collect::<Vec<char>>();
+        scores(&chars).1
     }
 }

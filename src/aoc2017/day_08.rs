@@ -68,7 +68,7 @@ impl Machine {
             "<=" => cond_reg_val <= val,
             "==" => cond_reg_val == val,
             "!=" => cond_reg_val != val,
-            _ => panic!("Unexpected condition {}", expr.cond_type)
+            _ => panic!("Unexpected condition {}", expr.cond_type),
         };
         if cond_val {
             reg_val += expr.op_sign * expr.op_value;
@@ -78,8 +78,7 @@ impl Machine {
     }
 
     fn largest_reg_value(&self) -> Value {
-        self
-            .register
+        self.register
             .values()
             .copied()
             .max()
