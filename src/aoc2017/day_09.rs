@@ -52,7 +52,7 @@ fn scores(chars: &[char]) -> (usize, usize) {
                 } else {
                     is_garbage = true;
                 }
-            },
+            }
             '{' if !is_garbage => depth += 1,
             '}' if !is_garbage => {
                 scores += depth;
