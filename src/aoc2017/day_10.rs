@@ -15,7 +15,7 @@ impl AoC2017_10 {
 
 impl Solution for AoC2017_10 {
     fn part_one(&self) -> String {
-        let secret = self
+        let inp = self
             .input
             .split(',')
             .map(|s| {
@@ -23,7 +23,7 @@ impl Solution for AoC2017_10 {
                     .expect("Integer values expected in the input")
             })
             .collect::<Vec<u8>>();
-        let arr = knot_hash(256, 1, &secret);
+        let arr = knot_hash(256, 1, &inp);
         (arr[0] as u32 * arr[1] as u32).to_string()
     }
 
@@ -36,7 +36,7 @@ impl Solution for AoC2017_10 {
     }
 }
 
-fn knot_hash(size: usize, rounds: usize, secret: &[u8]) -> Vec<u8> {
+fn knot_hash(size: usize, rounds: usize, input: &[u8]) -> Vec<u8> {
     let mut arr = vec![0u8; size]
         .iter_mut()
         .enumerate()
@@ -45,7 +45,7 @@ fn knot_hash(size: usize, rounds: usize, secret: &[u8]) -> Vec<u8> {
     let mut pos = 0usize;
     let mut skip_size = 0usize;
     for _ in 0..rounds {
-        for len in secret {
+        for len in input {
             let len = *len as usize;
             for i in 0..len / 2 {
                 let a = (pos + i) % size;
@@ -60,10 +60,10 @@ fn knot_hash(size: usize, rounds: usize, secret: &[u8]) -> Vec<u8> {
 }
 
 fn hash(s: &str) -> String {
-    let mut secret = s.bytes().collect::<Vec<u8>>();
-    let mut salt = vec![17u8, 31, 73, 47, 23];
-    secret.append(&mut salt);
-    knot_hash(256, 64, &secret)
+    let mut input = s.bytes().collect::<Vec<u8>>();
+    let mut offset = vec![17u8, 31, 73, 47, 23];
+    input.append(&mut offset);
+    knot_hash(256, 64, &input)
         .chunks(16)
         .map(|chunk| chunk.iter().fold(0, |acc, val| acc ^ val))
         .map(|b| format!("{b:02x}"))
