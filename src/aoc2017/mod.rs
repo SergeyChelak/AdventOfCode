@@ -27,6 +27,9 @@ use day_08::*;
 mod day_09;
 use day_09::*;
 
+mod day_10;
+use day_10::*;
+
 pub fn all_days() -> std::io::Result<Vec<Box<dyn Solution>>> {
     Ok(vec![
         Box::new(AoC2017_01::new()?),
@@ -38,9 +41,10 @@ pub fn all_days() -> std::io::Result<Vec<Box<dyn Solution>>> {
         Box::new(AoC2017_07::new()?),
         Box::new(AoC2017_08::new()?),
         Box::new(AoC2017_09::new()?),
+        Box::new(AoC2017_10::new()?),
     ])
 }
 
 pub fn last_day() -> std::io::Result<Box<dyn Solution>> {
-    Ok(Box::new(AoC2017_09::new()?))
+    Ok(Box::new(AoC2017_10::new()?))
 }
