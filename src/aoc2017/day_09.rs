@@ -27,7 +27,7 @@ impl Solution for AoC2017_09 {
     }
 
     fn description(&self) -> String {
-        "".to_string()
+        "AoC 2017/Day 9: Stream Processing".to_string()
     }
 }
 
