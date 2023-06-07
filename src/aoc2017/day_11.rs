@@ -22,20 +22,26 @@ impl Edge {
             "s" => Self::South,
             "sw" => Self::SouthWest,
             "nw" => Self::NorthWest,
-            _ => panic!("Unexpected value '{s}'")
+            _ => panic!("Unexpected value '{s}'"),
         }
     }
 
-    fn inverse(&self) -> Self {
-        match self {
-            Self::North => Self::South,
-            Self::South => Self::North,
-            Self::SouthWest => Self::NorthEast,
-            Self::NorthEast => Self::SouthWest,
-            Self::NorthWest => Self::SouthEast,
-            Self::SouthEast => Self::NorthWest,
-        }
-    }
+    // fn inverse(&self) -> Self {
+    //     match self {
+    //         Self::North => Self::South,
+    //         Self::South => Self::North,
+    //         Self::SouthWest => Self::NorthEast,
+    //         Self::NorthEast => Self::SouthWest,
+    //         Self::NorthWest => Self::SouthEast,
+    //         Self::SouthEast => Self::NorthWest,
+    //     }
+    // }
+}
+
+struct Container {
+    edge_a: Edge,
+    edge_b: Edge,
+    delta_edge: Option<Edge>,
 }
 
 pub struct AoC2017_11 {
@@ -60,28 +66,71 @@ impl Solution for AoC2017_11 {
         self.edges.iter().for_each(|edge| {
             arr[*edge as usize] += 1;
         });
-        [Edge::North, Edge::NorthEast, Edge::SouthEast].iter()
-            .for_each(|edge| {
-                let idx = *edge as usize;
-                let idx_inv = edge.inverse() as usize;
-                let val = arr[idx].min(arr[idx_inv]);
-                arr[idx] -= val;
-                arr[idx_inv] -= val;
-            });
-        let dx = arr[Edge::NorthWest as usize].min(arr[Edge::South as usize]);
-        arr[Edge::SouthWest as usize] += dx;
-        arr[Edge::South as usize] -= dx;
-        arr[Edge::NorthWest as usize] -= dx;
+        let mut sum = arr.iter().sum();
+        loop {
+            [
+                Container {
+                    edge_a: Edge::North,
+                    edge_b: Edge::South,
+                    delta_edge: None,
+                },
+                Container {
+                    edge_a: Edge::NorthEast,
+                    edge_b: Edge::SouthWest,
+                    delta_edge: None,
+                },
+                Container {
+                    edge_a: Edge::SouthEast,
+                    edge_b: Edge::NorthWest,
+                    delta_edge: None,
+                },
+                Container {
+                    edge_a: Edge::NorthWest,
+                    edge_b: Edge::South,
+                    delta_edge: Some(Edge::SouthWest),
+                },
+                Container {
+                    edge_a: Edge::SouthEast,
+                    edge_b: Edge::North,
+                    delta_edge: Some(Edge::NorthEast),
+                },
+                Container {
+                    edge_a: Edge::SouthWest,
+                    edge_b: Edge::North,
+                    delta_edge: Some(Edge::NorthWest),
+                },
+                Container {
+                    edge_a: Edge::NorthEast,
+                    edge_b: Edge::South,
+                    delta_edge: Some(Edge::SouthEast),
+                },
+            ]
+            .iter()
+            .for_each(|container| {
+                let idx_a = container.edge_a as usize;
+                let idx_b = container.edge_b as usize;
 
-        println!("dx = {dx}, {arr:?}");
-        arr.iter().sum::<usize>().to_string()
+                let val = arr[idx_a].min(arr[idx_b]);
+                arr[idx_a] -= val;
+                arr[idx_b] -= val;
+                if let Some(edge) = container.delta_edge {
+                    arr[edge as usize] += val;
+                }
+            });
+            let new_sum = arr.iter().sum::<usize>();
+            if new_sum == sum {
+                break;
+            }
+            sum = new_sum;
+        }
+        sum.to_string()
     }
 
     // fn part_two(&self) -> String {
     // }
 
     fn description(&self) -> String {
-        "".to_string()
+        "AoC 2017/Day 11: Hex Ed".to_string()
     }
 }
 
