@@ -3,8 +3,9 @@ use crate::solution::Solution;
 use std::fs::read_to_string;
 use std::io;
 
+#[derive(Clone, Copy)]
 enum Edge {
-    North,
+    North = 0,
     NorthEast,
     SouthEast,
     South,
@@ -22,6 +23,17 @@ impl Edge {
             "sw" => Self::SouthWest,
             "nw" => Self::NorthWest,
             _ => panic!("Unexpected value '{s}'")
+        }
+    }
+
+    fn inverse(&self) -> Self {
+        match self {
+            Self::North => Self::South,
+            Self::South => Self::North,
+            Self::SouthWest => Self::NorthEast,
+            Self::NorthEast => Self::SouthWest,
+            Self::NorthWest => Self::SouthEast,
+            Self::SouthEast => Self::NorthWest,
         }
     }
 }
@@ -43,8 +55,27 @@ impl AoC2017_11 {
 }
 
 impl Solution for AoC2017_11 {
-    // fn part_one(&self) -> String {
-    // }
+    fn part_one(&self) -> String {
+        let mut arr = [0usize; 6];
+        self.edges.iter().for_each(|edge| {
+            arr[*edge as usize] += 1;
+        });
+        [Edge::North, Edge::NorthEast, Edge::SouthEast].iter()
+            .for_each(|edge| {
+                let idx = *edge as usize;
+                let idx_inv = edge.inverse() as usize;
+                let val = arr[idx].min(arr[idx_inv]);
+                arr[idx] -= val;
+                arr[idx_inv] -= val;
+            });
+        let dx = arr[Edge::NorthWest as usize].min(arr[Edge::South as usize]);
+        arr[Edge::SouthWest as usize] += dx;
+        arr[Edge::South as usize] -= dx;
+        arr[Edge::NorthWest as usize] -= dx;
+
+        println!("dx = {dx}, {arr:?}");
+        arr.iter().sum::<usize>().to_string()
+    }
 
     // fn part_two(&self) -> String {
     // }
@@ -68,7 +99,7 @@ mod test {
     #[test]
     fn aoc2017_11_correctness() -> io::Result<()> {
         let sol = AoC2017_11::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "773");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
