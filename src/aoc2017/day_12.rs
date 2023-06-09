@@ -1,10 +1,31 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::io;
 
-type Graph = HashMap<usize, usize>;
+type Graph = Vec<Vec<bool>>;
+
+fn connections_count(graph: &Graph, node: usize) -> usize {
+    let mut count = 0;
+    let mut visited: HashSet<usize> = HashSet::new();
+    let mut nodes = vec![node];    
+    while !nodes.is_empty() {
+        count += nodes.len();
+        let mut next = Vec::new();
+        for n in nodes {
+            visited.insert(n);
+            for (i, val) in graph[n].iter().enumerate() {
+                if !val || visited.contains(&i) {
+                    continue;
+                }
+                next.push(i);
+            }
+        }
+        nodes = next;
+    }
+    count
+}
 
 pub struct AoC2017_12 {
     graph: Graph,
@@ -12,14 +33,16 @@ pub struct AoC2017_12 {
 
 impl AoC2017_12 {
     pub fn new() -> io::Result<Self> {
-        let mut graph = Graph::new();
-        read_file_as_lines("input/aoc2017_12")?
+        let lines = read_file_as_lines("input/aoc2017_12")?;
+        let count = lines.len();
+        let mut graph = vec![vec![false; count]; count];
+        lines
             .iter()
             .map(|s| Self::parse_line(s))
             .for_each(|(node, connections)| {
                 connections.iter().for_each(|&elem| {
-                    graph.insert(node, elem);
-                    graph.insert(elem, node);
+                    graph[node][elem] = true;
+                    graph[elem][node] = true;
                 })
             });
         Ok(Self { graph })
@@ -44,8 +67,9 @@ impl AoC2017_12 {
 }
 
 impl Solution for AoC2017_12 {
-    // fn part_one(&self) -> String {
-    // }
+    fn part_one(&self) -> String {
+        connections_count(&self.graph, 0).to_string()
+    }
 
     // fn part_two(&self) -> String {
     // }
@@ -69,7 +93,7 @@ mod test {
     #[test]
     fn aoc2017_12_correctness() -> io::Result<()> {
         let sol = AoC2017_12::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "378");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
