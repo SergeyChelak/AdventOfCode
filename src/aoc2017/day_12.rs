@@ -1,31 +1,10 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::io;
 
 type Graph = Vec<Vec<bool>>;
-
-fn connections_count(graph: &Graph, node: usize) -> usize {
-    let mut count = 0;
-    let mut visited: HashSet<usize> = HashSet::new();
-    let mut nodes = vec![node];    
-    while !nodes.is_empty() {
-        count += nodes.len();
-        let mut next = Vec::new();
-        for n in nodes {
-            visited.insert(n);
-            for (i, val) in graph[n].iter().enumerate() {
-                if !val || visited.contains(&i) {
-                    continue;
-                }
-                next.push(i);
-            }
-        }
-        nodes = next;
-    }
-    count
-}
 
 pub struct AoC2017_12 {
     graph: Graph,
@@ -64,11 +43,31 @@ impl AoC2017_12 {
             .collect::<Vec<usize>>();
         (node, connections)
     }
+
+    fn group_size(&self, node: usize, visited: &mut HashSet<usize>) -> usize {
+        let mut count = 0;
+        let mut nodes = vec![node];
+        while !nodes.is_empty() {
+            count += nodes.len();
+            let mut next = Vec::new();
+            for n in nodes {
+                visited.insert(n);
+                for (i, val) in self.graph[n].iter().enumerate() {
+                    if !val || visited.contains(&i) {
+                        continue;
+                    }
+                    next.push(i);
+                }
+            }
+            nodes = next;
+        }
+        count
+    }
 }
 
 impl Solution for AoC2017_12 {
     fn part_one(&self) -> String {
-        connections_count(&self.graph, 0).to_string()
+        self.group_size(0, &mut HashSet::new()).to_string()
     }
 
     // fn part_two(&self) -> String {
