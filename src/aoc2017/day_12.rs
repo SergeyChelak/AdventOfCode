@@ -70,8 +70,19 @@ impl Solution for AoC2017_12 {
         self.group_size(0, &mut HashSet::new()).to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let size = self.graph.len();
+        let mut visited: HashSet<usize> = HashSet::new();
+        let mut count = 0;
+        for i in 0..size {
+            if visited.contains(&i) {
+                continue;
+            }
+            _ = self.group_size(i, &mut visited);
+            count += 1;
+        }
+        count.to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2017/Day 12: Digital Plumber".to_string()
@@ -93,7 +104,7 @@ mod test {
     fn aoc2017_12_correctness() -> io::Result<()> {
         let sol = AoC2017_12::new()?;
         assert_eq!(sol.part_one(), "378");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "204");
         Ok(())
     }
 }
