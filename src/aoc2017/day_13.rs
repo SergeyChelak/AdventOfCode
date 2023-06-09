@@ -92,8 +92,35 @@ impl Solution for AoC2017_13 {
         severity.to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut levels = self.levels();
+        let size = levels.len();
+        let mut buffer = Vec::new();
+        let teak = |arr: &mut Vec<LevelParams>| {
+            arr.iter_mut().for_each(|param| param.teak());
+        };
+        for _ in 0..size {
+            buffer.push(levels.clone());
+            teak(&mut levels);
+        }
+
+        let mut delay = 0;
+        loop {
+            let sum = buffer
+                .iter()
+                .enumerate()
+                .map(|(idx, params)| if params[idx].is_on_top() { 1 } else { 0 })
+                .sum::<usize>();
+            if sum == 0 {
+                break;
+            }
+            delay += 1;
+            buffer.remove(0);
+            buffer.push(levels.clone());
+            teak(&mut levels);
+        }
+        delay.to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2017/Day 13: Packet Scanners".to_string()
@@ -112,7 +139,7 @@ mod test {
     }
 
     #[test]
-    fn aoc2017_13_example() {
+    fn aoc2017_13_example1() {
         let sol = AoC2017_13 {
             input: vec![(0, 3), (1, 2), (4, 4), (6, 4)],
         };
@@ -120,10 +147,18 @@ mod test {
     }
 
     #[test]
+    fn aoc2017_13_example2() {
+        let sol = AoC2017_13 {
+            input: vec![(0, 3), (1, 2), (4, 4), (6, 4)],
+        };
+        assert_eq!(sol.part_two(), "10")
+    }
+
+    #[test]
     fn aoc2017_13_correctness() -> io::Result<()> {
         let sol = AoC2017_13::new()?;
         assert_eq!(sol.part_one(), "748");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "3873662");
         Ok(())
     }
 }
