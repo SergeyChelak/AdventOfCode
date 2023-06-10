@@ -18,22 +18,21 @@ impl AoC2017_14 {
 
 impl Solution for AoC2017_14 {
     fn part_one(&self) -> String {
-        let mut used_squares = 0;
-        (0..128).for_each(|i| {
-            let s = format!("{}-{i}", self.input);
-            used_squares += s
-                .knot_hash()
-                .chars()
-                .filter_map(|ch| ch.to_digit(16))
-                .map(|x| {
-                    (0..4)
-                        .map(|offset| x & (0x1 << offset))
-                        .map(|val| if val == 0 { 0 } else { 1 })
-                        .sum::<u32>()
-                })
-                .sum::<u32>();
-        });
-        used_squares.to_string()
+        (0..128)
+            .fold(0, |acc, i| {
+                acc + format!("{}-{i}", self.input)
+                    .knot_hash()
+                    .chars()
+                    .filter_map(|ch| ch.to_digit(16))
+                    .map(|x| {
+                        (0..4)
+                            .map(|offset| x & (0x1 << offset))
+                            .map(|val| if val == 0 { 0 } else { 1 })
+                            .sum::<u32>()
+                    })
+                    .sum::<u32>()
+            })
+            .to_string()
     }
 
     // fn part_two(&self) -> String {
