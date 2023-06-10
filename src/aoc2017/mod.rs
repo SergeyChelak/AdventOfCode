@@ -1,5 +1,7 @@
 use super::solution::Solution;
 
+mod knot_hash;
+
 mod day_01;
 use day_01::*;
 
