@@ -12,3 +12,6 @@ pub use permutations::*;
 
 pub mod combinations;
 pub use combinations::*;
+
+pub mod arrays;
+pub use arrays::*;

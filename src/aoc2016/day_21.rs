@@ -138,24 +138,14 @@ fn swap_letter(inp: &str, x: char, y: char) -> String {
 
 fn rotate_left(inp: &str, x: usize) -> String {
     let mut chars = inp.chars().collect::<Vec<char>>();
-    let len = chars.len();
-    let step = x % len;
-    let seg = &mut chars[..step];
-    seg.reverse();
-    let seg = &mut chars[step..];
-    seg.reverse();
-    chars.iter().rev().collect::<String>()
+    chars.spin_left(x);
+    chars.iter().collect::<String>()
 }
 
 fn rotate_right(inp: &str, x: usize) -> String {
     let mut chars = inp.chars().collect::<Vec<char>>();
-    let len = chars.len();
-    let step = x % len;
-    let seg = &mut chars[..len - step];
-    seg.reverse();
-    let seg = &mut chars[len - step..];
-    seg.reverse();
-    chars.iter().rev().collect::<String>()
+    chars.spin_right(x);
+    chars.iter().collect::<String>()
 }
 
 fn rotate_letter_position(inp: &str, x: char) -> String {

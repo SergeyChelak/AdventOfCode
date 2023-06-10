@@ -1,4 +1,4 @@
-use crate::solution::Solution;
+use crate::{solution::Solution, utils::ArraySpin};
 
 use std::{fs::read_to_string, io};
 
@@ -52,6 +52,8 @@ impl Movement {
     }
 }
 
+type CharArray = Vec<char>;
+
 pub struct AoC2017_16 {
     movements: Vec<Movement>,
 }
@@ -68,8 +70,24 @@ impl AoC2017_16 {
 }
 
 impl Solution for AoC2017_16 {
-    // fn part_one(&self) -> String {
-    // }
+    fn part_one(&self) -> String {
+        let mut arr = CharArray::with_capacity(16);
+        ('a'..='p').for_each(|ch| arr.push(ch));
+        for movement in &self.movements {
+            match movement {
+                Movement::Spin(count) => arr.spin_right(*count),
+                Movement::Exchange(a, b) => arr.swap(*a, *b),
+                Movement::Partner(a, b) => arr.iter_mut().for_each(|ch| {
+                    if *ch == *a {
+                        *ch = *b;
+                    } else if *ch == *b {
+                        *ch = *a;
+                    }
+                }),
+            }
+        }
+        arr.into_iter().collect()
+    }
 
     // fn part_two(&self) -> String {
     // }
@@ -93,7 +111,7 @@ mod test {
     #[test]
     fn aoc2017_16_correctness() -> io::Result<()> {
         let sol = AoC2017_16::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "ehdpincaogkblmfj");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
