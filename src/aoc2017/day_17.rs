@@ -25,8 +25,20 @@ impl Solution for AoC2017_17 {
         buffer[pos + 1].to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut len = 1;
+        let mut pos = 0usize;
+        let mut result = 0;
+        for val in 1..=50000000 {
+            let index = (pos + self.steps_count) % len + 1;
+            pos = index;
+            len += 1;
+            if pos == 1 {
+                result = val;
+            }
+        }
+        result.to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2017/Day 17: Spinlock".to_string()
@@ -47,7 +59,7 @@ mod test {
     fn aoc2017_17_correctness() -> io::Result<()> {
         let sol = AoC2017_17::new()?;
         assert_eq!(sol.part_one(), "996");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "1898341");
         Ok(())
     }
 }
