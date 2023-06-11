@@ -67,30 +67,45 @@ impl AoC2017_16 {
             .collect();
         Ok(Self { movements })
     }
+
+    fn perform(&self, times: usize) -> String {
+        let mut arr = CharArray::with_capacity(16);
+        ('a'..='p').for_each(|ch| arr.push(ch));
+        let mut permutations: Vec<String> = Vec::new();
+        permutations.push(arr.iter().collect());
+        loop {
+            for movement in &self.movements {
+                match movement {
+                    Movement::Spin(count) => arr.spin_right(*count),
+                    Movement::Exchange(a, b) => arr.swap(*a, *b),
+                    Movement::Partner(a, b) => arr.iter_mut().for_each(|ch| {
+                        if *ch == *a {
+                            *ch = *b;
+                        } else if *ch == *b {
+                            *ch = *a;
+                        }
+                    }),
+                }
+            }
+            let tmp = arr.iter().collect();
+            if permutations.contains(&tmp) {
+                break;
+            }
+            permutations.push(tmp);
+        }
+        let period = permutations.len();
+        permutations[times % period].clone()
+    }
 }
 
 impl Solution for AoC2017_16 {
     fn part_one(&self) -> String {
-        let mut arr = CharArray::with_capacity(16);
-        ('a'..='p').for_each(|ch| arr.push(ch));
-        for movement in &self.movements {
-            match movement {
-                Movement::Spin(count) => arr.spin_right(*count),
-                Movement::Exchange(a, b) => arr.swap(*a, *b),
-                Movement::Partner(a, b) => arr.iter_mut().for_each(|ch| {
-                    if *ch == *a {
-                        *ch = *b;
-                    } else if *ch == *b {
-                        *ch = *a;
-                    }
-                }),
-            }
-        }
-        arr.into_iter().collect()
+        self.perform(1)
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        self.perform(1000000000)
+    }
 
     fn description(&self) -> String {
         "AoC 2017/Day 16: Permutation Promenade".to_string()
@@ -112,7 +127,7 @@ mod test {
     fn aoc2017_16_correctness() -> io::Result<()> {
         let sol = AoC2017_16::new()?;
         assert_eq!(sol.part_one(), "ehdpincaogkblmfj");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "bpcekomfgjdlinha");
         Ok(())
     }
 }
