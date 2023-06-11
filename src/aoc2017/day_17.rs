@@ -8,15 +8,22 @@ pub struct AoC2017_17 {
 
 impl AoC2017_17 {
     pub fn new() -> io::Result<Self> {
-        Ok(Self {
-            steps_count: 344
-        })
+        Ok(Self { steps_count: 344 })
     }
 }
 
 impl Solution for AoC2017_17 {
-    // fn part_one(&self) -> String {
-    // }
+    fn part_one(&self) -> String {
+        let mut buffer = Vec::new();
+        buffer.push(0);
+        let mut pos = 0usize;
+        for val in 1..=2017 {
+            let index = (pos + self.steps_count) % buffer.len() + 1;
+            buffer.insert(index, val);
+            pos = index;
+        }
+        buffer[pos + 1].to_string()
+    }
 
     // fn part_two(&self) -> String {
     // }
@@ -31,9 +38,15 @@ mod test {
     use super::*;
 
     #[test]
+    fn aoc2017_17_example1() {
+        let sol = AoC2017_17 { steps_count: 3 };
+        assert_eq!(sol.part_one(), "638");
+    }
+
+    #[test]
     fn aoc2017_17_correctness() -> io::Result<()> {
         let sol = AoC2017_17::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "996");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
