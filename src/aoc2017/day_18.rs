@@ -4,7 +4,7 @@ use crate::utils::*;
 use std::io;
 
 type Register = usize;
-type Value = i32;
+type Value = i64;
 enum OpValue {
     Val(Value),
     Reg(Register),
@@ -53,6 +53,104 @@ impl Op {
     }
 }
 
+struct Machine<'a> {
+    register: [Value; 26],
+    pc: usize,
+    ops: &'a [Op],
+    sound_buffer: Vec<Value>,
+    last_recovered: Option<Value>,
+}
+
+impl<'a> Machine<'a> {
+    fn with_ops(ops: &'a [Op]) -> Self {
+        Self {
+            register: [0; 26],
+            pc: 0,
+            ops,
+            sound_buffer: vec![],
+            last_recovered: None
+        }
+    }
+
+    fn run(&mut self) {
+        while self.pc < self.ops.len() {
+            match &self.ops[self.pc] {
+                Op::Snd(reg) => self.op_snd(*reg),
+                Op::Set(reg, op_value) => self.op_set(*reg, op_value),
+                Op::Add(reg, op_value) => self.op_add(*reg, op_value),
+                Op::Mul(reg, op_value) => self.op_mul(*reg, op_value),
+                Op::Mod(reg, op_value) => self.op_mod(*reg, op_value),
+                Op::Rcv(reg) => self.op_rcv(*reg),
+                Op::Jgz(op_value, offset) => self.op_jgz(op_value, offset),
+            }
+            if self.last_recovered.is_some() {
+                break;
+            }
+        }
+    }
+
+    fn op_snd(&mut self, reg: usize) {
+        let val = self.register[reg];
+        self.sound_buffer.push(val);
+        self.pc += 1;
+    }
+
+    fn op_set(&mut self, reg: usize, op_value: &OpValue) {
+        let val = self.get_value(op_value);
+        self.register[reg] = val;
+        self.pc += 1;
+    }
+
+    fn op_add(&mut self, reg: usize, op_value: &OpValue) {
+        let val = self.get_value(op_value);
+        self.register[reg] += val;
+        self.pc += 1;
+    }
+
+    fn op_mul(&mut self, reg: usize, op_value: &OpValue) {
+        let val = self.get_value(op_value);
+        self.register[reg] *= val;
+        self.pc += 1;
+    }
+
+    fn op_mod(&mut self, reg: usize, op_value: &OpValue) {
+        let val = self.get_value(op_value);
+        self.register[reg] %= val;
+        self.pc += 1;
+    }
+
+    fn op_jgz(&mut self, op_value: &OpValue, offset: &OpValue) {
+        let x = self.get_value(op_value);
+        if x > 0 {
+            let offset = self.get_value(offset);
+            if offset > 0 {
+                self.pc += offset as usize;
+            } else {
+                let offset = (-offset) as usize;
+                self.pc -= offset as usize;
+            }
+        } else {
+            self.pc += 1;
+        }
+    }
+
+    fn op_rcv(&mut self, reg: usize) {
+        let val = self.register[reg];
+        if val != 0 {
+            self.last_recovered = Some(*self.sound_buffer.last().unwrap());
+        }
+        self.pc += 1;
+    }
+
+    fn get_value(&self, op_value: &OpValue) -> Value {
+        match op_value {
+            OpValue::Reg(reg) => self.register[*reg],
+            OpValue::Val(val) => *val,
+        }
+    }
+
+}
+
 pub struct AoC2017_18 {
     ops: Vec<Op>,
 }
@@ -68,8 +166,11 @@ impl AoC2017_18 {
 }
 
 impl Solution for AoC2017_18 {
-    // fn part_one(&self) -> String {
-    // }
+    fn part_one(&self) -> String {
+        let mut machine = Machine::with_ops(&self.ops);
+        machine.run();
+        machine.last_recovered.unwrap().to_string()
+    }
 
     // fn part_two(&self) -> String {
     // }
@@ -117,7 +218,7 @@ mod test {
     #[test]
     fn aoc2017_18_correctness() -> io::Result<()> {
         let sol = AoC2017_18::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "9423");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
