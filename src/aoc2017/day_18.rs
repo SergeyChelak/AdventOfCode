@@ -68,12 +68,16 @@ impl<'a> Machine<'a> {
             pc: 0,
             ops,
             sound_freq: None,
-            is_recovered: false
+            is_recovered: false,
         }
     }
 
+    fn is_working(&self) -> bool {
+        self.pc < self.ops.len() && !self.is_recovered
+    }
+
     fn run(&mut self) {
-        while self.pc < self.ops.len() {
+        while self.is_working() {
             match &self.ops[self.pc] {
                 Op::Snd(reg) => self.op_snd(*reg),
                 Op::Set(reg, op_value) => self.op_set(*reg, op_value),
@@ -83,16 +87,7 @@ impl<'a> Machine<'a> {
                 Op::Rcv(reg) => self.op_rcv(*reg),
                 Op::Jgz(op_value, offset) => self.op_jgz(op_value, offset),
             }
-            if self.is_recovered {
-                break;
-            }
         }
-    }
-
-    fn op_snd(&mut self, reg: usize) {
-        let val = self.register[reg];
-        self.sound_freq = Some(val);
-        self.pc += 1;
     }
 
     fn op_set(&mut self, reg: usize, op_value: &OpValue) {
@@ -129,6 +124,12 @@ impl<'a> Machine<'a> {
         }
     }
 
+    fn op_snd(&mut self, reg: usize) {
+        let val = self.register[reg];
+        self.sound_freq = Some(val);
+        self.pc += 1;
+    }
+
     fn op_rcv(&mut self, reg: usize) {
         let val = self.register[reg];
         if val != 0 {
@@ -145,14 +146,13 @@ impl<'a> Machine<'a> {
     }
 
     fn pc_offset(&mut self, offset: Value) {
-            if offset > 0 {
-                self.pc += offset as usize;
-            } else {
-                let offset = (-offset) as usize;
-                self.pc -= offset;
-            }
+        if offset > 0 {
+            self.pc += offset as usize;
+        } else {
+            let offset = (-offset) as usize;
+            self.pc -= offset;
+        }
     }
-
 }
 
 pub struct AoC2017_18 {
