@@ -123,12 +123,7 @@ impl<'a> Machine<'a> {
         let x = self.get_value(op_value);
         if x > 0 {
             let offset = self.get_value(offset);
-            if offset > 0 {
-                self.pc += offset as usize;
-            } else {
-                let offset = (-offset) as usize;
-                self.pc -= offset;
-            }
+            self.pc_offset(offset);
         } else {
             self.pc += 1;
         }
@@ -147,6 +142,15 @@ impl<'a> Machine<'a> {
             OpValue::Reg(reg) => self.register[*reg],
             OpValue::Val(val) => *val,
         }
+    }
+
+    fn pc_offset(&mut self, offset: Value) {
+            if offset > 0 {
+                self.pc += offset as usize;
+            } else {
+                let offset = (-offset) as usize;
+                self.pc -= offset;
+            }
     }
 
 }
