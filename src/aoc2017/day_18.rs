@@ -127,7 +127,7 @@ impl<'a> Machine<'a> {
                 self.pc += offset as usize;
             } else {
                 let offset = (-offset) as usize;
-                self.pc -= offset as usize;
+                self.pc -= offset;
             }
         } else {
             self.pc += 1;
