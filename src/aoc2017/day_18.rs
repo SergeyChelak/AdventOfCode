@@ -53,31 +53,67 @@ impl Op {
     }
 }
 
+trait Module {
+    fn op_snd(&mut self, value: Value);
+
+    fn op_rcv(&mut self, reg_value: &mut Value) -> bool;
+
+    fn output(&self) -> Option<Value>;
+}
+
+struct SoundModule {
+    sound_freq: Option<Value>,
+}
+
+impl SoundModule {
+    fn new() -> Self {
+        Self {
+            sound_freq: None,
+        }
+    }
+}
+
+impl Module for SoundModule {
+    fn op_snd(&mut self, value: Value) {
+        self.sound_freq = Some(value);
+    }
+
+    fn op_rcv(&mut self, reg_value: &mut Value) -> bool {
+        *reg_value == 0
+    }
+
+    fn output(&self) -> Option<Value> {
+        self.sound_freq
+    }
+}
+
+impl Default for SoundModule {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 struct Machine<'a> {
     register: [Value; 26],
     pc: usize,
     ops: &'a [Op],
-    sound_freq: Option<Value>,
-    is_recovered: bool,
+    is_suspended: bool,
+    module: Box<dyn Module>,
 }
 
 impl<'a> Machine<'a> {
-    fn with_ops(ops: &'a [Op]) -> Self {
+    fn new(ops: &'a [Op], module: Box<dyn Module>) -> Self {
         Self {
             register: [0; 26],
             pc: 0,
             ops,
-            sound_freq: None,
-            is_recovered: false,
+            is_suspended: false,
+            module
         }
     }
 
-    fn is_working(&self) -> bool {
-        self.pc < self.ops.len() && !self.is_recovered
-    }
-
     fn run(&mut self) {
-        while self.is_working() {
+        while self.pc < self.ops.len() && !self.is_suspended {
             match &self.ops[self.pc] {
                 Op::Snd(reg) => self.op_snd(*reg),
                 Op::Set(reg, op_value) => self.op_set(*reg, op_value),
@@ -126,14 +162,14 @@ impl<'a> Machine<'a> {
 
     fn op_snd(&mut self, reg: usize) {
         let val = self.register[reg];
-        self.sound_freq = Some(val);
+        self.module.op_snd(val);
         self.pc += 1;
     }
 
     fn op_rcv(&mut self, reg: usize) {
-        let val = self.register[reg];
-        if val != 0 {
-            self.is_recovered = self.sound_freq.is_some();
+        let val = &mut self.register[reg];
+        if !self.module.op_rcv(val) {
+            self.is_suspended = true;
         }
         self.pc += 1;
     }
@@ -153,6 +189,10 @@ impl<'a> Machine<'a> {
             self.pc -= offset;
         }
     }
+
+    fn module_output(&self) -> Option<Value> {
+        self.module.output()
+    }
 }
 
 pub struct AoC2017_18 {
@@ -171,9 +211,9 @@ impl AoC2017_18 {
 
 impl Solution for AoC2017_18 {
     fn part_one(&self) -> String {
-        let mut machine = Machine::with_ops(&self.ops);
+        let mut machine = Machine::new(&self.ops, Box::<SoundModule>::default());
         machine.run();
-        machine.sound_freq.unwrap().to_string()
+        machine.module_output().unwrap().to_string()
     }
 
     // fn part_two(&self) -> String {
