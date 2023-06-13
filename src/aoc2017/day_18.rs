@@ -113,7 +113,6 @@ impl MessageQueue {
             .enumerate()
             .find(|(idx, msg)| msg.sender != receiver_id && idx >= last);
         if let Some((idx, message)) = data {
-            // println!("Found at {idx} from {} to {}", message.sender, receiver_id);
             self.last_access_idx.insert(receiver_id, idx + 1);
             Some(message.value)
         } else {
