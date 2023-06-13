@@ -57,8 +57,8 @@ struct Machine<'a> {
     register: [Value; 26],
     pc: usize,
     ops: &'a [Op],
-    sound_buffer: Vec<Value>,
-    last_recovered: Option<Value>,
+    sound_freq: Option<Value>,
+    is_recovered: bool,
 }
 
 impl<'a> Machine<'a> {
@@ -67,8 +67,8 @@ impl<'a> Machine<'a> {
             register: [0; 26],
             pc: 0,
             ops,
-            sound_buffer: vec![],
-            last_recovered: None
+            sound_freq: None,
+            is_recovered: false
         }
     }
 
@@ -83,7 +83,7 @@ impl<'a> Machine<'a> {
                 Op::Rcv(reg) => self.op_rcv(*reg),
                 Op::Jgz(op_value, offset) => self.op_jgz(op_value, offset),
             }
-            if self.last_recovered.is_some() {
+            if self.is_recovered {
                 break;
             }
         }
@@ -91,7 +91,7 @@ impl<'a> Machine<'a> {
 
     fn op_snd(&mut self, reg: usize) {
         let val = self.register[reg];
-        self.sound_buffer.push(val);
+        self.sound_freq = Some(val);
         self.pc += 1;
     }
 
@@ -137,7 +137,7 @@ impl<'a> Machine<'a> {
     fn op_rcv(&mut self, reg: usize) {
         let val = self.register[reg];
         if val != 0 {
-            self.last_recovered = Some(*self.sound_buffer.last().unwrap());
+            self.is_recovered = self.sound_freq.is_some();
         }
         self.pc += 1;
     }
@@ -169,7 +169,7 @@ impl Solution for AoC2017_18 {
     fn part_one(&self) -> String {
         let mut machine = Machine::with_ops(&self.ops);
         machine.run();
-        machine.last_recovered.unwrap().to_string()
+        machine.sound_freq.unwrap().to_string()
     }
 
     // fn part_two(&self) -> String {
