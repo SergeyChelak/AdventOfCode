@@ -15,3 +15,6 @@ pub use combinations::*;
 
 pub mod arrays;
 pub use arrays::*;
+
+pub mod strings;
+pub use strings::*;
