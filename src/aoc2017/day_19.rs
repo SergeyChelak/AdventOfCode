@@ -38,6 +38,12 @@ struct Location {
     col: usize,
 }
 
+#[derive(Default, Hash)]
+struct VisitKind {
+    horizontal: bool,
+    vertical: bool,
+}
+
 pub struct AoC2017_19 {
     maze: Matrix,
 }
@@ -69,26 +75,20 @@ impl AoC2017_19 {
         let ch = self.maze[location.row][location.col];
         Direction::from_char(ch)
     }
-}
 
-#[derive(Default, Hash)]
-struct VisitKind {
-    horizontal: bool,
-    vertical: bool,
-}
-
-impl Solution for AoC2017_19 {
-    fn part_one(&self) -> String {
+    fn route(&self) -> (String, usize) {
         let mut loc = self.input_location();
         let mut direction = self.get_direction(&loc).expect("Direction not determined");
         assert_ne!(direction, Direction::Any, "Invalid direction");
         let mut prev_steps: HashMap<Location, VisitKind> = HashMap::new();
-        let mut output: Vec<char> = Vec::new();
+        let mut chars: Vec<char> = Vec::new();
+        let mut steps = 0;
         loop {
+            steps += 1;
             let ch = self.get(&loc);
             assert!(!ch.is_whitespace());
             if ch.is_alphabetic() {
-                output.push(ch);
+                chars.push(ch);
             }
             let mut step_direction = direction;
             if ch == '+' {
@@ -175,11 +175,18 @@ impl Solution for AoC2017_19 {
                 break;
             }
         }
-        output.into_iter().collect()
+        (chars.into_iter().collect(), steps)
+    }
+}
+
+impl Solution for AoC2017_19 {
+    fn part_one(&self) -> String {
+        self.route().0
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        self.route().1.to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2017/Day 19: A Series of Tubes".to_string()
@@ -217,7 +224,7 @@ mod test {
     fn aoc2017_19_correctness() -> io::Result<()> {
         let sol = AoC2017_19::new()?;
         assert_eq!(sol.part_one(), "AYRPVMEGQ");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "16408");
         Ok(())
     }
 }
