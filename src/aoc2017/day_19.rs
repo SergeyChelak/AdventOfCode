@@ -71,14 +71,9 @@ impl AoC2017_19 {
         self.maze[location.row][location.col]
     }
 
-    fn get_direction(&self, location: &Location) -> Option<Direction> {
-        let ch = self.maze[location.row][location.col];
-        Direction::from_char(ch)
-    }
-
     fn route(&self) -> (String, usize) {
         let mut loc = self.input_location();
-        let mut direction = self.get_direction(&loc).expect("Direction not determined");
+        let mut direction = Direction::from_char(self.get(&loc)).expect("Direction not determined");
         assert_ne!(direction, Direction::Any, "Invalid direction");
         let mut prev_steps: HashMap<Location, VisitKind> = HashMap::new();
         let mut chars: Vec<char> = Vec::new();
