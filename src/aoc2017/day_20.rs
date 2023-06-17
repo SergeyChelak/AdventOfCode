@@ -1,11 +1,12 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
+use std::collections::HashMap;
 use std::io;
 
 type Value = i32;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Hash, Eq, PartialEq)]
 struct Value3d {
     x: Value,
     y: Value,
@@ -14,9 +15,10 @@ struct Value3d {
 
 impl Value3d {
     fn from_str(s: &str) -> Self {
-        let tokens = s.split_once('=')
-            .expect("Incorrect Value3d declaration");
-        let tokens = remove_first_and_last(tokens.1).split(',').collect::<Vec<&str>>();
+        let tokens = s.split_once('=').expect("Incorrect Value3d declaration");
+        let tokens = remove_first_and_last(tokens.1)
+            .split(',')
+            .collect::<Vec<&str>>();
         let x = tokens[0].parse::<Value>().expect("Failed parse X");
         let y = tokens[1].parse::<Value>().expect("Failed parse Y");
         let z = tokens[2].parse::<Value>().expect("Failed parse Z");
@@ -76,11 +78,36 @@ impl AoC2017_20 {
 }
 
 impl Solution for AoC2017_20 {
-    // fn part_one(&self) -> String {
-    // }
+    fn part_one(&self) -> String {
+        let mut particles = self.particles.clone();
+        for _ in 0..1000 {
+            particles.iter_mut().for_each(|p| p.teak());
+        }
+        particles
+            .iter()
+            .enumerate()
+            .min_by(|a, b| a.1.distance().cmp(&b.1.distance()))
+            .expect("Particles list shouldn't be empty")
+            .0
+            .to_string()
+    }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut particles = self.particles.clone();
+        for _ in 0..1000 {
+            let mut pos_map: HashMap<Value3d, usize> = HashMap::new();
+            particles.iter_mut().for_each(|p| {
+                p.teak();
+                let count = pos_map.entry(p.position).or_default();
+                *count += 1;
+            });
+            particles.retain(|p| {
+                let count = pos_map.get(&p.position).unwrap_or(&0);
+                *count < 2
+            });
+        }
+        particles.len().to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2017/cDay 20: Particle Swarm".to_string()
@@ -101,8 +128,8 @@ mod test {
     #[test]
     fn aoc2017_20_correctness() -> io::Result<()> {
         let sol = AoC2017_20::new()?;
-        assert_eq!(sol.part_one(), "");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_one(), "457");
+        assert_eq!(sol.part_two(), "448");
         Ok(())
     }
 }
