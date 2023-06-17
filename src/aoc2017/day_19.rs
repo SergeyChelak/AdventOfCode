@@ -95,7 +95,7 @@ impl Solution for AoC2017_19 {
                 direction = direction.invert();
                 step_direction = Direction::Any;
             }
-            let mut kind = prev_steps.entry(loc.clone()).or_default();
+            let mut kind = prev_steps.entry(loc).or_default();
             match step_direction {
                 Direction::Horizontal => kind.horizontal = true,
                 Direction::Vertical => kind.vertical = true,
@@ -105,10 +105,10 @@ impl Solution for AoC2017_19 {
                 }
             }
             let is_allowed = |adj: &Location| {
-                if self.get(&adj).is_whitespace() {
+                if self.get(adj).is_whitespace() {
                     return false;
                 }
-                if let Some(step_kind) = prev_steps.get(&adj) {
+                if let Some(step_kind) = prev_steps.get(adj) {
                     match step_direction {
                         Direction::Horizontal => !step_kind.horizontal,
                         Direction::Vertical => !step_kind.vertical,
