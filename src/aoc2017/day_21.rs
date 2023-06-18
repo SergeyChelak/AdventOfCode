@@ -1,22 +1,65 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
+use std::collections::HashMap;
 use std::io;
 
+type Value = char;
+type Matrix = Vec<Vec<Value>>;
+
+trait MatrixOps {
+    fn initial() -> Self;
+
+    fn as_string(&self) -> String;
+
+    fn from_str(s: &str) -> Self;
+
+    fn rotate(&self) -> Self;
+}
+
+impl MatrixOps for Matrix {
+    fn initial() -> Self {
+        vec![
+            vec!['.', '#', '.'],
+            vec!['.', '.', '#'],
+            vec!['#', '#', '#'],
+        ]
+    }
+
+    fn as_string(&self) -> String {
+        self.iter()
+            .map(|arr| arr.iter().collect::<String>())
+            .collect::<Vec<String>>()
+            .join("/")
+    }
+
+    fn from_str(s: &str) -> Self {
+        s.split('/')
+            .map(|x|x.chars().collect::<Vec<Value>>())
+            .collect::<Matrix>()
+    }
+
+    fn rotate(&self) -> Self {
+        todo!()
+    }
+}
+
 pub struct AoC2017_21 {
-    // place required fields here
+    rules: HashMap<String, String>
 }
 
 impl AoC2017_21 {
     pub fn new() -> io::Result<Self> {
-        _ = read_file_as_lines("input/aoc2017_20")?;
+        let mut rules = HashMap::new();
+        read_file_as_lines("input/aoc2017_21")?
+            .iter()
+            .map(|s| s.split_once(" => ").expect("Invalid pattern format"))
+            .for_each(|(inp, out)| {
+                rules.insert(inp.to_string(), out.to_string());
+            });
         Ok(Self {
-            // initialize solution
+            rules
         })
-    }
-
-    fn parse_rule(s: &str) {
-        let (inp, out) = s.split_once(" => ").expect("Invalid pattern format");
     }
 }
 
@@ -39,6 +82,7 @@ mod test {
     #[test]
     fn aoc2017_21_input_load_test() -> io::Result<()> {
         let sol = AoC2017_21::new()?;
+        assert!(!sol.rules.is_empty());
         Ok(())
     }
 
