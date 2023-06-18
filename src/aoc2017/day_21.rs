@@ -19,11 +19,7 @@ trait MatrixOps {
 
 impl MatrixOps for Matrix {
     fn initial() -> Self {
-        vec![
-            vec!['.', '#', '.'],
-            vec!['.', '.', '#'],
-            vec!['#', '#', '#'],
-        ]
+        Self::from_str(".#./..#/###")
     }
 
     fn as_string(&self) -> String {
@@ -35,17 +31,25 @@ impl MatrixOps for Matrix {
 
     fn from_str(s: &str) -> Self {
         s.split('/')
-            .map(|x|x.chars().collect::<Vec<Value>>())
+            .map(|x| x.chars().collect::<Vec<Value>>())
             .collect::<Matrix>()
     }
 
     fn rotate(&self) -> Self {
-        todo!()
+        let mut matrix = self.clone().into_iter().rev().collect::<Matrix>();
+        for i in 0..matrix.len() {
+            for j in i + 1..matrix[i].len() {
+                let tmp = matrix[i][j];
+                matrix[i][j] = matrix[j][i];
+                matrix[j][i] = tmp;
+            }
+        }
+        matrix
     }
 }
 
 pub struct AoC2017_21 {
-    rules: HashMap<String, String>
+    rules: HashMap<String, String>,
 }
 
 impl AoC2017_21 {
@@ -57,9 +61,7 @@ impl AoC2017_21 {
             .for_each(|(inp, out)| {
                 rules.insert(inp.to_string(), out.to_string());
             });
-        Ok(Self {
-            rules
-        })
+        Ok(Self { rules })
     }
 }
 
