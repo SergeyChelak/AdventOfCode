@@ -75,6 +75,37 @@ impl AoC2017_21 {
         } else {
             panic!("Unexpected step size")
         };
+
+        let mut output = {
+            let dim = len / step * (step + 1);
+            vec![vec!['\0'; dim]; dim]
+        };
+        for r in (0..len).step_by(step) {
+            for c in (0..len).step_by(step) {
+                let mut inner = vec![vec!['\0'; step]; step];
+                for i in 0..step {
+                    for j in 0..step {
+                        inner[i][j] = matrix[i + r][j + c];
+                    }
+                }
+                let pattern = self
+                    .find_pattern(&mut inner)
+                    .expect("Matching pattern not found");
+                let enhanced = &mut matrix_from_str(&pattern);
+                let dim = 1 + step;
+                let rx = (r / step) * dim;
+                let cx = (c / step) * dim;
+                for i in 0..dim {
+                    for j in 0..dim {
+                        output[rx + i][cx + j] = enhanced[i][j];
+                    }
+                }
+            }
+        }
+        *matrix = output;
+    }
+
+    fn find_pattern(&self, matrix: &mut Matrix) -> Option<String> {
         let ops = [
             Operation::Nothing,
             Operation::FlipHorizontal,
@@ -85,29 +116,19 @@ impl AoC2017_21 {
             Operation::FlipVertical,
             Operation::FlipHorizontal,
         ];
-        for r in (0..len).step_by(step) {
-            for c in (0..len).step_by(step) {
-                let mut inner = vec![vec!['\0'; step]; step];
-                for i in 0..step {
-                    for j in 0..step {
-                        inner[i][j] = matrix[i + r][j + c];
-                    }
-                }
-                for op in &ops {
-                    inner = match op {
-                        Operation::Nothing => inner,
-                        Operation::Transpose => transpose(&inner),
-                        Operation::FlipHorizontal => flip_horizontal(&inner),
-                        Operation::FlipVertical => flip_vertical(&inner),
-                    };
-                    let key = matrix_to_string(&inner);
-                    if let Some(pattern) = self.rules.get(&key) {
-                        println!("Match found: {}", pattern);
-                        break;
-                    }
-                }
+        for op in &ops {
+            match op {
+                Operation::Nothing => {}
+                Operation::Transpose => *matrix = transpose(matrix),
+                Operation::FlipHorizontal => *matrix = flip_horizontal(matrix),
+                Operation::FlipVertical => *matrix = flip_vertical(matrix),
+            }
+            let key = matrix_to_string(&matrix);
+            if let Some(pattern) = self.rules.get(&key) {
+                return Some(pattern.to_string());
             }
         }
+        None
     }
 }
 
@@ -148,7 +169,7 @@ mod test {
     #[test]
     fn aoc2017_21_correctness() -> io::Result<()> {
         let sol = AoC2017_21::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "208");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
