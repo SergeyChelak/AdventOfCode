@@ -31,6 +31,7 @@ fn flip_vertical(matrix: &Matrix) -> Matrix {
     matrix.clone().into_iter().rev().collect::<Matrix>()
 }
 
+#[allow(clippy::needless_range_loop)]
 fn transpose(matrix: &Matrix) -> Matrix {
     let n = matrix.len();
     let m = matrix[0].len();
@@ -134,7 +135,7 @@ impl AoC2017_21 {
                 Operation::FlipHorizontal => *matrix = flip_horizontal(matrix),
                 Operation::FlipVertical => *matrix = flip_vertical(matrix),
             }
-            let key = matrix_to_string(&matrix);
+            let key = matrix_to_string(matrix);
             if let Some(pattern) = self.rules.get(&key) {
                 return Some(pattern.to_string());
             }
