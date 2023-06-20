@@ -43,6 +43,17 @@ fn transpose(matrix: &Matrix) -> Matrix {
     result
 }
 
+fn lighting_pixels(matrix: &Matrix) -> usize {
+    matrix
+        .iter()
+        .map(|x| {
+            x.iter()
+                .map(|v| if *v == '#' { 1 } else { 0 })
+                .sum::<usize>()
+        })
+        .sum::<usize>()
+}
+
 enum Operation {
     Nothing,
     Transpose,
@@ -66,7 +77,7 @@ impl AoC2017_21 {
         Ok(Self { rules })
     }
 
-    fn enhance_art(&self, matrix: &mut Matrix) {
+    fn enhance_step(&self, matrix: &mut Matrix) {
         let len = matrix.len();
         let step = if len % 2 == 0 {
             2
@@ -130,25 +141,22 @@ impl AoC2017_21 {
         }
         None
     }
+
+    fn count_pixels(&self, steps: usize) -> usize {
+        let mut matrix = matrix_from_str(".#./..#/###");
+        (0..steps).for_each(|_| self.enhance_step(&mut matrix));
+        lighting_pixels(&matrix)
+    }
 }
 
 impl Solution for AoC2017_21 {
     fn part_one(&self) -> String {
-        let mut matrix = matrix_from_str(".#./..#/###");
-        (0..5).for_each(|_| self.enhance_art(&mut matrix));
-        matrix
-            .iter()
-            .map(|x| {
-                x.iter()
-                    .map(|v| if *v == '#' { 1 } else { 0 })
-                    .sum::<usize>()
-            })
-            .sum::<usize>()
-            .to_string()
+        self.count_pixels(5).to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        self.count_pixels(18).to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2017/Day 21: Fractal Art".to_string()
@@ -170,7 +178,7 @@ mod test {
     fn aoc2017_21_correctness() -> io::Result<()> {
         let sol = AoC2017_21::new()?;
         assert_eq!(sol.part_one(), "208");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "2480380");
         Ok(())
     }
 }
