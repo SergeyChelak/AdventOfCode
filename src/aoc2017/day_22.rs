@@ -29,6 +29,23 @@ impl Direction {
             Self::Left => Self::Up,
         }
     }
+
+    fn inverse(&self) -> Self {
+        match self {
+            Self::Up => Self::Down,
+            Self::Down => Self::Up,
+            Self::Right => Self::Left,
+            Self::Left => Self::Right,
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+enum State {
+    Clean,
+    Weaken,
+    Infected,
+    Flagged,
 }
 
 type PointScalar = isize;
@@ -85,13 +102,15 @@ impl AoC2017_22 {
         };
         Self { center, infected }
     }
+}
 
-    fn contaminate(&self, bursts: usize) -> usize {
+impl Solution for AoC2017_22 {
+    fn part_one(&self) -> String {
         let mut state = self.infected.clone();
         let mut ptr = self.center;
         let mut dir = Direction::Up;
         let mut count = 0;
-        for _ in 0..bursts {
+        for _ in 0..10_000 {
             let is_infected = state.contains(&ptr);
             dir = if is_infected {
                 state.remove(&ptr);
@@ -103,13 +122,7 @@ impl AoC2017_22 {
             };
             ptr.forward(&dir);
         }
-        count
-    }
-}
-
-impl Solution for AoC2017_22 {
-    fn part_one(&self) -> String {
-        self.contaminate(10_000).to_string()
+        count.to_string()
     }
 
     // fn part_two(&self) -> String {
@@ -138,8 +151,7 @@ mod test {
             .map(|x| x.to_string())
             .collect::<Vec<String>>();
         let s = AoC2017_22::from_lines(&lines);
-        assert_eq!(s.contaminate(70), 41);
-        assert_eq!(s.contaminate(10_000), 5587);
+        assert_eq!(s.part_one(), "5587");
     }
 
     #[test]
