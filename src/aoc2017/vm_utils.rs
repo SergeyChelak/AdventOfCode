@@ -1,10 +1,13 @@
 pub type Register = usize;
 pub type Value = i64;
+
+#[derive(Clone, Copy)]
 pub enum OpValue {
     Val(Value),
     Reg(Register),
 }
 
+#[derive(Clone, Copy)]
 pub enum Op {
     Snd(OpValue),
     Set(Register, OpValue),
