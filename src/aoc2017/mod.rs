@@ -1,6 +1,7 @@
 use super::solution::Solution;
 
 mod knot_hash;
+mod vm_utils;
 
 mod day_01;
 use day_01::*;
