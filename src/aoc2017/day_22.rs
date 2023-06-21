@@ -1,7 +1,7 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::io;
 
 enum Direction {
@@ -30,7 +30,7 @@ impl Direction {
         }
     }
 
-    fn inverse(&self) -> Self {
+    fn reverse(&self) -> Self {
         match self {
             Self::Up => Self::Down,
             Self::Down => Self::Up,
@@ -40,12 +40,23 @@ impl Direction {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 enum State {
     Clean,
-    Weaken,
+    Weakened,
     Infected,
     Flagged,
+}
+
+impl State {
+    fn next_state(&self) -> Self {
+        match self {
+            Self::Clean => Self::Weakened,
+            Self::Weakened => Self::Infected,
+            Self::Infected => Self::Flagged,
+            Self::Flagged => Self::Clean,
+        }
+    }
 }
 
 type PointScalar = isize;
@@ -57,7 +68,7 @@ struct Point {
 }
 
 impl Point {
-    fn forward(&mut self, dir: &Direction) {
+    fn move_dir(&mut self, dir: &Direction) {
         match dir {
             Direction::Up => self.row -= 1,
             Direction::Left => self.col -= 1,
@@ -120,13 +131,38 @@ impl Solution for AoC2017_22 {
                 state.insert(ptr);
                 dir.turn_left()
             };
-            ptr.forward(&dir);
+            ptr.move_dir(&dir);
         }
         count.to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut count = 0;
+        let mut cluster = {
+            let mut map: HashMap<Point, State> = HashMap::new();
+            self.infected.iter().for_each(|x| {
+                map.insert(*x, State::Infected);
+            });
+            map
+        };
+        let mut dir = Direction::Up;
+        let mut ptr = self.center;
+        for _ in 0..10000000 {
+            let state = cluster.entry(ptr).or_insert(State::Clean);
+            dir = match state {
+                State::Clean => dir.turn_left(),
+                State::Weakened => dir,
+                State::Infected => dir.turn_right(),
+                State::Flagged => dir.reverse(),
+            };
+            *state = state.next_state();
+            if *state == State::Infected {
+                count += 1;
+            }
+            ptr.move_dir(&dir);
+        }
+        count.to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2017/Day 22: Sporifica Virus".to_string()
@@ -158,7 +194,7 @@ mod test {
     fn aoc2017_22_correctness() -> io::Result<()> {
         let sol = AoC2017_22::new()?;
         assert_eq!(sol.part_one(), "5406");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "2511640");
         Ok(())
     }
 }
