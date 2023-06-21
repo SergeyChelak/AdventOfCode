@@ -3,15 +3,20 @@ use crate::utils::*;
 
 use std::io;
 
+use super::vm_utils::*;
+
 pub struct AoC2017_23 {
-    // place required fields here
+    ops: Vec<Op>,
 }
 
 impl AoC2017_23 {
     pub fn new() -> io::Result<Self> {
-        _ = read_file_as_lines("input/aoc2017_23")?;
+        let ops = read_file_as_lines("input/aoc2017_23")?
+            .iter()
+            .map(|s| Op::from_str(s))
+            .collect();
         Ok(Self {
-            // initialize solution
+            ops
         })
     }
 }
@@ -35,6 +40,7 @@ mod test {
     #[test]
     fn aoc2017_23_input_load_test() -> io::Result<()> {
         let sol = AoC2017_23::new()?;
+        assert!(!sol.ops.is_empty());
         Ok(())
     }
 

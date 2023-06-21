@@ -9,10 +9,12 @@ pub enum Op {
     Snd(OpValue),
     Set(Register, OpValue),
     Add(Register, OpValue),
+    Sub(Register, OpValue),
     Mul(Register, OpValue),
     Mod(Register, OpValue),
     Rcv(Register),
     Jgz(OpValue, OpValue),
+    Jnz(OpValue, OpValue),
 }
 
 impl Op {
@@ -22,10 +24,15 @@ impl Op {
             "snd" => Self::Snd(Self::parse_op_value(tokens[1])),
             "set" => Self::Set(Self::parse_reg(tokens[1]), Self::parse_op_value(tokens[2])),
             "add" => Self::Add(Self::parse_reg(tokens[1]), Self::parse_op_value(tokens[2])),
+            "sub" => Self::Sub(Self::parse_reg(tokens[1]), Self::parse_op_value(tokens[2])),
             "mul" => Self::Mul(Self::parse_reg(tokens[1]), Self::parse_op_value(tokens[2])),
             "mod" => Self::Mod(Self::parse_reg(tokens[1]), Self::parse_op_value(tokens[2])),
             "rcv" => Self::Rcv(Self::parse_reg(tokens[1])),
             "jgz" => Self::Jgz(
+                Self::parse_op_value(tokens[1]),
+                Self::parse_op_value(tokens[2]),
+            ),
+            "jnz" => Self::Jnz(
                 Self::parse_op_value(tokens[1]),
                 Self::parse_op_value(tokens[2]),
             ),
