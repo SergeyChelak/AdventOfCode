@@ -8,6 +8,12 @@ enum JoinPort {
     B,
 }
 
+#[derive(Default, Copy, Clone)]
+struct BridgeParams {
+    strength: i32,
+    length: usize,
+}
+
 struct Component {
     port_a: i32,
     port_b: i32,
@@ -60,7 +66,13 @@ impl AoC2017_24 {
         Self { components }
     }
 
-    fn find_max_strength(&self, indices: &mut Vec<usize>, max_strength: &mut i32, pin_count: i32) {
+    fn find_max_strength(
+        &self,
+        indices: &mut Vec<usize>,
+        params: &mut BridgeParams,
+        pin_count: i32,
+        criteria: &dyn Fn(&BridgeParams, &[usize]) -> BridgeParams,
+    ) {
         for (i, comp) in self.components.iter().enumerate() {
             if indices.contains(&i) {
                 continue;
@@ -68,28 +80,51 @@ impl AoC2017_24 {
             if let Some(port) = comp.join_port(pin_count) {
                 indices.push(i);
                 let pins = comp.get_opposite_value(port);
-                self.find_max_strength(indices, max_strength, pins);
+                self.find_max_strength(indices, params, pins, criteria);
                 indices.pop();
             }
         }
-        let strength = indices
+        *params = criteria(params, indices);
+    }
+
+    fn calc_strength(&self, indices: &[usize]) -> i32 {
+        indices
             .iter()
             .map(|x| &self.components[*x])
             .map(|x| x.port_a + x.port_b)
-            .sum::<i32>();
-        *max_strength = strength.max(*max_strength);
+            .sum::<i32>()
     }
 }
 
 impl Solution for AoC2017_24 {
     fn part_one(&self) -> String {
-        let mut strength = 0;
-        self.find_max_strength(&mut Vec::new(), &mut strength, 0);
-        strength.to_string()
+        let mut params = BridgeParams::default();
+        self.find_max_strength(&mut Vec::new(), &mut params, 0, &|p, indices| {
+            let strength = self.calc_strength(indices);
+            BridgeParams {
+                strength: strength.max(p.strength),
+                ..*p
+            }
+        });
+        params.strength.to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut params = BridgeParams::default();
+        self.find_max_strength(&mut Vec::new(), &mut params, 0, &|p, indices| {
+            let length = indices.len();
+            let strength = self.calc_strength(indices);
+            if length >= p.length && strength > p.strength {
+                BridgeParams {
+                    strength,
+                    length
+                }
+            } else {
+                *p
+            }
+        });
+        params.strength.to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2017/Day 24: Electromagnetic Moat".to_string()
@@ -111,7 +146,7 @@ mod test {
     fn aoc2017_24_correctness() -> io::Result<()> {
         let sol = AoC2017_24::new()?;
         assert_eq!(sol.part_one(), "1940");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "1928");
         Ok(())
     }
 }
