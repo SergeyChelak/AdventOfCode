@@ -115,10 +115,7 @@ impl Solution for AoC2017_24 {
             let length = indices.len();
             let strength = self.calc_strength(indices);
             if length >= p.length && strength > p.strength {
-                BridgeParams {
-                    strength,
-                    length
-                }
+                BridgeParams { strength, length }
             } else {
                 *p
             }
