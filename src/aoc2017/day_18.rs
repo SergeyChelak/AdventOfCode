@@ -151,7 +151,7 @@ impl<'a> Machine<'a> {
                 Op::Mod(reg, op_value) => self.op_mod(*reg, op_value),
                 Op::Rcv(reg) => self.op_rcv(*reg),
                 Op::Jgz(op_value, offset) => self.op_jgz(op_value, offset),
-                _ => panic!("Unsupported operation")
+                _ => panic!("Unsupported operation"),
             }
         }
     }
