@@ -32,12 +32,10 @@ impl Solution for AoC2018_01 {
         set.insert(0);
         'main: loop {
             for x in &self.input {
-                // print!("{freq} + {x}");
                 freq += x;
                 if set.contains(&freq) {
                     break 'main;
                 }
-                // println!(" = {freq}");
                 set.insert(freq);
             }
         }
