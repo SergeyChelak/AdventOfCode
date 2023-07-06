@@ -18,6 +18,20 @@ fn profile(s: &str) -> (usize, usize) {
     (twice_rep, triple_rep)
 }
 
+fn check_diff(a: &str, b: &str) -> Option<String> {
+    let diff = a
+        .chars()
+        .zip(b.chars())
+        .filter(|(x, y)| *x == *y)
+        .map(|(ch, _)| ch)
+        .collect::<String>();
+    if a.len() - diff.len() == 1 {
+        Some(diff)
+    } else {
+        None
+    }
+}
+
 pub struct AoC2018_02 {
     input: Vec<String>,
 }
@@ -39,8 +53,16 @@ impl Solution for AoC2018_02 {
         (count.0 * count.1).to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        for (i, a) in self.input.iter().enumerate() {
+            for (_, b) in self.input.iter().enumerate().skip(i) {
+                if let Some(str) = check_diff(a, b) {
+                    return str;
+                }
+            }
+        }
+        "Not found".to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2018/Day 2: Inventory Management System".to_string()
@@ -62,7 +84,7 @@ mod test {
     fn aoc2018_02_correctness() -> io::Result<()> {
         let sol = AoC2018_02::new()?;
         assert_eq!(sol.part_one(), "5976");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "xretqmmonskvzupalfiwhcfdb");
         Ok(())
     }
 }
