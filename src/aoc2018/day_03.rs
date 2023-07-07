@@ -49,6 +49,9 @@ impl Claim {
     }
 }
 
+const SQUARE_SIZE: usize = 1000;
+type Square = [[usize; SQUARE_SIZE]; SQUARE_SIZE];
+
 pub struct AoC2018_03 {
     input: Vec<Claim>,
 }
@@ -61,12 +64,9 @@ impl AoC2018_03 {
             .collect();
         Ok(Self { input })
     }
-}
 
-impl Solution for AoC2018_03 {
-    fn part_one(&self) -> String {
-        const SIZE: usize = 1000;
-        let mut square = [[0usize; SIZE]; SIZE];
+    fn fill_square(&self) -> Square {
+        let mut square = [[0usize; SQUARE_SIZE]; SQUARE_SIZE];
         self.input.iter().for_each(|claim| {
             let top = claim.origin.top;
             let left = claim.origin.left;
@@ -76,16 +76,40 @@ impl Solution for AoC2018_03 {
                 }
             }
         });
-
         square
+    }
+}
+
+impl Solution for AoC2018_03 {
+    fn part_one(&self) -> String {
+        self.fill_square()
             .iter()
             .map(|row| row.iter().filter(|&x| *x > 1).count())
             .sum::<usize>()
             .to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let square = self.fill_square();
+        self.input
+            .iter()
+            .enumerate()
+            .find(|(_, claim)| {
+                let top = claim.origin.top;
+                let left = claim.origin.left;
+                for i in top..top + claim.rect.height {
+                    for j in left..left + claim.rect.width {
+                        if square[i][j] != 1 {
+                            return false;
+                        }
+                    }
+                }
+                true
+            })
+            .map(|(i, _)| i + 1)
+            .expect("Non-overlap claim doesn't found")
+            .to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2018/Day 3: No Matter How You Slice It".to_string()
@@ -107,7 +131,7 @@ mod test {
     fn aoc2018_03_correctness() -> io::Result<()> {
         let sol = AoC2018_03::new()?;
         assert_eq!(sol.part_one(), "117505");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "1254");
         Ok(())
     }
 }
