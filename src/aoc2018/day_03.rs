@@ -3,22 +3,86 @@ use crate::utils::*;
 
 use std::io;
 
+type Int = usize;
+
+struct Rect {
+    width: Int,
+    height: Int,
+}
+
+impl Rect {
+    fn from_str(s: &str) -> Self {
+        let (width, height) = s.split_once('x').expect("Can't parse rect dimensions");
+        let width = width.parse::<Int>().expect("Can't parse rect dim: Width");
+        let height = height.parse::<Int>().expect("Can't parse rect dim: Height");
+        Self { width, height }
+    }
+}
+
+struct Origin {
+    left: Int,
+    top: Int,
+}
+
+impl Origin {
+    fn from_str(s: &str) -> Self {
+        let len = s.len();
+        let s = &s[..len - 1];
+        let (left, top) = s.split_once(',').expect("Can't parse origin");
+        let left = left.parse::<Int>().expect("Can't parse origin: Left");
+        let top = top.parse::<Int>().expect("Can't parse origin: Top");
+        Self { left, top }
+    }
+}
+
+struct Claim {
+    rect: Rect,
+    origin: Origin,
+}
+
+impl Claim {
+    fn from_str(s: &str) -> Self {
+        let tokens = s.split(' ').collect::<Vec<&str>>();
+        let origin = Origin::from_str(tokens[2]);
+        let rect = Rect::from_str(tokens[3]);
+        Self { origin, rect }
+    }
+}
+
 pub struct AoC2018_03 {
-    // place required fields here
+    input: Vec<Claim>,
 }
 
 impl AoC2018_03 {
     pub fn new() -> io::Result<Self> {
-        _ = read_file_as_lines("input/aoc2018_03")?;
-        Ok(Self {
-            // initialize solution
-        })
+        let input = read_file_as_lines("input/aoc2018_03")?
+            .iter()
+            .map(|s| Claim::from_str(s))
+            .collect();
+        Ok(Self { input })
     }
 }
 
 impl Solution for AoC2018_03 {
-    // fn part_one(&self) -> String {
-    // }
+    fn part_one(&self) -> String {
+        const SIZE: usize = 1000;
+        let mut square = [[0usize; SIZE]; SIZE];
+        self.input.iter().for_each(|claim| {
+            let top = claim.origin.top;
+            let left = claim.origin.left;
+            for i in top..top + claim.rect.height {
+                for j in left..left + claim.rect.width {
+                    square[i][j] += 1;
+                }
+            }
+        });
+
+        square
+            .iter()
+            .map(|row| row.iter().filter(|&x| *x > 1).count())
+            .sum::<usize>()
+            .to_string()
+    }
 
     // fn part_two(&self) -> String {
     // }
@@ -35,13 +99,14 @@ mod test {
     #[test]
     fn aoc2018_03_input_load_test() -> io::Result<()> {
         let sol = AoC2018_03::new()?;
+        assert!(!sol.input.is_empty());
         Ok(())
     }
 
     #[test]
     fn aoc2018_03_correctness() -> io::Result<()> {
         let sol = AoC2018_03::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "117505");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
