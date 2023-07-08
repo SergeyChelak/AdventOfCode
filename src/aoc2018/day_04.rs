@@ -49,10 +49,8 @@ impl AoC2018_04 {
             .collect::<Vec<Event>>();
         Ok(Self { records })
     }
-}
 
-impl Solution for AoC2018_04 {
-    fn part_one(&self) -> String {
+    fn calc_timeline(&self) -> HashMap<usize, Stat> {
         let mut timeline: HashMap<usize, Stat> = HashMap::new();
         let mut guard_id = 0;
         let mut start_asleep: Option<u32> = None;
@@ -71,6 +69,13 @@ impl Solution for AoC2018_04 {
                 Event::Begin(_, id) => guard_id = *id,
             };
         }
+        timeline
+    }
+}
+
+impl Solution for AoC2018_04 {
+    fn part_one(&self) -> String {
+        let timeline = self.calc_timeline();
         let (&id, time) = timeline
             .iter()
             .max_by(|(_, a), (_, b)| {
@@ -87,8 +92,22 @@ impl Solution for AoC2018_04 {
         (id * best_minute.0).to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let timeline = self.calc_timeline();
+        let (id, minute, _) = timeline
+            .iter()
+            .map(|(key, stat)| {
+                let (minute, max) = stat
+                    .iter()
+                    .enumerate()
+                    .max_by(|(_, x), (_, y)| x.cmp(&y))
+                    .expect("Unreachable");
+                (*key, minute, max)
+            })
+            .max_by(|(_, _, &a), (_, _, &b)| a.cmp(&b))
+            .expect("Frequent minute not found");
+        (id * minute).to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2018/Day 4: Repose Record".to_string()
@@ -110,7 +129,7 @@ mod test {
     fn aoc2018_04_correctness() -> io::Result<()> {
         let sol = AoC2018_04::new()?;
         assert_eq!(sol.part_one(), "101194");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "102095");
         Ok(())
     }
 
