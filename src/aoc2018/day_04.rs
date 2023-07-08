@@ -62,8 +62,8 @@ impl AoC2018_04 {
                     let start =
                         start_asleep.expect("Asleep time should appear before wake up") as usize;
                     let stop = time.minute() as usize;
-                    for i in start..stop {
-                        entry[i] += 1;
+                    for x in entry.iter_mut().take(stop).skip(start) {
+                        *x += 1;
                     }
                 }
                 Event::Begin(_, id) => guard_id = *id,
@@ -100,7 +100,7 @@ impl Solution for AoC2018_04 {
                 let (minute, max) = stat
                     .iter()
                     .enumerate()
-                    .max_by(|(_, x), (_, y)| x.cmp(&y))
+                    .max_by(|(_, x), (_, y)| x.cmp(y))
                     .expect("Unreachable");
                 (*key, minute, max)
             })
