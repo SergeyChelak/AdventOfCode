@@ -65,6 +65,7 @@ impl AoC2018_03 {
         Ok(Self { input })
     }
 
+    #[allow(clippy::needless_range_loop)]
     fn fill_square(&self) -> Square {
         let mut square = [[0usize; SQUARE_SIZE]; SQUARE_SIZE];
         self.input.iter().for_each(|claim| {
@@ -89,6 +90,7 @@ impl Solution for AoC2018_03 {
             .to_string()
     }
 
+    #[allow(clippy::needless_range_loop)]
     fn part_two(&self) -> String {
         let square = self.fill_square();
         self.input
