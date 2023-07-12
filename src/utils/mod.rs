@@ -18,3 +18,6 @@ pub use arrays::*;
 
 pub mod strings;
 pub use strings::*;
+
+pub mod coordinate;
+pub use coordinate::*;

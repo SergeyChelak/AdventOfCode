@@ -3,15 +3,23 @@ use crate::utils::*;
 
 use std::io;
 
+type Int = i32;
+type Point = Point2d<Int>;
+
 pub struct AoC2018_06 {
-    // place required fields here
+    points: Vec<Point>,
 }
 
 impl AoC2018_06 {
     pub fn new() -> io::Result<Self> {
-        Ok(Self {
-            // initialize solution
-        })
+        let points = read_file_as_lines("input/aoc2018_06")?
+            .iter()
+            .map(|s| {
+                Point::parse_csv(s)
+                    .unwrap_or_else(|err| panic!("Failed to parse coordinate from '{s}' string, error: {err:?}"))
+            })
+            .collect::<Vec<Point>>();
+        Ok(Self { points })
     }
 }
 
@@ -34,6 +42,7 @@ mod test {
     #[test]
     fn aoc2018_06_input_load_test() -> io::Result<()> {
         let sol = AoC2018_06::new()?;
+        assert!(!sol.points.is_empty());
         Ok(())
     }
 
