@@ -1,10 +1,27 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
+use std::collections::HashSet;
 use std::io;
 
 type Int = i32;
 type Point = Point2d<Int>;
+
+/// Returns top left and bottom right points
+fn boundaries(points: &[Point]) -> (Point, Point) {
+    let min_x = points.iter().map(|p| p.x).min().unwrap();
+    let min_y = points.iter().map(|p| p.y).min().unwrap();
+    let max_x = points.iter().map(|p| p.x).max().unwrap();
+    let max_y = points.iter().map(|p| p.y).max().unwrap();
+    (Point { x: min_x, y: min_y }, Point { x: max_x, y: max_y })
+}
+
+#[derive(Copy, Clone)]
+enum Cell {
+    Free,
+    Inf(Int),
+    Owned(usize, Int), // owner, distance
+}
 
 pub struct AoC2018_06 {
     points: Vec<Point>,
@@ -12,20 +29,106 @@ pub struct AoC2018_06 {
 
 impl AoC2018_06 {
     pub fn new() -> io::Result<Self> {
-        let points = read_file_as_lines("input/aoc2018_06")?
+        let lines = read_file_as_lines("input/aoc2018_06")?;
+        Ok(Self::from_lines(&lines))
+    }
+
+    fn from_lines(lines: &[String]) -> Self {
+        let points = lines
             .iter()
             .map(|s| {
-                Point::parse_csv(s)
-                    .unwrap_or_else(|err| panic!("Failed to parse coordinate from '{s}' string, error: {err:?}"))
+                Point::parse_csv(s).unwrap_or_else(|err| {
+                    panic!("Failed to parse coordinate from '{s}' string, error: {err:?}")
+                })
             })
             .collect::<Vec<Point>>();
-        Ok(Self { points })
+        Self { points }
     }
 }
 
 impl Solution for AoC2018_06 {
-    // fn part_one(&self) -> String {
-    // }
+    fn part_one(&self) -> String {
+        let (a, b) = boundaries(&self.points);
+        let norm = self
+            .points
+            .iter()
+            .map(|p| p.sub(&a))
+            .collect::<Vec<Point>>();
+
+        let dim = b.sub(&a).add(&Point { x: 1, y: 1 });
+        let mut matrix = vec![vec![Cell::Free; dim.y as usize]; dim.x as usize];
+        norm.iter()
+            .enumerate()
+            .for_each(|(i, p)| matrix[p.x as usize][p.y as usize] = Cell::Owned(i, 0));
+
+        norm.iter().enumerate().for_each(|(id, p)| {
+            for x in 0..matrix.len() {
+                for y in 0..matrix[x].len() {
+                    let distance = (p.x.abs_diff(x as Int) + p.y.abs_diff(y as Int)) as Int;
+                    match matrix[x][y] {
+                        Cell::Free => matrix[x][y] = Cell::Owned(id, distance),
+                        Cell::Owned(other_id, other_dist) if other_id != id => {
+                            if distance == other_dist {
+                                matrix[x][y] = Cell::Inf(distance);
+                            } else if distance < other_dist {
+                                matrix[x][y] = Cell::Owned(id, distance);
+                            }
+                        }
+                        Cell::Inf(other_dist) => {
+                            if distance < other_dist {
+                                matrix[x][y] = Cell::Owned(id, distance);
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+            }
+        });
+
+        let mut infinites: HashSet<usize> = HashSet::new();
+        let get_id = |cell: &Cell| -> Option<usize> {
+            match cell {
+                Cell::Owned(id, _) => Some(*id),
+                _ => None,
+            }
+        };
+
+        for i in 0..matrix.len() {
+            if let Some(id) = get_id(&matrix[i][0]) {
+                infinites.insert(id);
+            }
+            if let Some(id) = get_id(&matrix[i][matrix[i].len() - 1]) {
+                infinites.insert(id);
+            }
+        }
+
+        for i in 0..matrix[0].len() {
+            if let Some(id) = get_id(&matrix[0][i]) {
+                infinites.insert(id);
+            }
+            if let Some(id) = get_id(&matrix[matrix.len() - 1][i]) {
+                infinites.insert(id);
+            }
+        }
+
+        let mut squares = vec![0usize; norm.len()];
+        for x in 0..matrix.len() {
+            for y in 0..matrix[x].len() {
+                match matrix[x][y] {
+                    Cell::Owned(id, _) => squares[id] += 1,
+                    _ => continue,
+                }
+            }
+        }
+        squares
+            .iter()
+            .enumerate()
+            .filter(|(id, _)| !infinites.contains(id))
+            .map(|(_, dist)| *dist)
+            .max()
+            .unwrap()
+            .to_string()
+    }
 
     // fn part_two(&self) -> String {
     // }
@@ -47,9 +150,19 @@ mod test {
     }
 
     #[test]
+    fn aoc2018_06_example1() {
+        let lines = ["1, 1", "1, 6", "8, 3", "3, 4", "5, 5", "8, 9"]
+            .iter()
+            .map(|s| s.to_string())
+            .collect::<Vec<String>>();
+        let sol = AoC2018_06::from_lines(&lines);
+        assert_eq!(sol.part_one(), "17");
+    }
+
+    #[test]
     fn aoc2018_06_correctness() -> io::Result<()> {
         let sol = AoC2018_06::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "4754");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
