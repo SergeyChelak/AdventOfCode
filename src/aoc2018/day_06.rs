@@ -8,6 +8,12 @@ type Int = i32;
 type UInt = u32;
 type Point = Point2d<Int>;
 
+impl Point {
+    fn distance(&self, x: Int, y: Int) -> UInt {
+        self.x.abs_diff(x) + self.y.abs_diff(y)
+    }
+}
+
 /// Returns top left and bottom right points
 fn boundaries(points: &[Point]) -> (Point, Point) {
     let min_x = points.iter().map(|p| p.x).min().unwrap();
@@ -19,15 +25,8 @@ fn boundaries(points: &[Point]) -> (Point, Point) {
 
 #[derive(Copy, Clone)]
 enum Cell {
-    Free,
     Inf(UInt),
     Owned(usize, UInt), // owner, distance
-}
-
-impl Point2d<i32> {
-    fn distance(&self, x: Int, y: Int) -> UInt {
-        self.x.abs_diff(x) + self.y.abs_diff(y)
-    }
 }
 
 pub struct AoC2018_06 {
@@ -67,27 +66,26 @@ impl AoC2018_06 {
 impl Solution for AoC2018_06 {
     fn part_one(&self) -> String {
         let (norm, dim) = self.normalized_input();
-        let mut matrix = vec![vec![Cell::Free; dim.y as usize]; dim.x as usize];
+        let mut matrix = vec![vec![Cell::Inf(UInt::MAX); dim.y as usize]; dim.x as usize];
         norm.iter()
             .enumerate()
             .for_each(|(i, p)| matrix[p.x as usize][p.y as usize] = Cell::Owned(i, 0));
 
         norm.iter().enumerate().for_each(|(id, p)| {
-            for x in 0..matrix.len() {
-                for y in 0..matrix[x].len() {
+            for (x, row) in matrix.iter_mut().enumerate() {
+                for (y, val) in row.iter_mut().enumerate() {
                     let distance = p.distance(x as Int, y as Int);
-                    match matrix[x][y] {
-                        Cell::Free => matrix[x][y] = Cell::Owned(id, distance),
-                        Cell::Owned(other_id, other_dist) if other_id != id => {
-                            if distance == other_dist {
-                                matrix[x][y] = Cell::Inf(distance);
-                            } else if distance < other_dist {
-                                matrix[x][y] = Cell::Owned(id, distance);
+                    match val {
+                        Cell::Owned(other_id, other_dist) if *other_id != id => {
+                            if distance == *other_dist {
+                                *val = Cell::Inf(distance);
+                            } else if distance < *other_dist {
+                                *val = Cell::Owned(id, distance);
                             }
                         }
                         Cell::Inf(other_dist) => {
-                            if distance < other_dist {
-                                matrix[x][y] = Cell::Owned(id, distance);
+                            if distance < *other_dist {
+                                *val = Cell::Owned(id, distance);
                             }
                         }
                         _ => {}
