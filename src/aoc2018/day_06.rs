@@ -143,10 +143,9 @@ impl Solution for AoC2018_06 {
         let mut count = 0;
         for x in 0..=dim.x {
             for y in 0..=dim.y {
-                let mut sum = 0;
-                for p in &norm_points {
-                    sum += p.x.abs_diff(x) + p.y.abs_diff(y);
-                                    }
+                let sum = norm_points
+                    .iter()
+                    .fold(0, |acc, p| acc + p.x.abs_diff(x) + p.y.abs_diff(y));
                 if sum < max {
                     count += 1;
                 }
