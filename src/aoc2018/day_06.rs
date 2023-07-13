@@ -1,6 +1,7 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
+use std::cmp::Ordering;
 use std::collections::HashSet;
 use std::io;
 
@@ -77,10 +78,10 @@ impl Solution for AoC2018_06 {
                     let distance = p.distance(x as Int, y as Int);
                     match val {
                         Cell::Owned(other_id, other_dist) if *other_id != id => {
-                            if distance == *other_dist {
-                                *val = Cell::Inf(distance);
-                            } else if distance < *other_dist {
-                                *val = Cell::Owned(id, distance);
+                            match distance.cmp(other_dist) {
+                                Ordering::Equal => *val = Cell::Inf(distance),
+                                Ordering::Less => *val = Cell::Owned(id, distance),
+                                _ => {}
                             }
                         }
                         Cell::Inf(other_dist) => {
