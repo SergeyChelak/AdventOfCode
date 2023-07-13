@@ -15,15 +15,6 @@ impl Point {
     }
 }
 
-/// Returns top left and bottom right points
-fn boundaries(points: &[Point]) -> (Point, Point) {
-    let min_x = points.iter().map(|p| p.x).min().unwrap();
-    let min_y = points.iter().map(|p| p.y).min().unwrap();
-    let max_x = points.iter().map(|p| p.x).max().unwrap();
-    let max_y = points.iter().map(|p| p.y).max().unwrap();
-    (Point { x: min_x, y: min_y }, Point { x: max_x, y: max_y })
-}
-
 #[derive(Copy, Clone)]
 enum Cell {
     Inf(UInt),
@@ -95,41 +86,16 @@ impl Solution for AoC2018_06 {
             }
         });
 
-        let mut infinites: HashSet<usize> = HashSet::new();
-        let get_id = |cell: &Cell| -> Option<usize> {
-            match cell {
-                Cell::Owned(id, _) => Some(*id),
-                _ => None,
-            }
-        };
-
-        for i in 0..matrix.len() {
-            if let Some(id) = get_id(&matrix[i][0]) {
-                infinites.insert(id);
-            }
-            if let Some(id) = get_id(&matrix[i][matrix[i].len() - 1]) {
-                infinites.insert(id);
-            }
-        }
-
-        for i in 0..matrix[0].len() {
-            if let Some(id) = get_id(&matrix[0][i]) {
-                infinites.insert(id);
-            }
-            if let Some(id) = get_id(&matrix[matrix.len() - 1][i]) {
-                infinites.insert(id);
-            }
-        }
-
         let mut squares = vec![0usize; norm.len()];
-        for x in 0..matrix.len() {
-            for y in 0..matrix[x].len() {
-                match matrix[x][y] {
-                    Cell::Owned(id, _) => squares[id] += 1,
-                    _ => continue,
+        for row in matrix.iter() {
+            for val in row.iter() {
+                if let Cell::Owned(id, _) = val {
+                     squares[*id] += 1;
                 }
             }
         }
+
+        let infinites = edge_values(&matrix);
         squares
             .iter()
             .enumerate()
@@ -160,6 +126,62 @@ impl Solution for AoC2018_06 {
     fn description(&self) -> String {
         "AoC 2018/Day 6: Chronal Coordinates".to_string()
     }
+}
+
+/// Returns top left and bottom right points
+fn boundaries(points: &[Point]) -> (Point, Point) {
+    let min_x = points.iter().map(|p| p.x).min().unwrap();
+    let min_y = points.iter().map(|p| p.y).min().unwrap();
+    let max_x = points.iter().map(|p| p.x).max().unwrap();
+    let max_y = points.iter().map(|p| p.y).max().unwrap();
+    (Point { x: min_x, y: min_y }, Point { x: max_x, y: max_y })
+}
+
+
+fn edge_values(matrix: &[Vec<Cell>]) -> HashSet<usize> {    
+    enum Direction {
+        Left, Right, Up, Down
+    }
+    let mut infinites: HashSet<usize> = HashSet::new();
+    let instructions = [Direction::Right, Direction::Down, Direction::Left, Direction::Up];
+    let (mut x, mut y) = (0usize, 0usize);
+    let mut ptr = 0usize;
+    while ptr < instructions.len() {
+        match instructions[ptr] {
+            Direction::Right => {
+                if x == matrix.len() - 1 {
+                    ptr += 1;
+                    continue;
+                }
+                x += 1;
+            },
+            Direction::Left => {
+                if x == 0 {
+                    ptr += 1;
+                    continue;
+                }
+                x -= 1;
+            },
+            Direction::Down => {
+                if y == matrix[x].len() - 1 {
+                    ptr += 1;
+                    continue;
+                }
+                y += 1;
+            },
+            Direction::Up => {
+                if y == 0 {
+                    ptr += 1;
+                    continue;
+                }
+                y -= 1;
+            }
+        }
+        if let Cell::Owned(id, _) = matrix[x][y] {
+            infinites.insert(id);
+        }
+    }
+    infinites
 }
 
 #[cfg(test)]
