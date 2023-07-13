@@ -5,6 +5,7 @@ use std::collections::HashSet;
 use std::io;
 
 type Int = i32;
+type UInt = u32;
 type Point = Point2d<Int>;
 
 /// Returns top left and bottom right points
@@ -19,8 +20,14 @@ fn boundaries(points: &[Point]) -> (Point, Point) {
 #[derive(Copy, Clone)]
 enum Cell {
     Free,
-    Inf(Int),
-    Owned(usize, Int), // owner, distance
+    Inf(UInt),
+    Owned(usize, UInt), // owner, distance
+}
+
+impl Point2d<i32> {
+    fn distance(&self, x: Int, y: Int) -> UInt {
+        self.x.abs_diff(x) + self.y.abs_diff(y)
+    }
 }
 
 pub struct AoC2018_06 {
@@ -68,7 +75,7 @@ impl Solution for AoC2018_06 {
         norm.iter().enumerate().for_each(|(id, p)| {
             for x in 0..matrix.len() {
                 for y in 0..matrix[x].len() {
-                    let distance = (p.x.abs_diff(x as Int) + p.y.abs_diff(y as Int)) as Int;
+                    let distance = p.distance(x as Int, y as Int);
                     match matrix[x][y] {
                         Cell::Free => matrix[x][y] = Cell::Owned(id, distance),
                         Cell::Owned(other_id, other_dist) if other_id != id => {
@@ -142,7 +149,7 @@ impl Solution for AoC2018_06 {
             for y in 0..=dim.y {
                 let sum = points
                     .iter()
-                    .fold(0, |acc, p| acc + p.x.abs_diff(x) + p.y.abs_diff(y));
+                    .fold(0, |acc, p| acc + p.distance(x, y));
                 if sum < max {
                     count += 1;
                 }
