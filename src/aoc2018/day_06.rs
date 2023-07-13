@@ -44,18 +44,22 @@ impl AoC2018_06 {
             .collect::<Vec<Point>>();
         Self { points }
     }
-}
 
-impl Solution for AoC2018_06 {
-    fn part_one(&self) -> String {
+    fn normalized_input(&self) -> (Vec<Point>, Point) {
         let (a, b) = boundaries(&self.points);
-        let norm = self
+        let norm_points = self
             .points
             .iter()
             .map(|p| p.sub(&a))
             .collect::<Vec<Point>>();
-
         let dim = b.sub(&a).add(&Point { x: 1, y: 1 });
+        (norm_points, dim)
+    }
+}
+
+impl Solution for AoC2018_06 {
+    fn part_one(&self) -> String {
+        let (norm, dim) = self.normalized_input();
         let mut matrix = vec![vec![Cell::Free; dim.y as usize]; dim.x as usize];
         norm.iter()
             .enumerate()
@@ -131,19 +135,12 @@ impl Solution for AoC2018_06 {
     }
 
     fn part_two(&self) -> String {
-        let (a, b) = boundaries(&self.points);
-        let norm_points = self
-            .points
-            .iter()
-            .map(|p| p.sub(&a))
-            .collect::<Vec<Point>>();
-        let dim = b.sub(&a);
-
+        let (points, dim) = self.normalized_input();
         let max = 10000;
         let mut count = 0;
         for x in 0..=dim.x {
             for y in 0..=dim.y {
-                let sum = norm_points
+                let sum = points
                     .iter()
                     .fold(0, |acc, p| acc + p.x.abs_diff(x) + p.y.abs_diff(y));
                 if sum < max {
