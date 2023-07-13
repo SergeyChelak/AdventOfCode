@@ -130,8 +130,30 @@ impl Solution for AoC2018_06 {
             .to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let (a, b) = boundaries(&self.points);
+        let norm_points = self
+            .points
+            .iter()
+            .map(|p| p.sub(&a))
+            .collect::<Vec<Point>>();
+        let dim = b.sub(&a);
+
+        let max = 10000;
+        let mut count = 0;
+        for x in 0..=dim.x {
+            for y in 0..=dim.y {
+                let mut sum = 0;
+                for p in &norm_points {
+                    sum += p.x.abs_diff(x) + p.y.abs_diff(y);
+                                    }
+                if sum < max {
+                    count += 1;
+                }
+            }
+        }
+        count.to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2018/Day 6: Chronal Coordinates".to_string()
@@ -163,7 +185,7 @@ mod test {
     fn aoc2018_06_correctness() -> io::Result<()> {
         let sol = AoC2018_06::new()?;
         assert_eq!(sol.part_one(), "4754");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "42344");
         Ok(())
     }
 }
