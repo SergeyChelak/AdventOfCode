@@ -90,7 +90,7 @@ impl Solution for AoC2018_06 {
         for row in matrix.iter() {
             for val in row.iter() {
                 if let Cell::Owned(id, _) = val {
-                     squares[*id] += 1;
+                    squares[*id] += 1;
                 }
             }
         }
@@ -112,9 +112,7 @@ impl Solution for AoC2018_06 {
         let mut count = 0;
         for x in 0..=dim.x {
             for y in 0..=dim.y {
-                let sum = points
-                    .iter()
-                    .fold(0, |acc, p| acc + p.distance(x, y));
+                let sum = points.iter().fold(0, |acc, p| acc + p.distance(x, y));
                 if sum < max {
                     count += 1;
                 }
@@ -137,13 +135,20 @@ fn boundaries(points: &[Point]) -> (Point, Point) {
     (Point { x: min_x, y: min_y }, Point { x: max_x, y: max_y })
 }
 
-
-fn edge_values(matrix: &[Vec<Cell>]) -> HashSet<usize> {    
+fn edge_values(matrix: &[Vec<Cell>]) -> HashSet<usize> {
     enum Direction {
-        Left, Right, Up, Down
+        Left,
+        Right,
+        Up,
+        Down,
     }
     let mut infinites: HashSet<usize> = HashSet::new();
-    let instructions = [Direction::Right, Direction::Down, Direction::Left, Direction::Up];
+    let instructions = [
+        Direction::Right,
+        Direction::Down,
+        Direction::Left,
+        Direction::Up,
+    ];
     let (mut x, mut y) = (0usize, 0usize);
     let mut ptr = 0usize;
     while ptr < instructions.len() {
@@ -154,21 +159,21 @@ fn edge_values(matrix: &[Vec<Cell>]) -> HashSet<usize> {
                     continue;
                 }
                 x += 1;
-            },
+            }
             Direction::Left => {
                 if x == 0 {
                     ptr += 1;
                     continue;
                 }
                 x -= 1;
-            },
+            }
             Direction::Down => {
                 if y == matrix[x].len() - 1 {
                     ptr += 1;
                     continue;
                 }
                 y += 1;
-            },
+            }
             Direction::Up => {
                 if y == 0 {
                     ptr += 1;
