@@ -46,7 +46,7 @@ impl Solution for AoC2015_03 {
         set.insert(pos_santa);
         let mut is_santa = true;
         for ch in self.input.iter() {
-            let mut coord = if is_santa {
+            let coord = if is_santa {
                 &mut pos_santa
             } else {
                 &mut pos_robo

@@ -90,7 +90,7 @@ impl AoC2017_19 {
                 direction = direction.invert();
                 step_direction = Direction::Any;
             }
-            let mut kind = prev_steps.entry(loc).or_default();
+            let kind = prev_steps.entry(loc).or_default();
             match step_direction {
                 Direction::Horizontal => kind.horizontal = true,
                 Direction::Vertical => kind.vertical = true,
