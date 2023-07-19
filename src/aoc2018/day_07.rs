@@ -36,7 +36,10 @@ impl AoC2018_07 {
 
 impl Solution for AoC2018_07 {
     fn part_one(&self) -> String {
-        calc_steps_oder(&self.input)
+        let mut output: Vec<char> = Vec::new();
+        let mut step_data = build_steps_data(&self.input);
+        search_dfs(&mut step_data, &mut output);
+        output.iter().collect()
     }
 
     // fn part_two(&self) -> String {
@@ -47,53 +50,45 @@ impl Solution for AoC2018_07 {
     }
 }
 
-fn calc_steps_oder(input: &[Dependency]) -> String {
-    type StepsData = HashMap<char, HashSet<char>>;
+type StepsData = HashMap<char, HashSet<char>>;
 
-    fn build_steps_data(input: &[Dependency]) -> StepsData {
-        let mut steps: StepsData = HashMap::new();
-        input.iter().for_each(|x| {
-            let entry = steps.entry(x.step).or_insert(HashSet::new());
-            entry.insert(x.dependency);
-            _ = steps.entry(x.dependency).or_insert(HashSet::new());
-        });
-        steps
-    }
+fn build_steps_data(input: &[Dependency]) -> StepsData {
+    let mut steps: StepsData = HashMap::new();
+    input.iter().for_each(|x| {
+        let entry = steps.entry(x.step).or_insert(HashSet::new());
+        entry.insert(x.dependency);
+        _ = steps.entry(x.dependency).or_insert(HashSet::new());
+    });
+    steps
+}
 
-    fn find_finished(step_data: &StepsData, in_use: &[char]) -> Vec<char> {
-        let mut finished = step_data
-            .iter()
-            .filter_map(|(x, set)| {
-                if !in_use.contains(x) && set.is_empty() {
-                    Some(*x)
-                } else {
-                    None
-                }
-            })
-            .collect::<Vec<char>>();
-        finished.sort();
-        finished
-    }
-
-    fn search(step_data: &mut StepsData, finished: &[char], output: &mut Vec<char>) {
-        for ch in finished {
-            if output.contains(ch) {
-                continue;
+fn find_finished(step_data: &StepsData, in_use: &[char]) -> Vec<char> {
+    let mut finished = step_data
+        .iter()
+        .filter_map(|(x, set)| {
+            if !in_use.contains(x) && set.is_empty() {
+                Some(*x)
+            } else {
+                None
             }
-            output.push(*ch);
-            step_data.iter_mut().for_each(|(_, set)| {
-                set.remove(ch);
-            });
-            let next = find_finished(step_data, output);
-            search(step_data, &next, output);
-        }
-    }
+        })
+        .collect::<Vec<char>>();
+    finished.sort();
+    finished
+}
 
-    let mut output: Vec<char> = Vec::new();
-    let mut step_data = build_steps_data(input);
-    let finished = find_finished(&step_data, &[]);
-    search(&mut step_data, &finished, &mut output);
-    output.iter().collect()
+fn search_dfs(step_data: &mut StepsData, output: &mut Vec<char>) {
+    let finished = find_finished(step_data, output);
+    for ch in &finished {
+        if output.contains(ch) {
+            continue;
+        }
+        output.push(*ch);
+        step_data.iter_mut().for_each(|(_, set)| {
+            set.remove(ch);
+        });
+        search_dfs(step_data, output);
+    }
 }
 
 #[cfg(test)]
