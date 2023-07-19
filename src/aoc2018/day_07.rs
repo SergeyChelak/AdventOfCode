@@ -1,3 +1,5 @@
+use serde_json::to_string;
+
 use crate::solution::Solution;
 use crate::utils::*;
 
@@ -38,12 +40,23 @@ impl Solution for AoC2018_07 {
     fn part_one(&self) -> String {
         let mut output: Vec<char> = Vec::new();
         let mut step_data = build_steps_data(&self.input);
-        search_dfs(&mut step_data, &mut output);
+        loop {
+            let finished = find_finished(&step_data, &output);
+            if let Some(ch) = finished.first() {
+                output.push(*ch);
+                step_data.iter_mut().for_each(|(_, set)| {
+                    set.remove(ch);
+                });
+            } else {
+                break;
+            }
+        }
         output.iter().collect()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        todo!()
+    }
 
     fn description(&self) -> String {
         "AoC 2018/Day 7: The Sum of Its Parts".to_string()
@@ -76,21 +89,6 @@ fn find_finished(step_data: &StepsData, in_use: &[char]) -> Vec<char> {
     finished.sort();
     finished
 }
-
-fn search_dfs(step_data: &mut StepsData, output: &mut Vec<char>) {
-    let finished = find_finished(step_data, output);
-    for ch in &finished {
-        if output.contains(ch) {
-            continue;
-        }
-        output.push(*ch);
-        step_data.iter_mut().for_each(|(_, set)| {
-            set.remove(ch);
-        });
-        search_dfs(step_data, output);
-    }
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
@@ -106,13 +104,26 @@ mod test {
     fn aoc2018_07_correctness() -> io::Result<()> {
         let sol = AoC2018_07::new()?;
         assert_eq!(sol.part_one(), "LAPFCRGHVZOTKWENBXIMSUDJQY");
-        assert_eq!(sol.part_two(), "");
+        // assert_eq!(sol.part_two(), "");
         Ok(())
     }
 
     #[test]
     fn aoc2018_07_example1() {
-        let lines = [
+        let lines = example_input();
+        let aoc = AoC2018_07::from_lines(&lines);
+        assert_eq!(aoc.part_one(), "CABDFE");
+    }
+
+    #[test]
+    fn aoc2018_07_example2() {
+        let lines = example_input();
+        let aoc = AoC2018_07::from_lines(&lines);
+        // TODO: assert_eq!(???, 15);
+    }
+
+    fn example_input() -> Vec<String> {
+        [
             "Step C must be finished before step A can begin.",
             "Step C must be finished before step F can begin.",
             "Step A must be finished before step B can begin.",
@@ -123,8 +134,6 @@ mod test {
         ]
         .iter()
         .map(|x| x.to_string())
-        .collect::<Vec<String>>();
-        let aoc = AoC2018_07::from_lines(&lines);
-        assert_eq!(aoc.part_one(), "CABDFE");
+        .collect::<Vec<String>>()
     }
 }
