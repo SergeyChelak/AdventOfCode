@@ -90,15 +90,13 @@ fn find_finished(step_data: &StepsData, in_use: &[char]) -> Vec<char> {
 
 fn pt2(input: &[Dependency], count: usize) -> usize {
     let mut step_data = build_steps_data(input);
-
     let mut work_load = vec![0usize; count];
-
     let mut deadline: HashMap<char, usize> = HashMap::new();
     let mut in_use: HashSet<char> = HashSet::new();
-
     loop {
+        //
         println!("Load: {:?}", work_load);
-
+        //
         let mut next_step = |load: &[usize]| -> (usize, Vec<char>) {
             let mut active_load = load
                 .iter()
@@ -131,37 +129,44 @@ fn pt2(input: &[Dependency], count: usize) -> usize {
         if finished.is_empty() {
             break;
         }
-        // distribute
-        println!("time = {time}");
+        //
+        println!("Time = {time}");
         println!("Finished: {:?}", finished);
+        //
         for ch in finished {
             assert!(!in_use.contains(&ch), "Reusing char '{ch}'");
-            for load in work_load.iter_mut() {
-                if *load <= time {
-                    let old_load = *load;
-                    *load = time.max(*load) + 1 + (ch as u8 - b'A') as usize;
+            // find less loaded worker
+            let (idx, load) = work_load
+                .iter()
+                .map(|x| time.max(*x)  + 1 + (ch as u8 - b'A') as usize)
+                .enumerate()
+                .min_by(|(_, a), (_, b)| a.cmp(b))
+                .expect("Failed to find less loaded worker");
 
-                    println!("{ch} distributed to {old_load} with {load}");
-                    deadline.insert(ch, *load);
-
-                    step_data
-                        .iter_mut()
-                        .filter(|(_, set)| set.contains(&ch))
-                        .for_each(|(x, set)| {
-                            set.remove(&ch);
-                            let entry: &mut usize = deadline.entry(*x).or_insert(*load);
-                            *entry = (*load).max(*entry);
-                        });
-                    in_use.insert(ch);
-                    break;
-                }
-            }
+            //
+            println!("{ch} distributed to {idx} with {load}");
+            //
+            work_load[idx] = load;
+            deadline.insert(ch, load);
+            // shift deadline of the dependent steps
+            step_data
+                .iter_mut()
+                .filter(|(_, set)| set.contains(&ch))
+                .for_each(|(x, set)| {
+                    set.remove(&ch);
+                    let entry: &mut usize = deadline.entry(*x).or_insert(load);
+                    *entry = load.max(*entry);
+                });
+            in_use.insert(ch);
         }
+        //
         println!()
+        //
     }
     assert_eq!(in_use.len(), step_data.len());
     *work_load.iter().max().unwrap()
 }
+
 #[cfg(test)]
 mod test {
     use super::*;
