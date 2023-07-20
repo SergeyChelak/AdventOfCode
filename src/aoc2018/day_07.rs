@@ -53,7 +53,7 @@ impl Solution for AoC2018_07 {
     }
 
     fn part_two(&self) -> String {
-        todo!()
+        (pt2(&self.input, 5) * 60).to_string()
     }
 
     fn description(&self) -> String {
@@ -87,6 +87,81 @@ fn find_finished(step_data: &StepsData, in_use: &[char]) -> Vec<char> {
     finished.sort();
     finished
 }
+
+fn pt2(input: &[Dependency], count: usize) -> usize {
+    let mut step_data = build_steps_data(input);
+
+    let mut work_load = vec![0usize; count];
+
+    let mut deadline: HashMap<char, usize> = HashMap::new();
+    let mut in_use: HashSet<char> = HashSet::new();
+
+    loop {
+        println!("Load: {:?}", work_load);
+
+        let mut next_step = |load: &[usize]| -> (usize, Vec<char>) {
+            let mut active_load = load
+                .iter()
+                .copied()
+                .filter(|x| *x > 0)
+                .collect::<Vec<usize>>();
+            if active_load.is_empty() {
+                active_load.push(0);
+            } else {
+                active_load.sort();
+            }
+            for time in active_load.iter() {
+                let mut finished = step_data
+                    .iter()
+                    .filter_map(|(x, set)| if set.is_empty() { Some(*x) } else { None })
+                    .filter(|x| !in_use.contains(x))
+                    .filter(|&x| {
+                        let entry: &mut usize = deadline.entry(x).or_insert(0);
+                        *entry <= *time
+                    })
+                    .collect::<Vec<char>>();
+                if !finished.is_empty() {
+                    finished.sort();
+                    return (*time, finished);
+                }
+            }
+            (usize::MAX, vec![])
+        };
+        let (time, finished) = next_step(&work_load);
+        if finished.is_empty() {
+            break;
+        }
+        // distribute
+        println!("time = {time}");
+        println!("Finished: {:?}", finished);
+        for ch in finished {
+            assert!(!in_use.contains(&ch), "Reusing char '{ch}'");
+            for load in work_load.iter_mut() {
+                if *load <= time {
+                    let old_load = *load;
+                    *load = time.max(*load) + 1 + (ch as u8 - b'A') as usize;
+
+                    println!("{ch} distributed to {old_load} with {load}");
+                    deadline.insert(ch, *load);
+
+                    step_data
+                        .iter_mut()
+                        .filter(|(_, set)| set.contains(&ch))
+                        .for_each(|(x, set)| {
+                            set.remove(&ch);
+                            let entry: &mut usize = deadline.entry(*x).or_insert(*load);
+                            *entry = (*load).max(*entry);
+                        });
+                    in_use.insert(ch);
+                    break;
+                }
+            }
+        }
+        println!()
+    }
+    assert_eq!(in_use.len(), step_data.len());
+    *work_load.iter().max().unwrap()
+}
 #[cfg(test)]
 mod test {
     use super::*;
@@ -117,7 +192,7 @@ mod test {
     fn aoc2018_07_example2() {
         let lines = example_input();
         let aoc = AoC2018_07::from_lines(&lines);
-        // TODO: assert_eq!(???, 15);
+        assert_eq!(pt2(&aoc.input, 2), 15);
     }
 
     fn example_input() -> Vec<String> {
