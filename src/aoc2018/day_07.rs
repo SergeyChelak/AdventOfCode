@@ -53,7 +53,7 @@ impl Solution for AoC2018_07 {
     }
 
     fn part_two(&self) -> String {
-        (pt2(&self.input, 5) * 1).to_string()
+        distributed_duration(&self.input, 5, 60).to_string()
     }
 
     fn description(&self) -> String {
@@ -88,15 +88,16 @@ fn find_finished(step_data: &StepsData, in_use: &[char]) -> Vec<char> {
     finished
 }
 
-fn pt2(input: &[Dependency], count: usize) -> usize {
+fn distributed_duration(
+    input: &[Dependency],
+    workers: usize,
+    minimal_step_duration: usize,
+) -> usize {
     let mut step_data = build_steps_data(input);
-    let mut work_load = vec![0usize; count];
+    let mut work_load = vec![0usize; workers];
     let mut deadline: HashMap<char, usize> = HashMap::new();
     let mut in_use: HashSet<char> = HashSet::new();
     loop {
-        //
-        println!("Load: {:?}", work_load);
-        //
         let mut next_step = |load: &[usize]| -> (usize, Vec<char>) {
             let mut active_load = load
                 .iter()
@@ -129,23 +130,15 @@ fn pt2(input: &[Dependency], count: usize) -> usize {
         if finished.is_empty() {
             break;
         }
-        //
-        println!("Time = {time}");
-        println!("Finished: {:?}", finished);
-        //
         for ch in finished {
             assert!(!in_use.contains(&ch), "Reusing char '{ch}'");
             // find less loaded worker
             let (idx, load) = work_load
                 .iter()
-                .map(|x| time.max(*x) + 61 + (ch as u8 - b'A') as usize)
+                .map(|x| time.max(*x) + minimal_step_duration + 1 + (ch as u8 - b'A') as usize)
                 .enumerate()
                 .min_by(|(_, a), (_, b)| a.cmp(b))
                 .expect("Failed to find less loaded worker");
-
-            //
-            println!("{ch} distributed to {idx} with {load}");
-            //
             work_load[idx] = load;
             deadline.insert(ch, load);
             // shift deadline of the dependent steps
@@ -159,9 +152,6 @@ fn pt2(input: &[Dependency], count: usize) -> usize {
                 });
             in_use.insert(ch);
         }
-        //
-        println!()
-        //
     }
     assert_eq!(in_use.len(), step_data.len());
     *work_load.iter().max().unwrap()
@@ -193,12 +183,12 @@ mod test {
         assert_eq!(aoc.part_one(), "CABDFE");
     }
 
-    // #[test]
-    // fn aoc2018_07_example2() {
-    //     let lines = example_input();
-    //     let aoc = AoC2018_07::from_lines(&lines);
-    //     assert_eq!(pt2(&aoc.input, 2), 15);
-    // }
+    #[test]
+    fn aoc2018_07_example2() {
+        let lines = example_input();
+        let aoc = AoC2018_07::from_lines(&lines);
+        assert_eq!(distributed_duration(&aoc.input, 2, 0), 15);
+    }
 
     fn example_input() -> Vec<String> {
         [
