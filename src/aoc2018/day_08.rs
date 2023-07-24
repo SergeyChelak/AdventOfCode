@@ -3,16 +3,20 @@ use crate::solution::Solution;
 use std::fs::read_to_string;
 use std::io;
 
+type Int = i32;
+
 pub struct AoC2018_08 {
-    // place required fields here
+    input: Vec<Int>,
 }
 
 impl AoC2018_08 {
     pub fn new() -> io::Result<Self> {
-        _ = read_to_string("input/aoc2018_08").unwrap();
-        Ok(Self {
-            // initialize solution
-        })
+        let input = read_to_string("input/aoc2018_08")?
+            .split_whitespace()
+            .map(|x| x.parse::<Int>().expect("Non int value in the input"))
+            .collect();
+
+        Ok(Self { input })
     }
 }
 
@@ -35,6 +39,7 @@ mod test {
     #[test]
     fn aoc2018_08_input_load_test() -> io::Result<()> {
         let sol = AoC2018_08::new()?;
+        assert!(!sol.input.is_empty());
         Ok(())
     }
 
