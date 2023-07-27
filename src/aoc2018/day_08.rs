@@ -27,8 +27,9 @@ impl Solution for AoC2018_08 {
         sum.to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        calc_root_node(&self.input, &mut 0).to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2018/Day 8: Memory Maneuver".to_string()
@@ -44,6 +45,10 @@ fn sum_metadata(input: &[Int], pos: &mut usize, sum: &mut Int) {
         *sum += input[*pos];
         *pos += 1;
     });
+}
+
+fn calc_root_node(input: &[Int], pos: &mut usize) -> usize {
+    0
 }
 
 #[cfg(test)]
@@ -67,12 +72,23 @@ mod test {
 
     #[test]
     fn aoc2018_08_example1() {
-        let input = "2 3 0 3 10 11 12 1 1 0 1 99 2 1 1 2"
-            .split_whitespace()
-            .map(|x| x.parse::<Int>().expect("Non int value in the input"))
-            .collect::<Vec<Int>>();
+        let input = input_data();
         let mut sum = 0;
         sum_metadata(&input, &mut 0, &mut sum);
         assert_eq!(sum, 138);
+    }
+
+    #[test]
+    fn aoc2018_08_example2() {
+        let input = input_data();
+        let val = calc_root_node(&input, &mut 0);
+        assert_eq!(val, 66);
+    }
+
+    fn input_data() -> Vec<Int> {
+        "2 3 0 3 10 11 12 1 1 0 1 99 2 1 1 2"
+            .split_whitespace()
+            .map(|x| x.parse::<Int>().expect("Non int value in the input"))
+            .collect::<Vec<Int>>()
     }
 }
