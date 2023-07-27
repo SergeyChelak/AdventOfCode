@@ -48,7 +48,31 @@ fn sum_metadata(input: &[Int], pos: &mut usize, sum: &mut Int) {
 }
 
 fn calc_root_node(input: &[Int], pos: &mut usize) -> usize {
-    0
+    let child_count = input[*pos];
+    let metadata_count = input[*pos + 1];
+    *pos += 2;
+    let mut children: Vec<Int> = Vec::with_capacity(child_count);
+    for _ in 0..child_count {
+        let val = calc_root_node(input, pos);
+        children.push(val);
+    }
+    let metadata = &input[*pos..*pos + metadata_count];
+    *pos += metadata_count;
+    if child_count == 0 {
+        metadata.iter().sum::<usize>()
+    } else {
+        metadata
+            .iter()
+            .filter_map(|&x| {
+                if x > 0 && x <= child_count {
+                    Some(x)
+                } else {
+                    None
+                }
+            })
+            .map(|x| children[x - 1])
+            .sum::<usize>()
+    }
 }
 
 #[cfg(test)]
@@ -66,7 +90,7 @@ mod test {
     fn aoc2018_08_correctness() -> io::Result<()> {
         let sol = AoC2018_08::new()?;
         assert_eq!(sol.part_one(), "48260");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "25981");
         Ok(())
     }
 
