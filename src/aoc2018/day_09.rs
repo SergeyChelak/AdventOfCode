@@ -1,6 +1,7 @@
 use crate::solution::Solution;
 
-use std::{collections::HashMap, io::Result};
+use std::collections::{HashMap, LinkedList};
+use std::io::Result;
 
 pub struct AoC2018_09 {
     players: usize,
@@ -18,54 +19,58 @@ impl AoC2018_09 {
 
 impl Solution for AoC2018_09 {
     fn part_one(&self) -> String {
-        let mut circle: Vec<usize> = Vec::with_capacity(self.marbles);
-        circle.push(0);
-        circle.push(1);
-        let mut scores: HashMap<usize, usize> = HashMap::new();
-        let mut player = 1usize;
-        let mut position = 1usize;
-        for marble in 2..=self.marbles {
-            if marble % 23 == 0 {
-                let entry = scores.entry(player).or_insert(0);
-                *entry += marble;
-                let index = {
-                    let mut p = position;
-                    if p < 7 {
-                        p += circle.len();
-                    }
-                    p - 7
-                };
-                let val = circle[index];
-                *entry += val;
-                circle.remove(index);
-                position = index;
-            } else {
-                let mut next = position + 2;
-                let len = circle.len();
-                if next == len {
-                    circle.push(marble);
-                } else {
-                    next %= len;
-                    circle.insert(next, marble);
-                }
-                position = next;
-            }
-            player = (player + 1) % self.players;
-        }
-        scores
-            .iter()
-            .max_by(|(_, a), (_, b)| a.cmp(b))
-            .expect("Scores map is empty")
-            .1
-            .to_string()
+        max_scores(self.marbles, self.players).to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        max_scores(self.marbles * 100, self.players).to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2018/Day 9: Marble Mania".to_string()
     }
+}
+
+fn max_scores(marbles: usize, players: usize) -> usize {
+    let mut circle: Vec<usize> = Vec::with_capacity(marbles);
+    circle.push(0);
+    circle.push(1);
+    let mut scores: HashMap<usize, usize> = HashMap::new();
+    let mut player = 1usize;
+    let mut position = 1usize;
+    for marble in 2..=marbles {
+        if marble % 23 == 0 {
+            let entry = scores.entry(player).or_insert(0);
+            *entry += marble;
+            let index = {
+                let mut p = position;
+                if p < 7 {
+                    p += circle.len();
+                }
+                p - 7
+            };
+            let val = circle[index];
+            *entry += val;
+            circle.remove(index);
+            position = index;
+        } else {
+            let mut next = position + 2;
+            let len = circle.len();
+            if next == len {
+                circle.push(marble);
+            } else {
+                next %= len;
+                circle.insert(next, marble);
+            }
+            position = next;
+        }
+        player = (player + 1) % players;
+    }
+    *scores
+        .iter()
+        .max_by(|(_, a), (_, b)| a.cmp(b))
+        .expect("Scores map is empty")
+        .1
 }
 
 #[cfg(test)]
