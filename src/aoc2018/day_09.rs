@@ -25,18 +25,27 @@ impl Solution for AoC2018_09 {
         let mut player = 1usize;
         let mut position = 1usize;
         for marble in 2..=self.marbles {
-            println!("{:?}", circle);
             if marble % 23 == 0 {
                 let entry = scores.entry(player).or_insert(0);
                 *entry += marble;
-                todo!("add 7 marble in counter-clockwise direction and remove it")
+                let index = {
+                    let mut p = position;
+                    if p < 7 {
+                        p += circle.len();
+                    }
+                    p - 7
+                };
+                let val = circle[index];
+                *entry += val;
+                circle.remove(index);
+                position = index;
             } else {
                 let mut next = position + 2;
                 let len = circle.len();
                 if next == len {
                     circle.push(marble);
                 } else {
-                    next = next % len;
+                    next %= len;
                     circle.insert(next, marble);
                 }
                 position = next;
@@ -86,7 +95,7 @@ mod test {
     #[test]
     fn aoc2018_09_correctness() -> Result<()> {
         let sol = AoC2018_09::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "429287");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
