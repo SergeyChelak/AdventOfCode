@@ -1,6 +1,6 @@
 use crate::solution::Solution;
 
-use std::collections::{HashMap, LinkedList};
+use std::collections::HashMap;
 use std::io::Result;
 
 pub struct AoC2018_09 {
