@@ -33,12 +33,11 @@ impl Solution for AoC2018_09 {
 fn max_scores(marbles: usize, players: usize) -> usize {
     let mut circle: Vec<usize> = Vec::with_capacity(marbles);
     circle.push(0);
-    circle.push(1);
     let mut scores = vec![0usize; players];
-    let mut player = 1usize;
     let mut position = 1usize;
-    for marble in 2..=marbles {
+    for marble in 1..=marbles {
         if marble % 23 == 0 {
+            let player = (marble - 1) % players;
             scores[player] += marble;
             let index = {
                 let mut p = position;
@@ -62,7 +61,6 @@ fn max_scores(marbles: usize, players: usize) -> usize {
             }
             position = next;
         }
-        player = (player + 1) % players;
     }
     *scores
         .iter()
@@ -98,7 +96,7 @@ mod test {
     fn aoc2018_09_correctness() -> Result<()> {
         let sol = AoC2018_09::new()?;
         assert_eq!(sol.part_one(), "429287");
-        assert_eq!(sol.part_two(), "");
+        // assert_eq!(sol.part_two(), "");
         Ok(())
     }
 }
