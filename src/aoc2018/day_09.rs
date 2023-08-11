@@ -1,6 +1,7 @@
 use crate::solution::Solution;
 
 use std::io::Result;
+use std::collections::LinkedList;
 
 pub struct AoC2018_09 {
     players: usize,
@@ -31,35 +32,25 @@ impl Solution for AoC2018_09 {
 }
 
 fn max_scores(marbles: usize, players: usize) -> usize {
-    let mut circle: Vec<usize> = Vec::with_capacity(marbles);
-    circle.push(0);
+    let mut circle: LinkedList<usize> = LinkedList::new();
+    circle.push_back(0);
     let mut scores = vec![0usize; players];
-    let mut position = 1usize;
     for marble in 1..=marbles {
         if marble % 23 == 0 {
             let player = (marble - 1) % players;
-            scores[player] += marble;
-            let index = {
-                let mut p = position;
-                if p < 7 {
-                    p += circle.len();
-                }
-                p - 7
-            };
-            let val = circle[index];
-            scores[player] += val;
-            circle.remove(index);
-            position = index;
-        } else {
-            let mut next = position + 2;
-            let len = circle.len();
-            if next == len {
-                circle.push(marble);
-            } else {
-                next %= len;
-                circle.insert(next, marble);
+            for _ in 0..7 {
+                let val = circle.pop_back().unwrap();
+                circle.push_front(val);
             }
-            position = next;
+            let val = circle.pop_back().unwrap();
+            scores[player] += marble + val;
+            let val = circle.pop_front().unwrap();
+            circle.push_back(val);
+        } else {
+            let val = circle.pop_front().unwrap();
+            circle.push_back(val);
+            
+            circle.push_back(marble);
         }
     }
     *scores
@@ -96,7 +87,7 @@ mod test {
     fn aoc2018_09_correctness() -> Result<()> {
         let sol = AoC2018_09::new()?;
         assert_eq!(sol.part_one(), "429287");
-        // assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "3624387659`");
         Ok(())
     }
 }
