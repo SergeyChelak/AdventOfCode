@@ -1,6 +1,5 @@
 use crate::solution::Solution;
 
-use std::collections::HashMap;
 use std::io::Result;
 
 pub struct AoC2018_09 {
@@ -35,13 +34,12 @@ fn max_scores(marbles: usize, players: usize) -> usize {
     let mut circle: Vec<usize> = Vec::with_capacity(marbles);
     circle.push(0);
     circle.push(1);
-    let mut scores: HashMap<usize, usize> = HashMap::new();
+    let mut scores = vec![0usize; players];
     let mut player = 1usize;
     let mut position = 1usize;
     for marble in 2..=marbles {
         if marble % 23 == 0 {
-            let entry = scores.entry(player).or_insert(0);
-            *entry += marble;
+            scores[player] += marble;
             let index = {
                 let mut p = position;
                 if p < 7 {
@@ -50,7 +48,7 @@ fn max_scores(marbles: usize, players: usize) -> usize {
                 p - 7
             };
             let val = circle[index];
-            *entry += val;
+            scores[player] += val;
             circle.remove(index);
             position = index;
         } else {
@@ -68,9 +66,8 @@ fn max_scores(marbles: usize, players: usize) -> usize {
     }
     *scores
         .iter()
-        .max_by(|(_, a), (_, b)| a.cmp(b))
+        .max()
         .expect("Scores map is empty")
-        .1
 }
 
 #[cfg(test)]
