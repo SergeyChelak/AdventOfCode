@@ -1,7 +1,7 @@
 use crate::solution::Solution;
 
-use std::io::Result;
 use std::collections::LinkedList;
+use std::io::Result;
 
 pub struct AoC2018_09 {
     players: usize,
@@ -49,14 +49,11 @@ fn max_scores(marbles: usize, players: usize) -> usize {
         } else {
             let val = circle.pop_front().unwrap();
             circle.push_back(val);
-            
+
             circle.push_back(marble);
         }
     }
-    *scores
-        .iter()
-        .max()
-        .expect("Scores map is empty")
+    *scores.iter().max().expect("Scores map is empty")
 }
 
 #[cfg(test)]

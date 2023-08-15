@@ -44,7 +44,7 @@ impl AoC2018_06 {
     }
 
     fn normalized_input(&self) -> (Vec<Point>, Point) {
-        let (a, b) = boundaries(&self.points);
+        let (a, b) = bounds(&self.points);
         let norm_points = self
             .points
             .iter()
@@ -124,15 +124,6 @@ impl Solution for AoC2018_06 {
     fn description(&self) -> String {
         "AoC 2018/Day 6: Chronal Coordinates".to_string()
     }
-}
-
-/// Returns top left and bottom right points
-fn boundaries(points: &[Point]) -> (Point, Point) {
-    let min_x = points.iter().map(|p| p.x).min().unwrap();
-    let min_y = points.iter().map(|p| p.y).min().unwrap();
-    let max_x = points.iter().map(|p| p.x).max().unwrap();
-    let max_y = points.iter().map(|p| p.y).max().unwrap();
-    (Point { x: min_x, y: min_y }, Point { x: max_x, y: max_y })
 }
 
 fn edge_values(matrix: &[Vec<Cell>]) -> HashSet<usize> {

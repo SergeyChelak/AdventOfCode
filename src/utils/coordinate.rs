@@ -55,3 +55,13 @@ where
         res
     }
 }
+
+/// Returns top left and bottom right points
+/// It is expected that input vector isn't empty
+pub fn bounds<T: Ord + Copy>(points: &[Point2d<T>]) -> (Point2d<T>, Point2d<T>) {
+    let min_x = points.iter().map(|p| p.x).min().unwrap();
+    let min_y = points.iter().map(|p| p.y).min().unwrap();
+    let max_x = points.iter().map(|p| p.x).max().unwrap();
+    let max_y = points.iter().map(|p| p.y).max().unwrap();
+    (Point2d { x: min_x, y: min_y }, Point2d { x: max_x, y: max_y })
+}
