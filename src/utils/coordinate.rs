@@ -9,7 +9,7 @@ pub enum PointParseError {
     TokenError,
 }
 
-#[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Point2d<T> {
     pub x: T,
     pub y: T,
@@ -58,6 +58,12 @@ where
 pub struct Bounds<T> {
     pub low: Point2d<T>,
     pub high: Point2d<T>,
+}
+
+impl<T: Ord + Copy + AddAssign + SubAssign> Bounds<T> {
+    pub fn size(&self) -> Point2d<T> {
+        self.high.sub(&self.low)
+    }
 }
 
 /// Returns top left and bottom right points

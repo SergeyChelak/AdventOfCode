@@ -5,6 +5,7 @@ use std::io;
 
 type PointElem = Point2d<i32>;
 
+#[derive(Clone, Copy)]
 struct Point {
     position: PointElem,
     speed: PointElem,
@@ -40,14 +41,55 @@ impl AoC2018_10 {
 }
 
 impl Solution for AoC2018_10 {
-    // fn part_one(&self) -> String {
-    // }
+    fn part_one(&self) -> String {
+        let mut data = self.points.clone();
+        let mut min_square = usize::MAX;
+        loop {
+            let points = data.iter().map(|x| x.position).collect::<Vec<PointElem>>();
+            let bounds = bounds(&points).expect("Bounds input is empty");
+            let size = bounds.size();
+            let square = size.x as usize * size.y as usize;
+            if square > min_square {
+                data.iter_mut().for_each(|elem| {
+                    elem.position = elem.position.sub(&elem.speed);
+                });
+                let points = data.iter().map(|x| x.position).collect::<Vec<PointElem>>();
+                print_points(&points, &bounds);
+                break;
+            }
+            min_square = min_square.min(square);
+            data.iter_mut().for_each(|elem| {
+                elem.position = elem.position.add(&elem.speed);
+            });
+        }
+        "".to_string()
+    }
 
     // fn part_two(&self) -> String {
     // }
 
     fn description(&self) -> String {
         "AoC 2018/Day 10: The Stars Align".to_string()
+    }
+}
+
+fn print_points(points: &[PointElem], bounds: &Bounds<i32>) {
+    let size = bounds.size().add(&PointElem { x: 1, y: 1 });
+    let cols = size.x as usize;
+    let rows = size.y as usize;
+    let mut matrix = vec![vec![0; cols]; rows];
+    let points = normalize_with_bounds(points, bounds);
+    points.iter().for_each(|p| {
+        let x = p.x as usize;
+        let y = p.y as usize;
+        matrix[y][x] = 1;
+    });
+    for y in 0..rows {
+        for x in 0..cols {
+            let ch = if matrix[y][x] == 1 { '#' } else { ' ' };
+            print!("{ch}");
+        }
+        println!();
     }
 }
 

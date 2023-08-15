@@ -46,7 +46,7 @@ impl AoC2018_06 {
     fn normalized_input(&self) -> (Vec<Point>, Point) {
         let bounds = bounds(&self.points).expect("Bounds input is empty");
         let norm_points = normalize_with_bounds(&self.points, &bounds);
-        let dim = bounds.high.sub(&bounds.low).add(&Point { x: 1, y: 1 });
+        let dim = bounds.size().add(&Point { x: 1, y: 1 });
         (norm_points, dim)
     }
 }
