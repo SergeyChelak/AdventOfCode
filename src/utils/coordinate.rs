@@ -40,7 +40,6 @@ impl<T> Point2d<T>
 where
     T: Copy + AddAssign + SubAssign,
 {
-    #[allow(dead_code)]
     pub fn add(&self, other: &Self) -> Self {
         let mut res = *self;
         res.x += other.x;
@@ -56,12 +55,38 @@ where
     }
 }
 
+pub struct Bounds<T> {
+    pub low: Point2d<T>,
+    pub high: Point2d<T>,
+}
+
 /// Returns top left and bottom right points
-/// It is expected that input vector isn't empty
-pub fn bounds<T: Ord + Copy>(points: &[Point2d<T>]) -> (Point2d<T>, Point2d<T>) {
-    let min_x = points.iter().map(|p| p.x).min().unwrap();
-    let min_y = points.iter().map(|p| p.y).min().unwrap();
-    let max_x = points.iter().map(|p| p.x).max().unwrap();
-    let max_y = points.iter().map(|p| p.y).max().unwrap();
-    (Point2d { x: min_x, y: min_y }, Point2d { x: max_x, y: max_y })
+pub fn bounds<T: Ord + Copy>(points: &[Point2d<T>]) -> Option<Bounds<T>> {
+    let Some(min_x) = points.iter().map(|p| p.x).min() else {
+        return None;
+    };
+    let Some(min_y) = points.iter().map(|p| p.y).min() else {
+        return None;
+    };
+    let Some(max_x) = points.iter().map(|p| p.x).max() else {
+        return None;
+    };
+    let Some(max_y) = points.iter().map(|p| p.y).max() else {
+        return None;
+    };
+    Some(Bounds {
+        low: Point2d { x: min_x, y: min_y },
+        high: Point2d { x: max_x, y: max_y },
+    })
+}
+
+pub fn normalize_with_bounds<T>(points: &[Point2d<T>], bounds: &Bounds<T>) -> Vec<Point2d<T>>
+where
+    T: Ord + Copy + AddAssign + SubAssign,
+{
+    let a = bounds.low;
+    points
+        .iter()
+        .map(|p| p.sub(&a))
+        .collect::<Vec<Point2d<T>>>()
 }
