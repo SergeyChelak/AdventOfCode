@@ -38,35 +38,46 @@ impl AoC2018_10 {
             .collect::<Vec<Point>>();
         Ok(Self { points })
     }
-}
 
-impl Solution for AoC2018_10 {
-    fn part_one(&self) -> String {
+    fn wait_for_message(&self, need_print: bool) -> usize {
         let mut data = self.points.clone();
         let mut min_square = usize::MAX;
+        let mut time = 0;
         loop {
             let points = data.iter().map(|x| x.position).collect::<Vec<PointElem>>();
             let bounds = bounds(&points).expect("Bounds input is empty");
             let size = bounds.size();
             let square = size.x as usize * size.y as usize;
             if square > min_square {
-                data.iter_mut().for_each(|elem| {
-                    elem.position = elem.position.sub(&elem.speed);
-                });
-                let points = data.iter().map(|x| x.position).collect::<Vec<PointElem>>();
-                print_points(&points, &bounds);
+                time -= 1;
+                if need_print {
+                    data.iter_mut().for_each(|elem| {
+                        elem.position = elem.position.sub(&elem.speed);
+                    });
+                    let points = data.iter().map(|x| x.position).collect::<Vec<PointElem>>();
+                    print_points(&points, &bounds);
+                }
                 break;
             }
             min_square = min_square.min(square);
             data.iter_mut().for_each(|elem| {
                 elem.position = elem.position.add(&elem.speed);
             });
+            time += 1;
         }
+        time
+    }
+}
+
+impl Solution for AoC2018_10 {
+    fn part_one(&self) -> String {
+        self.wait_for_message(true);
         "".to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        self.wait_for_message(false).to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2018/Day 10: The Stars Align".to_string()
@@ -84,9 +95,9 @@ fn print_points(points: &[PointElem], bounds: &Bounds<i32>) {
         let y = p.y as usize;
         matrix[y][x] = 1;
     });
-    for y in 0..rows {
-        for x in 0..cols {
-            let ch = if matrix[y][x] == 1 { '#' } else { ' ' };
+    for y in matrix.iter() {
+        for val in y {
+            let ch = if *val == 1 { '#' } else { ' ' };
             print!("{ch}");
         }
         println!();
@@ -108,7 +119,7 @@ mod test {
     fn aoc2018_10_correctness() -> io::Result<()> {
         let sol = AoC2018_10::new()?;
         assert_eq!(sol.part_one(), "");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "10391");
         Ok(())
     }
 }
