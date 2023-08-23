@@ -23,16 +23,7 @@ impl Solution for AoC2018_11 {
         let mut max = Int::MIN;
         for (i, row) in grid.iter().enumerate().take(GRID_SIZE - 3) {
             for (j, _) in row.iter().enumerate().take(GRID_SIZE - 3) {
-                let sum = grid[i][j]
-                    + grid[i][j + 1]
-                    + grid[i][j + 2]
-                    + grid[i + 1][j]
-                    + grid[i + 1][j + 1]
-                    + grid[i + 1][j + 2]
-                    + grid[i + 2][j]
-                    + grid[i + 2][j + 1]
-                    + grid[i + 2][j + 2];
-
+                let sum = sum(&grid, i, j, 3);
                 if max < sum {
                     max = sum;
                     x = i;
@@ -43,8 +34,25 @@ impl Solution for AoC2018_11 {
         format!("{},{}", x + 1, y + 1)
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let grid = make_grid(self.serial_number);
+        let (mut x, mut y, mut size) = (0, 0, 0);
+        let mut max = Int::MIN;
+        for dim in 0..GRID_SIZE {
+            for (i, row) in grid.iter().enumerate().take(GRID_SIZE - dim) {
+                for (j, _) in row.iter().enumerate().take(GRID_SIZE - dim) {
+                    let sum = sum(&grid, i, j, dim);
+                    if max < sum {
+                        max = sum;
+                        x = i;
+                        y = j;
+                        size = dim;
+                    }
+                }
+            }
+        }
+        format!("{},{},{}", x + 1, y + 1, size)
+    }
 
     fn description(&self) -> String {
         "AoC 2018/Day 11: Chronal Charge".to_string()
@@ -52,11 +60,12 @@ impl Solution for AoC2018_11 {
 }
 
 const GRID_SIZE: usize = 300;
+type Grid = Vec<Vec<Int>>; //[[Int; GRID_SIZE]; GRID_SIZE];
 
-fn make_grid(serial_number: Int) -> Vec<Vec<Int>> {
+fn make_grid(serial_number: Int) -> Grid {
     let mut grid = vec![vec![0; GRID_SIZE]; GRID_SIZE];
-    for i in 0..GRID_SIZE {
-        for j in 0..GRID_SIZE {
+    for (i, row) in grid.iter_mut().enumerate() {
+        for (j, val) in row.iter_mut().enumerate() {
             let x = (i + 1) as Int;
             let y = (j + 1) as Int;
             let rack_id = x + 10;
@@ -66,10 +75,20 @@ fn make_grid(serial_number: Int) -> Vec<Vec<Int>> {
                 modulus = power % 10;
                 power /= 10;
             }
-            grid[i][j] = modulus - 5;
+            *val = modulus - 5;
         }
     }
     grid
+}
+
+fn sum(grid: &Grid, i: usize, j: usize, size: usize) -> Int {
+    let mut sum = 0;
+    for r in 0..size {
+        for c in 0..size {
+            sum += grid[i + r][j + c];
+        }
+    }
+    sum
 }
 
 #[cfg(test)]
@@ -80,7 +99,7 @@ mod test {
     fn aoc2018_11_correctness() -> io::Result<()> {
         let sol = AoC2018_11::new()?;
         assert_eq!(sol.part_one(), "20,77");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "143,57,10");
         Ok(())
     }
 
@@ -92,11 +111,9 @@ mod test {
         let grid = make_grid(57);
         assert_eq!(grid[121][78], -5);
 
-        // Fuel cell at 217,196, grid serial number 39: power level  0.
         let grid = make_grid(39);
         assert_eq!(grid[216][195], 0);
 
-        // Fuel cell at 101,153, grid serial number 71: power level  4.
         let grid = make_grid(71);
         assert_eq!(grid[100][152], 4);
     }
