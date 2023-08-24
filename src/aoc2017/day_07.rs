@@ -131,7 +131,7 @@ impl Solution for AoC2017_07 {
     fn part_two(&self) -> String {
         let root = self.root_node_name();
         let Some(tree) = self.tree_with_root(&root) else {
-            return "Not found".to_string()
+            return "Not found".to_string();
         };
         let mut weight = u32::MAX;
         _ = tree.corrected_weight(&mut weight);
