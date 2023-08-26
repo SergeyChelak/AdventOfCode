@@ -35,7 +35,7 @@ impl AoC2018_12 {
 
     fn mutate(&self, value: &str) -> String {
         let len = value.len();
-        let mut result = vec!['.'; 40];
+        let mut result = vec!['.'; len];
         for p in 0..len - 5 {
             let s = &value[p..p + 5];
             if let Some(val) = self.mutations.get(s) {
@@ -48,14 +48,30 @@ impl AoC2018_12 {
 
 impl Solution for AoC2018_12 {
     fn part_one(&self) -> String {
-        let mut sum = 0;
         let mut state = self.initial_state.clone();
-        for _ in 0..=20 {
-            println!("{state}");
+        let ext = ['.', '.', '.', '.'];
+        let steps = 20;
+        for _ in 0..steps {
+            state = ext
+                .into_iter()
+                .chain(state.chars())
+                .chain(ext)
+                .collect::<String>();
             state = self.mutate(&state);
-            sum += state.chars().filter(|ch| *ch == '#').count();
         }
-        sum.to_string()
+        let offset = ext.len() as isize * steps;
+        state
+            .chars()
+            .enumerate()
+            .filter_map(|(i, ch)| {
+                if ch == '#' {
+                    Some(i as isize - offset)
+                } else {
+                    None
+                }
+            })
+            .fold(0, |acc, v| acc + v)
+            .to_string()
     }
 
     // fn part_two(&self) -> String {
@@ -109,7 +125,7 @@ mod test {
     #[test]
     fn aoc2018_12_correctness() -> io::Result<()> {
         let sol = AoC2018_12::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "1816");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
