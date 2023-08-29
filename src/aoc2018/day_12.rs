@@ -4,10 +4,11 @@ use crate::utils::*;
 use std::collections::HashMap;
 use std::io;
 
-type MutationMap = HashMap<String, char>;
+type Chars = Vec<char>;
+type MutationMap = HashMap<Chars, char>;
 
 pub struct AoC2018_12 {
-    initial_state: String,
+    initial_state: Chars,
     mutations: MutationMap,
 }
 
@@ -19,11 +20,11 @@ impl AoC2018_12 {
 
     fn from_strings(input: &[String]) -> Self {
         let (_, initial_state) = input[0].split_once(": ").unwrap();
-        let initial_state = initial_state.to_string();
+        let initial_state = initial_state.chars().collect::<Chars>();
         let mut mutations: MutationMap = HashMap::new();
         for s in &input[2..] {
             let (pattern, output) = s.split_once(" => ").unwrap();
-            let pattern = pattern.to_string();
+            let pattern = pattern.chars().collect::<Chars>();
             let output = output.parse::<char>().unwrap();
             mutations.insert(pattern, output);
         }
@@ -33,7 +34,7 @@ impl AoC2018_12 {
         }
     }
 
-    fn mutate(&self, value: &str) -> String {
+    fn mutate(&self, value: &Chars) -> Chars {
         let len = value.len();
         let mut result = vec!['.'; len];
         for p in 0..len - 5 {
@@ -42,7 +43,7 @@ impl AoC2018_12 {
                 result[p + 2] = *val;
             }
         }
-        result.iter().collect::<String>()
+        result
     }
 }
 
@@ -54,23 +55,23 @@ impl Solution for AoC2018_12 {
         for _ in 0..steps {
             state = ext
                 .into_iter()
-                .chain(state.chars())
+                .chain(state)
                 .chain(ext)
-                .collect::<String>();
+                .collect();
             state = self.mutate(&state);
         }
         let offset = ext.len() as isize * steps;
         state
-            .chars()
+            .iter()
             .enumerate()
             .filter_map(|(i, ch)| {
-                if ch == '#' {
+                if *ch == '#' {
                     Some(i as isize - offset)
                 } else {
                     None
                 }
             })
-            .fold(0, |acc, v| acc + v)
+            .sum::<isize>()
             .to_string()
     }
 
