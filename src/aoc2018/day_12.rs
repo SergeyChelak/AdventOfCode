@@ -45,22 +45,15 @@ impl AoC2018_12 {
         }
         result
     }
-}
 
-impl Solution for AoC2018_12 {
-    fn part_one(&self) -> String {
+    fn calculate(&self, steps: usize) -> isize {
         let mut state = self.initial_state.clone();
         let ext = ['.', '.', '.', '.'];
-        let steps = 20;
         for _ in 0..steps {
-            state = ext
-                .into_iter()
-                .chain(state)
-                .chain(ext)
-                .collect();
+            state = ext.into_iter().chain(state).chain(ext).collect();
             state = self.mutate(&state);
         }
-        let offset = ext.len() as isize * steps;
+        let offset = (ext.len() * steps) as isize;
         state
             .iter()
             .enumerate()
@@ -72,7 +65,12 @@ impl Solution for AoC2018_12 {
                 }
             })
             .sum::<isize>()
-            .to_string()
+    }
+}
+
+impl Solution for AoC2018_12 {
+    fn part_one(&self) -> String {
+        self.calculate(20).to_string()
     }
 
     // fn part_two(&self) -> String {
