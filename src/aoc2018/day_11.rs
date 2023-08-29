@@ -1,8 +1,9 @@
 use crate::solution::Solution;
-
+use crate::utils::coordinate::*;
 use std::io;
 
 type Int = isize;
+type Position = Point2d<usize>;
 
 pub struct AoC2018_11 {
     serial_number: Int,
@@ -14,16 +15,13 @@ impl AoC2018_11 {
             serial_number: 9221,
         })
     }
-}
 
-impl Solution for AoC2018_11 {
-    fn part_one(&self) -> String {
-        let grid = make_grid(self.serial_number);
+    fn max_square(&self, grid: &Grid, dim: usize) -> (Position, Int) {
         let (mut x, mut y) = (0, 0);
         let mut max = Int::MIN;
-        for (i, row) in grid.iter().enumerate().take(GRID_SIZE - 3) {
-            for (j, _) in row.iter().enumerate().take(GRID_SIZE - 3) {
-                let sum = sum(&grid, i, j, 3);
+        for (i, row) in grid.iter().enumerate().take(GRID_SIZE - dim) {
+            for (j, _) in row.iter().enumerate().take(GRID_SIZE - dim) {
+                let sum = sum(&grid, i, j, dim);
                 if max < sum {
                     max = sum;
                     x = i;
@@ -31,27 +29,32 @@ impl Solution for AoC2018_11 {
                 }
             }
         }
-        format!("{},{}", x + 1, y + 1)
+        let position = Position { x, y };
+        (position, max)
+    }
+}
+
+impl Solution for AoC2018_11 {
+    fn part_one(&self) -> String {
+        let grid = make_grid(self.serial_number);
+        let (pos, _) = self.max_square(&grid, 3);
+        format!("{},{}", pos.x + 1, pos.y + 1)
     }
 
     fn part_two(&self) -> String {
         let grid = make_grid(self.serial_number);
-        let (mut x, mut y, mut size) = (0, 0, 0);
+        let mut position = Position { x: 0, y: 0 };
+        let mut size = 0;
         let mut max = Int::MIN;
         for dim in 0..GRID_SIZE {
-            for (i, row) in grid.iter().enumerate().take(GRID_SIZE - dim) {
-                for (j, _) in row.iter().enumerate().take(GRID_SIZE - dim) {
-                    let sum = sum(&grid, i, j, dim);
-                    if max < sum {
-                        max = sum;
-                        x = i;
-                        y = j;
-                        size = dim;
-                    }
-                }
+            let (pos, power) = self.max_square(&grid, dim);
+            if max < power {
+                max = power;
+                position = pos;
+                size = dim;
             }
         }
-        format!("{},{},{}", x + 1, y + 1, size)
+        format!("{},{},{}", position.x + 1, position.y + 1, size)
     }
 
     fn description(&self) -> String {
