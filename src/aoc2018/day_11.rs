@@ -21,7 +21,7 @@ impl AoC2018_11 {
         let mut max = Int::MIN;
         for (i, row) in grid.iter().enumerate().take(GRID_SIZE - dim) {
             for (j, _) in row.iter().enumerate().take(GRID_SIZE - dim) {
-                let sum = sum(&grid, i, j, dim);
+                let sum = sum(grid, i, j, dim);
                 if max < sum {
                     max = sum;
                     x = i;

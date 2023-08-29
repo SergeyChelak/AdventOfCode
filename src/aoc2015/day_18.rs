@@ -15,7 +15,7 @@ fn switch_lights(input: &Grid) -> Grid {
     for i in 0..rows {
         let cols = input[i].len();
         for j in 0..cols {
-            let offs = vec![
+            let offs = [
                 (-1, -1), // 1
                 (0, -1),  // 2
                 (1, -1),  // 3

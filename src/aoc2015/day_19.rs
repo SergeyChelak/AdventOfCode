@@ -123,7 +123,7 @@ mod test {
 
     #[test]
     fn aoc2015_19_search() {
-        let repl = vec!["e => H", "e => O", "H => HO", "H => OH", "O => HH"]
+        let repl = ["e => H", "e => O", "H => HO", "H => OH", "O => HH"]
             .iter()
             .map(|&s| s.to_string())
             .map(|s| Replacement::from_str(&s))

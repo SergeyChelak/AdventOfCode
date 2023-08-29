@@ -63,7 +63,7 @@ mod test {
     #[test]
     fn aoc2018_09_example1() {
         // players, marbles, high scores
-        let data = vec![
+        let data = [
             (9, 25, 32),
             (10, 1618, 8317),
             (13, 7999, 146373),
@@ -84,7 +84,7 @@ mod test {
     fn aoc2018_09_correctness() -> Result<()> {
         let sol = AoC2018_09::new()?;
         assert_eq!(sol.part_one(), "429287");
-        assert_eq!(sol.part_two(), "3624387659`");
+        assert_eq!(sol.part_two(), "3624387659");
         Ok(())
     }
 }

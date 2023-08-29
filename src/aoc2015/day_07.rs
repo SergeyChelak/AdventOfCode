@@ -178,7 +178,7 @@ mod test {
 
     #[test]
     fn aoc2015_07_case1() {
-        let input = vec![
+        let input = [
             "123 -> x",
             "456 -> y",
             "x AND y -> d",
