@@ -94,7 +94,6 @@ impl AoC2018_12 {
                 } else {
                     loops.insert(pattern.to_owned(), offset);
                 }
-
             }
 
             // clear array for the next state
