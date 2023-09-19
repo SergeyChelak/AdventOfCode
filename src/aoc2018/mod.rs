@@ -36,8 +36,8 @@ use day_11::*;
 mod day_12;
 use day_12::*;
 
-// mod day_13;
-// use day_13::*;
+mod day_13;
+use day_13::*;
 
 // mod day_14;
 // use day_14::*;
@@ -89,7 +89,7 @@ pub fn all_days() -> std::io::Result<Vec<Box<dyn Solution>>> {
         Box::new(AoC2018_10::new()?),
         Box::new(AoC2018_11::new()?),
         Box::new(AoC2018_12::new()?),
-        // Box::new(AoC2018_13::new()?),
+        Box::new(AoC2018_13::new()?),
         // Box::new(AoC2018_14::new()?),
         // Box::new(AoC2018_15::new()?),
         // Box::new(AoC2018_16::new()?),
@@ -106,5 +106,5 @@ pub fn all_days() -> std::io::Result<Vec<Box<dyn Solution>>> {
 }
 
 pub fn last_day() -> std::io::Result<Box<dyn Solution>> {
-    Ok(Box::new(AoC2018_12::new()?))
+    Ok(Box::new(AoC2018_13::new()?))
 }
