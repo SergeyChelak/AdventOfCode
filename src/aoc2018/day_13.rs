@@ -180,7 +180,7 @@ impl<'a> Collider<'a> {
         Self { track, carts }
     }
 
-    fn check_collisions(&self) -> Vec<Coordinate> {
+    fn get_collisions(&self) -> Vec<Coordinate> {
         let coordinates = self
             .carts
             .iter()
@@ -197,17 +197,33 @@ impl<'a> Collider<'a> {
         result
     }
 
+    fn remove_collisions(&mut self) {
+        let collisions = self.get_collisions();
+        if collisions.is_empty() {
+            return;
+        }
+        self.carts = self
+            .carts
+            .iter()
+            .filter(|&cart| !collisions.contains(&cart.coordinate))
+            .cloned()
+            .collect::<Vec<Cart>>();
+    }
+
+    fn can_collide(&self) -> bool {
+        self.carts.len() > 1
+    }
+
     fn teak(&mut self) {
         self.carts.iter_mut().for_each(|cart| {
             let coord = cart.coordinate;
             let element = &self.track[coord.x][coord.y];
             cart.teak(element);
-            {
-                let coord = cart.coordinate;
-                let element = &self.track[coord.x][coord.y];
-                assert_ne!(*element, TrackElement::None);
-            }
         });
+    }
+
+    fn get_cart(&self) -> Cart {
+        self.carts.first().unwrap().clone()
     }
 }
 
@@ -252,22 +268,25 @@ impl Solution for AoC2018_13 {
     fn part_one(&self) -> String {
         let mut collider = Collider::new(&self.track, self.carts.clone());
         loop {
-            let collisions = collider.check_collisions();
-            if let Some(elem) = collisions.first() {
-                {
-                    let count = collisions.len();
-                    if count > 1 {
-                        println!("Found collisions {}", collisions.len());
-                    }
-                }
-                break format!("{},{}", elem.y, elem.x);
+            let collisions = collider.get_collisions();
+            if let Some(coord) = collisions.first() {
+                assert_eq!(collisions.len(), 1);
+                break format!("{},{}", coord.y, coord.x);
             }
             collider.teak();
         }
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut collider = Collider::new(&self.track, self.carts.clone());
+        while collider.can_collide() {
+            collider.teak();
+            collider.remove_collisions();
+        }
+        let cart = collider.get_cart();
+        let coord = cart.coordinate;
+        format!("{},{}", coord.y, coord.x)
+    }
 
     fn description(&self) -> String {
         "AoC 2018/Day 13: Mine Cart Madness".to_string()
@@ -308,11 +327,29 @@ mod test {
             "| | |  | v  |",
             "\\-+-/  \\-+--/",
             "  \\------/   ",
-        ].iter().map(|s| s.to_string()).collect::<Vec<String>>();
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect::<Vec<String>>();
         let (track, carts) = AoC2018_13::parse(&input)
             .map_err(|err| io::Error::new(io::ErrorKind::Other, String::from(err)))?;
         let sol = AoC2018_13 { track, carts };
         assert_eq!(sol.part_one(), "7,3");
+        Ok(())
+    }
+
+    #[test]
+    fn aoc2018_13_example2() -> io::Result<()> {
+        let input = [
+            "/>-<\\  ", "|   |  ", "| /<+-\\", "| | | v", "\\>+</ |", "  |   ^", "  \\<->/",
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect::<Vec<String>>();
+        let (track, carts) = AoC2018_13::parse(&input)
+            .map_err(|err| io::Error::new(io::ErrorKind::Other, String::from(err)))?;
+        let sol = AoC2018_13 { track, carts };
+        assert_eq!(sol.part_two(), "6,4");
         Ok(())
     }
 
