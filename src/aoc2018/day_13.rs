@@ -79,6 +79,7 @@ type Track = Vec<Vec<TrackElement>>;
 struct Cart {
     direction: Direction,
     coordinate: Coordinate,
+    prev: Coordinate,
     phase: usize,
 }
 
@@ -87,12 +88,14 @@ impl Cart {
         Self {
             direction,
             coordinate,
+            prev: coordinate,
             phase: 0,
         }
     }
 
     fn teak(&mut self, element: &TrackElement) {
         let prev_direction = self.direction.clone();
+        self.prev = self.coordinate;
         let mut is_step_needed = false;
         match (element, &self.direction) {
             (TrackElement::HorizontalPath, Direction::Left) => {
@@ -151,7 +154,7 @@ impl Cart {
                         (Direction::Right, Direction::Left) => Direction::Up,
                         (Direction::Right, Direction::Right) => Direction::Down,
 
-                        _ => direction,
+                        _ => panic!("Shouldn't reach this branch"),
                     };
                 } else {
                     is_step_needed = true;
@@ -181,16 +184,21 @@ impl<'a> Collider<'a> {
     }
 
     fn get_collisions(&self) -> Vec<Coordinate> {
-        let coordinates = self
-            .carts
-            .iter()
-            .map(|cart| cart.coordinate)
-            .collect::<Vec<Coordinate>>();
+        let len = self.carts.len();
         let mut result = Vec::new();
-        for (i, a) in coordinates.iter().enumerate().take(coordinates.len() - 1) {
-            for b in coordinates.iter().skip(i + 1) {
-                if a == b {
-                    result.push(*a);
+        for (i, a) in self.carts.iter().enumerate().take(len - 1) {
+            for b in self.carts.iter().skip(i + 1) {
+                let coord_a = a.coordinate;
+                let coord_b = b.coordinate;
+                if coord_a == coord_b {
+                    result.push(coord_a);
+                } else {
+                    let prev_a = a.prev;
+                    let prev_b = b.prev;
+                    if coord_a == prev_b && coord_b == prev_a {
+                        result.push(coord_a);
+                        result.push(coord_b);
+                    }
                 }
             }
         }
