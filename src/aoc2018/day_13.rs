@@ -1,6 +1,8 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
+use std::cmp::Ordering;
+use std::collections::{HashMap, HashSet};
 use std::io;
 
 enum TrackError {
@@ -73,13 +75,21 @@ impl From<Direction> for TrackElement {
 }
 
 type Coordinate = Point2d<usize>;
+
+fn coordinate_cmp(a: &Coordinate, b: &Coordinate) -> Ordering {
+    let cmp = a.y.cmp(&b.y);
+    if cmp == Ordering::Equal {
+        return a.x.cmp(&b.x);
+    }
+    cmp
+}
+
 type Track = Vec<Vec<TrackElement>>;
 
 #[derive(Clone)]
 struct Cart {
     direction: Direction,
     coordinate: Coordinate,
-    prev: Coordinate,
     phase: usize,
 }
 
@@ -88,14 +98,12 @@ impl Cart {
         Self {
             direction,
             coordinate,
-            prev: coordinate,
             phase: 0,
         }
     }
 
     fn teak(&mut self, element: &TrackElement) {
         let prev_direction = self.direction.clone();
-        self.prev = self.coordinate;
         let mut is_step_needed = false;
         match (element, &self.direction) {
             (TrackElement::HorizontalPath, Direction::Left) => {
@@ -135,8 +143,8 @@ impl Cart {
                 self.direction = Direction::Down;
             }
             (TrackElement::Intersection, _) => {
-                let pos = self.phase % 3;
-                let new_direction = match pos {
+                self.phase %= 3;
+                let new_direction = match self.phase {
                     0 => Some(Direction::Left),
                     2 => Some(Direction::Right),
                     _ => None,
@@ -170,68 +178,6 @@ impl Cart {
         if is_step_needed {
             self.teak(&self.direction.clone().into());
         }
-    }
-}
-
-struct Collider<'a> {
-    track: &'a Track,
-    carts: Vec<Cart>,
-}
-
-impl<'a> Collider<'a> {
-    fn new(track: &'a Track, carts: Vec<Cart>) -> Self {
-        Self { track, carts }
-    }
-
-    fn get_collisions(&self) -> Vec<Coordinate> {
-        let len = self.carts.len();
-        let mut result = Vec::new();
-        for (i, a) in self.carts.iter().enumerate().take(len - 1) {
-            for b in self.carts.iter().skip(i + 1) {
-                let coord_a = a.coordinate;
-                let coord_b = b.coordinate;
-                if coord_a == coord_b {
-                    result.push(coord_a);
-                } else {
-                    let prev_a = a.prev;
-                    let prev_b = b.prev;
-                    if coord_a == prev_b && coord_b == prev_a {
-                        result.push(coord_a);
-                        result.push(coord_b);
-                    }
-                }
-            }
-        }
-        result
-    }
-
-    fn remove_collisions(&mut self) {
-        let collisions = self.get_collisions();
-        if collisions.is_empty() {
-            return;
-        }
-        self.carts = self
-            .carts
-            .iter()
-            .filter(|&cart| !collisions.contains(&cart.coordinate))
-            .cloned()
-            .collect::<Vec<Cart>>();
-    }
-
-    fn can_collide(&self) -> bool {
-        self.carts.len() > 1
-    }
-
-    fn teak(&mut self) {
-        self.carts.iter_mut().for_each(|cart| {
-            let coord = cart.coordinate;
-            let element = &self.track[coord.x][coord.y];
-            cart.teak(element);
-        });
-    }
-
-    fn get_cart(&self) -> Cart {
-        self.carts.first().unwrap().clone()
     }
 }
 
@@ -274,24 +220,64 @@ impl AoC2018_13 {
 
 impl Solution for AoC2018_13 {
     fn part_one(&self) -> String {
-        let mut collider = Collider::new(&self.track, self.carts.clone());
-        loop {
-            let collisions = collider.get_collisions();
-            if let Some(coord) = collisions.first() {
-                assert_eq!(collisions.len(), 1);
-                break format!("{},{}", coord.y, coord.x);
+        let mut carts = self.carts.clone();
+        let mut coordinates = carts
+            .iter()
+            .map(|elem| elem.coordinate)
+            .collect::<HashSet<Coordinate>>();
+        'outer: loop {
+            carts.sort_by(|a, b| coordinate_cmp(&a.coordinate, &b.coordinate));
+            for cart in carts.iter_mut() {
+                let coordinate = &cart.coordinate;
+                coordinates.remove(coordinate);
+                let elem = &self.track[coordinate.x][coordinate.y];
+                cart.teak(elem);
+                let coordinate = &cart.coordinate;
+                if coordinates.contains(coordinate) {
+                    break 'outer format!("{},{}", coordinate.y, coordinate.x);
+                }
+                coordinates.insert(*coordinate);
             }
-            collider.teak();
         }
     }
 
     fn part_two(&self) -> String {
-        let mut collider = Collider::new(&self.track, self.carts.clone());
-        while collider.can_collide() {
-            collider.teak();
-            collider.remove_collisions();
+        let mut carts = self.carts.clone();
+        while carts.len() > 1 {
+            carts.sort_by(|a, b| coordinate_cmp(&a.coordinate, &b.coordinate));
+            let mut map: HashMap<Coordinate, usize> = HashMap::new();
+            carts.iter().enumerate().for_each(|(idx, cart)| {
+                map.insert(cart.coordinate, idx);
+            });
+
+            let mut remove_idx: HashSet<usize> = HashSet::new();
+            for (i, cart) in carts.iter_mut().enumerate() {
+                if remove_idx.contains(&i) {
+                    continue;
+                }
+                let coordinate = &cart.coordinate;
+                map.remove(&cart.coordinate);
+                let elem = &self.track[coordinate.x][coordinate.y];
+                cart.teak(elem);
+
+                if let Some(j) = map.get(&cart.coordinate) {
+                    remove_idx.insert(i);
+                    remove_idx.insert(*j);
+                } else {
+                    map.insert(cart.coordinate, i);
+                }
+            }
+            carts = carts
+                .iter()
+                .enumerate()
+                .filter(|(idx, _)| !remove_idx.contains(idx))
+                .map(|(_, cart)| cart)
+                .cloned()
+                .collect();
         }
-        let cart = collider.get_cart();
+        let Some(cart) = carts.first() else {
+            return "Solution not found".to_string();
+        };
         let coord = cart.coordinate;
         format!("{},{}", coord.y, coord.x)
     }
@@ -365,7 +351,7 @@ mod test {
     fn aoc2018_13_correctness() -> io::Result<()> {
         let sol = AoC2018_13::new()?;
         assert_eq!(sol.part_one(), "58,93");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "91,72");
         Ok(())
     }
 }
