@@ -66,9 +66,9 @@ type StepsData = HashMap<char, HashSet<char>>;
 fn build_steps_data(input: &[Dependency]) -> StepsData {
     let mut steps: StepsData = HashMap::new();
     input.iter().for_each(|x| {
-        let entry = steps.entry(x.step).or_insert(HashSet::new());
+        let entry = steps.entry(x.step).or_default();
         entry.insert(x.dependency);
-        _ = steps.entry(x.dependency).or_insert(HashSet::new());
+        _ = steps.entry(x.dependency).or_default();
     });
     steps
 }
