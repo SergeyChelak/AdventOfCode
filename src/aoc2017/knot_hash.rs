@@ -1,3 +1,5 @@
+use std::fmt::Write;
+
 pub trait KnotHashable {
     fn knot_hash(&self) -> String;
 }
@@ -36,8 +38,10 @@ impl KnotHash {
         tie_knot(self.buffer_size, self.rounds, &input)
             .chunks(16)
             .map(|chunk| chunk.iter().fold(0, |acc, val| acc ^ val))
-            .map(|b| format!("{b:02x}"))
-            .collect::<String>()
+            .fold(String::new(), |mut output, b| {
+                _ = write!(output, "{b:02x}");
+                output
+            })
     }
 }
 
