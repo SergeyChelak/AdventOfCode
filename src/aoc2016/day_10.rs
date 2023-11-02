@@ -89,10 +89,7 @@ impl Conveyor {
                         }
                     }
                     Receiver::Output(out_id) => {
-                        self.output
-                            .entry(out_id)
-                            .or_default()
-                            .push(dest.chip_id);
+                        self.output.entry(out_id).or_default().push(dest.chip_id);
                     }
                 }
             }
