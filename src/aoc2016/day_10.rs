@@ -65,7 +65,7 @@ impl Conveyor {
             while let Some(dest) = self.stack.pop() {
                 match dest.receiver {
                     Receiver::Bot(bot_id) => {
-                        let data = self.values.entry(bot_id).or_insert(vec![]);
+                        let data = self.values.entry(bot_id).or_default();
                         data.push(dest.chip_id);
                         if data.len() == 2 {
                             let (a, b) = (data[0], data[1]);
@@ -91,7 +91,7 @@ impl Conveyor {
                     Receiver::Output(out_id) => {
                         self.output
                             .entry(out_id)
-                            .or_insert(vec![])
+                            .or_default()
                             .push(dest.chip_id);
                     }
                 }
