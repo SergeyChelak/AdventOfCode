@@ -393,7 +393,7 @@ mod test {
             "#.....G.#",
             "#########",
         ];
-        test_part1(&input, "27755");
+        test_part1(&input, "18740");
     }
 
     fn test_part1(input: &[&str], expected: &str) {
