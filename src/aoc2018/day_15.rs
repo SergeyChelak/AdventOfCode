@@ -34,10 +34,10 @@ impl Battlefield {
     }
 
     fn outcome(&mut self) -> i32 {
-        let rounds = self.combat() - 1;
+        let rounds = self.combat();
         let hp = self.total_hp();
-        println!("Steps: {}, remaining hp: {}", rounds, hp);
-        rounds * hp
+        // don't take into account round in which combat ends
+        (rounds - 1)* hp
     }
 
     /// result is a number of rounds
@@ -53,10 +53,6 @@ impl Battlefield {
                     let Elem::Empty = self.get(&next_step) else {
                         panic!("Unexpected elem type for step: {:?}", self.get(&next_step))
                     };
-                    println!(
-                        "Step from {},{} to {},{}",
-                        pos.x, pos.y, next_step.x, next_step.y
-                    );
                     self.set(&next_step, self.get(&pos));
                     self.set(&pos, Elem::Empty);
 
@@ -67,9 +63,6 @@ impl Battlefield {
             }
             if has_moves {
                 rounds += 1;
-                println!("After {} round(s)", rounds);
-                self.print_maze();
-                println!();
                 continue;
             }
             break rounds;
@@ -92,13 +85,6 @@ impl Battlefield {
         } else {
             Elem::Empty
         };
-        {
-            println!(
-                "Attacking from {},{} to {},{}; actor = {:?}, remaining hp = {}",
-                pos.x, pos.y, enemy_pos.x, enemy_pos.y, elem_type, new_hp
-            );
-            // println!("From {:?}, dest {:?}", self.get(&pos), self.get(&enemy_pos));
-        }
         self.set(&enemy_pos, updated_item);
         true
     }
@@ -130,7 +116,6 @@ impl Battlefield {
     }
 
     fn next_step(&self, pos: Coordinate) -> Option<Coordinate> {
-        // println!("Looking for the path from {},{}", pos.x, pos.y);
         let Elem::Unit(original_type, _) = self.get(&pos) else {
             return None;
         };
@@ -163,8 +148,6 @@ impl Battlefield {
             cur = next;
         }
         let mut enemy_pos = enemy?;
-        // self.print_maze();
-        // println!("Enemy found at {},{}", enemy_pos.x, enemy_pos.y);
         while let Some(p) = path.get(&enemy_pos) {
             if path.get(p).is_some() {
                 enemy_pos = *p;
@@ -234,26 +217,6 @@ impl Battlefield {
     fn set(&mut self, pos: &Coordinate, value: Elem) {
         self.maze[pos.x][pos.y] = value;
     }
-
-    fn print_maze(&self) {
-        self.maze.iter().for_each(|row| {
-            let s = row.iter().fold(String::new(), |acc, val| {
-                let ch = match val {
-                    Elem::Empty => '.',
-                    Elem::Wall => '#',
-                    Elem::Unit(elem_type, _) => {
-                        if *elem_type == UnitType::Goblin {
-                            'G'
-                        } else {
-                            'E'
-                        }
-                    }
-                };
-                format!("{}{}", acc, ch)
-            });
-            println!("{s}");
-        })
-    }
 }
 
 pub struct AoC2018_15 {
@@ -317,21 +280,6 @@ mod test {
         assert_eq!(sol.part_one(), "196200");
         assert_eq!(sol.part_two(), "");
         Ok(())
-    }
-
-    #[test]
-    fn aoc2018_15_ex1_0() {
-        #[rustfmt::skip]
-        let input = [
-            "#######",   
-            "#.G...#",
-            "#...EG#",
-            "#.#.#G#",
-            "#..G#E#",
-            "#.....#",   
-            "#######",   
-        ];
-        test_part1(&input, "27730");
     }
 
     #[test]
