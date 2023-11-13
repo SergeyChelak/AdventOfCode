@@ -19,25 +19,31 @@ enum Elem {
 
 // Each unit, either Goblin or Elf, has 3 attack power and starts with 200 hit points.
 const INITIAL_HIT_POINTS: i32 = 200;
-const ATTACK_POWER: i32 = 3;
+const DEFAULT_ATTACK_POWER: i32 = 3;
 
 type Maze = Vec<Vec<Elem>>;
 type Coordinate = Point2d<usize>;
 
 struct Battlefield {
     maze: Maze,
+    attack_power_elf: i32,
+    attack_power_goblin: i32,
 }
 
 impl Battlefield {
-    fn new(maze: &Maze) -> Self {
-        Self { maze: maze.clone() }
+    fn new(maze: &Maze, attack_power_elf: i32, attack_power_goblin: i32) -> Self {
+        Self {
+            maze: maze.clone(),
+            attack_power_elf,
+            attack_power_goblin,
+        }
     }
 
     fn outcome(&mut self) -> i32 {
         let rounds = self.combat();
         let hp = self.total_hp();
         // don't take into account round in which combat ends
-        (rounds - 1)* hp
+        (rounds - 1) * hp
     }
 
     /// result is a number of rounds
@@ -79,7 +85,7 @@ impl Battlefield {
                 self.get(&enemy_pos)
             )
         };
-        let new_hp = hp - ATTACK_POWER;
+        let new_hp = hp - self.get_attack_power(&pos);
         let updated_item = if new_hp > 0 {
             Elem::Unit(elem_type, new_hp)
         } else {
@@ -87,6 +93,19 @@ impl Battlefield {
         };
         self.set(&enemy_pos, updated_item);
         true
+    }
+
+    fn get_attack_power(&self, pos: &Coordinate) -> i32 {
+        match self.get(pos) {
+            Elem::Unit(elem_type, _) => {
+                if elem_type == UnitType::Goblin {
+                    self.attack_power_goblin
+                } else {
+                    self.attack_power_elf
+                }
+            }
+            _ => panic!("Attack power not applicable for non unit element"),
+        }
     }
 
     fn total_hp(&self) -> i32 {
@@ -251,7 +270,8 @@ impl AoC2018_15 {
 
 impl Solution for AoC2018_15 {
     fn part_one(&self) -> String {
-        let mut battlefield = Battlefield::new(&self.maze);
+        let mut battlefield =
+            Battlefield::new(&self.maze, DEFAULT_ATTACK_POWER, DEFAULT_ATTACK_POWER);
         battlefield.outcome().to_string()
     }
 
