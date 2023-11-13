@@ -251,8 +251,8 @@ impl AoC2018_15 {
 
 impl Solution for AoC2018_15 {
     fn part_one(&self) -> String {
-        let mut battlefiled = Battlefield::new(&self.maze);
-        battlefiled.outcome().to_string()
+        let mut battlefield = Battlefield::new(&self.maze);
+        battlefield.outcome().to_string()
     }
 
     // fn part_two(&self) -> String {
