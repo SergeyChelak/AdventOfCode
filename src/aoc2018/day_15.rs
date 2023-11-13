@@ -116,7 +116,7 @@ impl Battlefield {
                 self.get(&enemy_pos)
             )
         };
-        let new_hp = hp - self.get_attack_power(&pos);
+        let new_hp = hp - self.get_attack_power(pos);
         let updated_item = if new_hp > 0 {
             outcome = AttackOutcome::Loss(elem_type);
             Elem::Unit(elem_type, new_hp)
@@ -179,7 +179,7 @@ impl Battlefield {
             let mut next: Vec<Coordinate> = Vec::new();
             for root in &cur {
                 visited.insert(*root);
-                self.get_adjacent(&root, |elem| match elem {
+                self.get_adjacent(root, |elem| match elem {
                     Elem::Wall => false,
                     Elem::Empty => true,
                     Elem::Unit(unit_type, _) => *unit_type != original_type,
