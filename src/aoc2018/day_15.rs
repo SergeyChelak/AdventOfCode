@@ -79,7 +79,7 @@ impl Battlefield {
             let mut has_moves = false;
             let units_coords = self.unit_positions();
             for pos in units_coords {
-                let mut outcome = self.try_attack(pos);
+                let mut outcome = self.try_attack(&pos);
                 if outcome.is_some() {
                     has_moves = true;
                 } else if let Some(next_step) = self.next_step(pos) {
@@ -88,7 +88,7 @@ impl Battlefield {
                     };
                     self.set(&next_step, self.get(&pos));
                     self.set(&pos, Elem::Empty);
-                    outcome = self.try_attack(next_step);
+                    outcome = self.try_attack(&next_step);
                     has_moves = true;
                 }
                 if !is_elf_death_allowed && outcome.is_elf_died() {
@@ -103,7 +103,7 @@ impl Battlefield {
         }
     }
 
-    fn try_attack(&mut self, pos: Coordinate) -> AttackOutcome {
+    fn try_attack(&mut self, pos: &Coordinate) -> AttackOutcome {
         let mut outcome = AttackOutcome::None;
         let Some(enemy_pos) = self.attack_position(pos) else {
             return outcome;
@@ -174,10 +174,10 @@ impl Battlefield {
         let mut enemy: Option<Coordinate> = None;
         let mut path: HashMap<Coordinate, Coordinate> = HashMap::new();
         loop {
-            let mut next = vec![];
+            let mut next = Vec::new();
             for root in cur {
                 visited.insert(root);
-                self.get_adjacent(root, |elem| match elem {
+                self.get_adjacent(&root, |elem| match elem {
                     Elem::Wall => false,
                     Elem::Empty => true,
                     Elem::Unit(unit_type, _) => *unit_type != original_type,
@@ -208,8 +208,8 @@ impl Battlefield {
         Some(enemy_pos)
     }
 
-    fn attack_position(&self, pos: Coordinate) -> Option<Coordinate> {
-        let Elem::Unit(pos_type, _) = self.get(&pos) else {
+    fn attack_position(&self, pos: &Coordinate) -> Option<Coordinate> {
+        let Elem::Unit(pos_type, _) = self.get(pos) else {
             return None;
         };
         let adj = self.get_adjacent(pos, |elem| match elem {
@@ -234,11 +234,11 @@ impl Battlefield {
         })
     }
 
-    fn get_adjacent<T>(&self, pos: Coordinate, criteria: T) -> Vec<Coordinate>
+    fn get_adjacent<T>(&self, pos: &Coordinate, criteria: T) -> Vec<Coordinate>
     where
         T: Fn(&Elem) -> bool,
     {
-        let mut result = Vec::new();
+        let mut result = Vec::with_capacity(4);
         let (x, y) = (pos.x, pos.y);
         // order is matter!
         if x > 0 {
@@ -260,10 +260,12 @@ impl Battlefield {
             .collect()
     }
 
+    #[inline]
     fn get(&self, pos: &Coordinate) -> Elem {
         self.maze[pos.x][pos.y]
     }
 
+    #[inline]
     fn set(&mut self, pos: &Coordinate, value: Elem) {
         self.maze[pos.x][pos.y] = value;
     }
@@ -314,6 +316,7 @@ impl Solution for AoC2018_15 {
             if battlefield.is_elves_alive() {
                 break;
             }
+            println!("Power {}", attack_power_elf);
             attack_power_elf += 1;
         }
         attack_power_elf.to_string()
