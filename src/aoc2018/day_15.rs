@@ -69,8 +69,10 @@ impl Battlefield {
         (rounds - 1) * hp
     }
 
-    fn is_elves_alive(&mut self) -> bool {
-        self.combat(false).is_some()
+    fn is_elves_alive(&mut self) -> Option<i32> {
+        let rounds = self.combat(false)?;
+        let hp = self.total_hp();
+        Some((rounds - 1) * hp)
     }
 
     fn combat(&mut self, is_elf_death_allowed: bool) -> Option<i32> {
@@ -172,11 +174,11 @@ impl Battlefield {
         let mut visited: HashSet<Coordinate> = HashSet::new();
         let mut cur = vec![pos];
         let mut enemy: Option<Coordinate> = None;
-        let mut path: HashMap<Coordinate, Coordinate> = HashMap::new();
+        let mut path: HashMap<Coordinate, Coordinate> = HashMap::new();        
         loop {
-            let mut next = Vec::new();
-            for root in cur {
-                visited.insert(root);
+            let mut next: Vec<Coordinate> = Vec::new();
+            for root in &cur {
+                visited.insert(*root);
                 self.get_adjacent(&root, |elem| match elem {
                     Elem::Wall => false,
                     Elem::Empty => true,
@@ -185,10 +187,13 @@ impl Battlefield {
                 .iter()
                 .filter(|p| !visited.contains(p))
                 .for_each(|p| {
+                    if next.contains(p) {
+                        return;
+                    }
                     if let Elem::Unit(_, _) = self.get(p) {
                         enemy = enemy.or(Some(*p));
                     }
-                    path.entry(*p).or_insert(root);
+                    path.entry(*p).or_insert(*root);
                     next.push(*p);
                 });
             }
@@ -196,7 +201,7 @@ impl Battlefield {
                 break;
             }
             cur = next;
-        }
+        }       
         let mut enemy_pos = enemy?;
         while let Some(p) = path.get(&enemy_pos) {
             if path.get(p).is_some() {
@@ -260,12 +265,10 @@ impl Battlefield {
             .collect()
     }
 
-    #[inline]
     fn get(&self, pos: &Coordinate) -> Elem {
         self.maze[pos.x][pos.y]
     }
 
-    #[inline]
     fn set(&mut self, pos: &Coordinate, value: Elem) {
         self.maze[pos.x][pos.y] = value;
     }
@@ -310,16 +313,17 @@ impl Solution for AoC2018_15 {
 
     fn part_two(&self) -> String {
         let mut attack_power_elf = 4;
+        let mut outcome = -1;
         while attack_power_elf < 1000 {
             let mut battlefield =
                 Battlefield::new(&self.maze, attack_power_elf, DEFAULT_ATTACK_POWER);
-            if battlefield.is_elves_alive() {
+            if let Some(val) = battlefield.is_elves_alive() {
+                outcome = val;
                 break;
             }
-            println!("Power {}", attack_power_elf);
             attack_power_elf += 1;
         }
-        attack_power_elf.to_string()
+        outcome.to_string()
     }
 
     fn description(&self) -> String {
@@ -342,7 +346,7 @@ mod test {
     fn aoc2018_15_correctness() -> io::Result<()> {
         let sol = AoC2018_15::new()?;
         assert_eq!(sol.part_one(), "196200");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "61750");
         Ok(())
     }
 
