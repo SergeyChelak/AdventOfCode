@@ -17,7 +17,28 @@ enum Elem {
     Empty,
 }
 
-// Each unit, either Goblin or Elf, has 3 attack power and starts with 200 hit points.
+enum AttackOutcome {
+    None,
+    Died(UnitType),
+    Loss(UnitType),
+}
+
+impl AttackOutcome {
+    fn is_some(&self) -> bool {
+        match self {
+            Self::None => false,
+            _ => true,
+        }
+    }
+
+    fn is_elf_died(&self) -> bool {
+        match self {
+            Self::Died(unit_type) => *unit_type == UnitType::Elf,
+            _ => false,
+        }
+    }
+}
+
 const INITIAL_HIT_POINTS: i32 = 200;
 const DEFAULT_ATTACK_POWER: i32 = 3;
 
@@ -40,20 +61,26 @@ impl Battlefield {
     }
 
     fn outcome(&mut self) -> i32 {
-        let rounds = self.combat();
+        let rounds = self
+            .combat(true)
+            .expect("Empty result isn't expected for 1st part");
         let hp = self.total_hp();
         // don't take into account round in which combat ends
         (rounds - 1) * hp
     }
 
-    /// result is a number of rounds
-    fn combat(&mut self) -> i32 {
+    fn is_elves_alive(&mut self) -> bool {
+        self.combat(false).is_some()
+    }
+
+    fn combat(&mut self, is_elf_death_allowed: bool) -> Option<i32> {
         let mut rounds = 0;
         loop {
             let mut has_moves = false;
             let units_coords = self.unit_positions();
             for pos in units_coords {
-                if self.try_attack(pos) {
+                let mut outcome = self.try_attack(pos);
+                if outcome.is_some() {
                     has_moves = true;
                 } else if let Some(next_step) = self.next_step(pos) {
                     let Elem::Empty = self.get(&next_step) else {
@@ -61,23 +88,25 @@ impl Battlefield {
                     };
                     self.set(&next_step, self.get(&pos));
                     self.set(&pos, Elem::Empty);
-
-                    _ = self.try_attack(next_step);
-
+                    outcome = self.try_attack(next_step);
                     has_moves = true;
+                }
+                if !is_elf_death_allowed && outcome.is_elf_died() {
+                    return None;
                 }
             }
             if has_moves {
                 rounds += 1;
                 continue;
             }
-            break rounds;
+            break Some(rounds);
         }
     }
 
-    fn try_attack(&mut self, pos: Coordinate) -> bool {
+    fn try_attack(&mut self, pos: Coordinate) -> AttackOutcome {
+        let mut outcome = AttackOutcome::None;
         let Some(enemy_pos) = self.attack_position(pos) else {
-            return false;
+            return outcome;
         };
         let Elem::Unit(elem_type, hp) = self.get(&enemy_pos) else {
             panic!(
@@ -87,12 +116,14 @@ impl Battlefield {
         };
         let new_hp = hp - self.get_attack_power(&pos);
         let updated_item = if new_hp > 0 {
+            outcome = AttackOutcome::Loss(elem_type);
             Elem::Unit(elem_type, new_hp)
         } else {
+            outcome = AttackOutcome::Died(elem_type);
             Elem::Empty
         };
         self.set(&enemy_pos, updated_item);
-        true
+        outcome
     }
 
     fn get_attack_power(&self, pos: &Coordinate) -> i32 {
@@ -275,8 +306,18 @@ impl Solution for AoC2018_15 {
         battlefield.outcome().to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut attack_power_elf = 4;
+        while attack_power_elf < 1000 {
+            let mut battlefield =
+                Battlefield::new(&self.maze, attack_power_elf, DEFAULT_ATTACK_POWER);
+            if battlefield.is_elves_alive() {
+                break;
+            }
+            attack_power_elf += 1;
+        }
+        attack_power_elf.to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2018/Day 15: Beverage Bandits".to_string()
