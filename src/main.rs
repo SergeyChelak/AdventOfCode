@@ -1,4 +1,5 @@
 use std::io;
+use std::time::Instant;
 mod solution;
 mod utils;
 
@@ -57,6 +58,13 @@ fn run_collection(days: io::Result<Vec<Box<dyn Solution>>>) {
 fn execute(solution: &Box<dyn Solution>) {
     println!();
     println!("{}", solution.description());
-    println!("\tPart 1: {}", solution.part_one());
-    println!("\tPart 2: {}", solution.part_two());
+    let measure = |part: u8, proc: &dyn Fn() -> String| {
+        let now = Instant::now();
+        let result = proc();
+        let duration = now.elapsed().as_millis();
+        let title = format!("{} ms for part {}", duration, part);
+        println!("{:>30}: {}", title, result);
+    };
+    measure(1, &|| solution.part_one());
+    measure(2, &|| solution.part_two());
 }

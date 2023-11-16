@@ -110,7 +110,7 @@ impl Solution for AoC2017_20 {
     }
 
     fn description(&self) -> String {
-        "AoC 2017/cDay 20: Particle Swarm".to_string()
+        "AoC 2017/Day 20: Particle Swarm".to_string()
     }
 }
 
