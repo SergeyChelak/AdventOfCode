@@ -7,6 +7,7 @@ mod aoc2015;
 mod aoc2016;
 mod aoc2017;
 mod aoc2018;
+mod aoc2023;
 use solution::Solution;
 
 fn main() -> io::Result<()> {
@@ -31,7 +32,7 @@ fn main() -> io::Result<()> {
             }
         }
         _ => {
-            if let Ok(day) = &aoc2018::last_day() {
+            if let Ok(day) = &aoc2023::last_day() {
                 execute(day);
             }
         }
@@ -45,6 +46,7 @@ fn collection(year: &str) -> io::Result<Vec<Box<dyn Solution>>> {
         "2016" => aoc2016::all_days(),
         "2017" => aoc2017::all_days(),
         "2018" => aoc2018::all_days(),
+        "2023" => aoc2023::all_days(),
         _ => Ok(vec![]),
     }
 }
