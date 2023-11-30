@@ -1,6 +1,7 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
+use std::collections::{HashMap, HashSet};
 use std::io;
 
 type MachineInstruction = dyn Fn(&mut Machine);
@@ -8,12 +9,13 @@ type MachineInstruction = dyn Fn(&mut Machine);
 struct Machine {
     reg: Registers,
     args: Instruction,
-    mapping: Vec<&'static MachineInstruction>,
+    instruction: Vec<&'static MachineInstruction>,
+    mapping: HashMap<i32, usize>,
 }
 
 impl Machine {
     fn new() -> Self {
-        let mapping: Vec<&'static MachineInstruction> = vec![
+        let instruction: Vec<&'static MachineInstruction> = vec![
             &Self::addr,
             &Self::addi,
             &Self::mulr,
@@ -34,7 +36,8 @@ impl Machine {
         Self {
             reg: Registers::default(),
             args: Instruction::default(),
-            mapping,
+            instruction,
+            mapping: HashMap::new(),
         }
     }
 
@@ -142,7 +145,7 @@ impl Machine {
     // -------
     fn ambiguous_count(&mut self, data: &TraceData) -> usize {
         let mut count = 0usize;
-        for f in self.mapping.clone() {
+        for f in self.instruction.clone() {
             self.reg = data.before;
             self.args = data.instr;
             f(self);
@@ -151,6 +154,53 @@ impl Machine {
             }
         }
         count
+    }
+
+    // -------
+    fn try_remap(&mut self, data: &TraceData) {
+        let opcode = data.instr[0];
+        if self.mapping.contains_key(&opcode) {
+            return;
+        }
+        let mapped = self.mapping.values().cloned().collect::<HashSet<usize>>();
+        let mut count = 0usize;
+        let mut idx = 0usize;
+        for (i, f) in self.instruction.clone().iter().enumerate() {
+            if mapped.contains(&i) {
+                continue;
+            }
+            self.reg = data.before;
+            self.args = data.instr;
+            f(self);
+            if self.reg == data.after {
+                count += 1;
+                idx = i;
+            }
+        }
+        if count == 1 {
+            self.mapping.insert(opcode, idx);
+        }
+    }
+
+    fn reset(&mut self) {
+        self.reg.iter_mut().for_each(|x| *x = 0);
+    }
+
+    fn exec(&mut self, args: Instruction) {
+        let opcode = args[0];
+        self.args = args;
+        let Some(idx) = self.mapping.get(&opcode) else {
+            panic!("Instruction {opcode} not mapped!")
+        };
+        self.instruction[*idx](self)
+    }
+
+    fn instructions_count(&self) -> usize {
+        self.instruction.len()
+    }
+
+    fn remap_count(&self) -> usize {
+        self.mapping.len()
     }
 }
 
@@ -282,8 +332,26 @@ impl Solution for AoC2018_16 {
             .to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut count = 0usize;
+        let mut machine = Machine::new();
+        loop {
+            self.input_1.iter().for_each(|data| machine.try_remap(data));
+            let next = machine.remap_count();
+            if next == count {
+                break;
+            }
+            count = next;
+        }
+        assert_eq!(
+            count,
+            machine.instructions_count(),
+            "Failed to remap instructions"
+        );
+        machine.reset();
+        self.input_2.iter().for_each(|arg| machine.exec(*arg));
+        machine.reg[0].to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2018/Day 16: Chronal Classification".to_string()
@@ -306,7 +374,7 @@ mod test {
     fn aoc2018_16_correctness() -> io::Result<()> {
         let sol = AoC2018_16::new()?;
         assert_eq!(sol.part_one(), "570");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "503");
         Ok(())
     }
 }
