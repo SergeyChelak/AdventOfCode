@@ -24,6 +24,7 @@ enum AttackOutcome {
 }
 
 impl AttackOutcome {
+    #[allow(clippy::match_like_matches_macro)]
     fn is_some(&self) -> bool {
         match self {
             Self::None => false,
@@ -174,7 +175,7 @@ impl Battlefield {
         let mut visited: HashSet<Coordinate> = HashSet::new();
         let mut cur = vec![pos];
         let mut enemy: Option<Coordinate> = None;
-        let mut path: HashMap<Coordinate, Coordinate> = HashMap::new();        
+        let mut path: HashMap<Coordinate, Coordinate> = HashMap::new();
         loop {
             let mut next: Vec<Coordinate> = Vec::new();
             for root in &cur {
@@ -201,7 +202,7 @@ impl Battlefield {
                 break;
             }
             cur = next;
-        }       
+        }
         let mut enemy_pos = enemy?;
         while let Some(p) = path.get(&enemy_pos) {
             if path.get(p).is_some() {
