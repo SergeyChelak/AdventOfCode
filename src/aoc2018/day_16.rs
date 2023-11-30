@@ -3,44 +3,156 @@ use crate::utils::*;
 
 use std::io;
 
-/*
-Addition:
+type MachineInstruction = dyn Fn(&mut Machine);
 
-    addr (add register) stores into register C the result of adding register A and register B.
-    addi (add immediate) stores into register C the result of adding register A and value B.
+struct Machine {
+    reg: Registers,
+    args: Instruction,
+    mapping: Vec<&'static MachineInstruction>,
+}
 
-Multiplication:
+impl Machine {
+    fn new() -> Self {
+        let mapping: Vec<&'static MachineInstruction> = vec![
+            &Self::addr,
+            &Self::addi,
+            &Self::mulr,
+            &Self::muli,
+            &Self::banr,
+            &Self::bani,
+            &Self::borr,
+            &Self::bori,
+            &Self::setr,
+            &Self::seti,
+            &Self::gtir,
+            &Self::gtri,
+            &Self::gtrr,
+            &Self::eqir,
+            &Self::eqri,
+            &Self::eqrr,
+        ];
+        Self {
+            reg: Registers::default(),
+            args: Instruction::default(),
+            mapping,
+        }
+    }
 
-    mulr (multiply register) stores into register C the result of multiplying register A and register B.
-    muli (multiply immediate) stores into register C the result of multiplying register A and value B.
+    fn addr(&mut self) {
+        // addr (add register) stores into register C the result of adding register A and register B.
+        self.reg[self.idx_c()] = self.reg[self.idx_a()] + self.reg[self.idx_b()];
+    }
 
-Bitwise AND:
+    fn addi(&mut self) {
+        // addi (add immediate) stores into register C the result of adding register A and value B.
+        self.reg[self.idx_c()] = self.reg[self.idx_a()] + self.val_b();
+    }
 
-    banr (bitwise AND register) stores into register C the result of the bitwise AND of register A and register B.
-    bani (bitwise AND immediate) stores into register C the result of the bitwise AND of register A and value B.
+    fn mulr(&mut self) {
+        // mulr (multiply register) stores into register C the result of multiplying register A and register B.
+        self.reg[self.idx_c()] = self.reg[self.idx_a()] * self.reg[self.idx_b()];
+    }
 
-Bitwise OR:
+    fn muli(&mut self) {
+        // muli (multiply immediate) stores into register C the result of multiplying register A and value B.
+        self.reg[self.idx_c()] = self.reg[self.idx_a()] * self.val_b();
+    }
 
-    borr (bitwise OR register) stores into register C the result of the bitwise OR of register A and register B.
-    bori (bitwise OR immediate) stores into register C the result of the bitwise OR of register A and value B.
+    fn banr(&mut self) {
+        // banr (bitwise AND register) stores into register C the result of the bitwise AND of register A and register B.
+        self.reg[self.idx_c()] = self.reg[self.idx_a()] & self.reg[self.idx_b()];
+    }
 
-Assignment:
+    fn bani(&mut self) {
+        // bani (bitwise AND immediate) stores into register C the result of the bitwise AND of register A and value B.
+        self.reg[self.idx_c()] = self.reg[self.idx_a()] & self.val_b();
+    }
 
-    setr (set register) copies the contents of register A into register C. (Input B is ignored.)
-    seti (set immediate) stores value A into register C. (Input B is ignored.)
+    fn borr(&mut self) {
+        // borr (bitwise OR register) stores into register C the result of the bitwise OR of register A and register B.
+        self.reg[self.idx_c()] = self.reg[self.idx_a()] | self.reg[self.idx_b()];
+    }
 
-Greater-than testing:
+    fn bori(&mut self) {
+        // bori (bitwise OR immediate) stores into register C the result of the bitwise OR of register A and value B.
+        self.reg[self.idx_c()] = self.reg[self.idx_a()] | self.val_b();
+    }
 
-    gtir (greater-than immediate/register) sets register C to 1 if value A is greater than register B. Otherwise, register C is set to 0.
-    gtri (greater-than register/immediate) sets register C to 1 if register A is greater than value B. Otherwise, register C is set to 0.
-    gtrr (greater-than register/register) sets register C to 1 if register A is greater than register B. Otherwise, register C is set to 0.
+    fn setr(&mut self) {
+        // setr (set register) copies the contents of register A into register C. (Input B is ignored.)
+        self.reg[self.idx_c()] = self.reg[self.idx_a()]
+    }
 
-Equality testing:
+    fn seti(&mut self) {
+        // seti (set immediate) stores value A into register C. (Input B is ignored.)
+        self.reg[self.idx_c()] = self.val_a();
+    }
 
-    eqir (equal immediate/register) sets register C to 1 if value A is equal to register B. Otherwise, register C is set to 0.
-    eqri (equal register/immediate) sets register C to 1 if register A is equal to value B. Otherwise, register C is set to 0.
-    eqrr (equal register/register) sets register C to 1 if register A is equal to register B. Otherwise, register C is set to 0.
-*/
+    fn gtir(&mut self) {
+        // gtir (greater-than immediate/register) sets register C to 1 if value A is greater than register B. Otherwise, register C is set to 0.
+        self.reg[self.idx_c()] = (self.val_a() > self.reg[self.idx_b()]) as i32
+    }
+
+    fn gtri(&mut self) {
+        // gtri (greater-than register/immediate) sets register C to 1 if register A is greater than value B. Otherwise, register C is set to 0.
+        self.reg[self.idx_c()] = (self.reg[self.idx_a()] > self.val_b()) as i32
+    }
+
+    fn gtrr(&mut self) {
+        // gtrr (greater-than register/register) sets register C to 1 if register A is greater than register B. Otherwise, register C is set to 0.
+        self.reg[self.idx_c()] = (self.reg[self.idx_a()] > self.reg[self.idx_b()]) as i32
+    }
+
+    fn eqir(&mut self) {
+        // eqir (equal immediate/register) sets register C to 1 if value A is equal to register B. Otherwise, register C is set to 0.
+        self.reg[self.idx_c()] = (self.val_a() == self.reg[self.idx_b()]) as i32
+    }
+
+    fn eqri(&mut self) {
+        // eqri (equal register/immediate) sets register C to 1 if register A is equal to value B. Otherwise, register C is set to 0.
+        self.reg[self.idx_c()] = (self.reg[self.idx_a()] == self.val_b()) as i32
+    }
+
+    fn eqrr(&mut self) {
+        // eqrr (equal register/register) sets register C to 1 if register A is equal to register B. Otherwise, register C is set to 0.
+        self.reg[self.idx_c()] = (self.reg[self.idx_a()] == self.reg[self.idx_b()]) as i32
+    }
+
+    // Accessors
+    fn idx_a(&self) -> usize {
+        self.args[1] as usize
+    }
+
+    fn idx_b(&self) -> usize {
+        self.args[2] as usize
+    }
+
+    fn idx_c(&self) -> usize {
+        self.args[3] as usize
+    }
+
+    fn val_a(&self) -> i32 {
+        self.args[1]
+    }
+
+    fn val_b(&self) -> i32 {
+        self.args[2]
+    }
+
+    // -------
+    fn ambiguous_count(&mut self, data: &TraceData) -> usize {
+        let mut count = 0usize;
+        for f in self.mapping.clone() {
+            self.reg = data.before;
+            self.args = data.instr;
+            f(self);
+            if self.reg == data.after {
+                count += 1;
+            }
+        }
+        count
+    }
+}
 
 #[derive(Clone, Copy, Debug)]
 enum ParserState {
@@ -51,7 +163,7 @@ enum ParserState {
 }
 
 type Registers = [i32; 4];
-type Instruction = [usize; 4];
+type Instruction = [i32; 4];
 
 #[derive(Default, Clone, Copy, Debug)]
 struct TraceData {
@@ -77,6 +189,7 @@ impl Parser {
         }
     }
 
+    #[allow(clippy::field_reassign_with_default)]
     fn parse(&mut self) {
         for s in &self.input {
             let s = s.trim();
@@ -132,10 +245,10 @@ impl Parser {
     fn parse_instruction(s: &str) -> Instruction {
         s.split(' ')
             .map(|x| {
-                x.parse::<usize>()
+                x.parse::<i32>()
                     .expect("Instruction values should be integers")
             })
-            .collect::<Vec<usize>>()
+            .collect::<Vec<i32>>()
             .try_into()
             .expect("Amount of instruction parameters is invalid")
     }
@@ -160,7 +273,13 @@ impl AoC2018_16 {
 
 impl Solution for AoC2018_16 {
     fn part_one(&self) -> String {
-        "".to_string()
+        let mut machine = Machine::new();
+        self.input_1
+            .iter()
+            .map(|data| machine.ambiguous_count(data))
+            .filter(|x| *x > 2)
+            .count()
+            .to_string()
     }
 
     // fn part_two(&self) -> String {
@@ -186,7 +305,7 @@ mod test {
     #[test]
     fn aoc2018_16_correctness() -> io::Result<()> {
         let sol = AoC2018_16::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "570");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
