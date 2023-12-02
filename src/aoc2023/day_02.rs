@@ -41,6 +41,28 @@ impl From<&str> for CubeSet {
         output
     }
 }
+
+fn cube_set_power(arr: &[CubeSet]) -> usize {
+    let mut red = 0;
+    let mut green = 0;
+    let mut blue = 0;
+    for x in arr {
+        red = red.max(x.red);
+        green = green.max(x.green);
+        blue = blue.max(x.blue);
+    }
+    let mut result = 1;
+    if red > 0 {
+        result *= red;
+    }
+    if blue > 0 {
+        result *= blue;
+    }
+    if green > 0 {
+        result *= green;
+    }
+    result
+}
 pub struct AoC2023_02 {
     input: Vec<Vec<CubeSet>>,
 }
@@ -79,8 +101,13 @@ impl Solution for AoC2023_02 {
         sum.to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        self.input
+            .iter()
+            .map(|x| cube_set_power(x))
+            .sum::<usize>()
+            .to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2023/Day 2: Cube Conundrum".to_string()
@@ -102,7 +129,7 @@ mod test {
     fn aoc2023_02_correctness() -> io::Result<()> {
         let sol = AoC2023_02::new()?;
         assert_eq!(sol.part_one(), "2913");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "55593");
         Ok(())
     }
 }
