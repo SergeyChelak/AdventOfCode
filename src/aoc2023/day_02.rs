@@ -85,7 +85,7 @@ impl AoC2023_02 {
         let (_, sets) = line
             .split_once(": ")
             .expect("Wrong separator after game id");
-        sets.split(';').map(|s| CubeSet::from(s)).collect()
+        sets.split(';').map(CubeSet::from).collect()
     }
 }
 
@@ -93,7 +93,7 @@ impl Solution for AoC2023_02 {
     fn part_one(&self) -> String {
         let mut sum = 0usize;
         for (i, game_set) in self.input.iter().enumerate() {
-            let is_possible = game_set.iter().fold(true, |acc, x| acc && x.is_possible());
+            let is_possible = game_set.iter().all(|x| x.is_possible());
             if is_possible {
                 sum += i + 1;
             }
