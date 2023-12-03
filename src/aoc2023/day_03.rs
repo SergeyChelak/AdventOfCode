@@ -3,9 +3,6 @@ use crate::utils::*;
 
 use std::collections::HashSet;
 use std::io;
-use std::ops::Range;
-
-type Position = (usize, usize);
 
 pub struct AoC2023_03 {
     input: Vec<Vec<char>>,
@@ -86,15 +83,15 @@ fn adjacent_digits(matrix: &[Vec<char>], row: usize, col: usize) -> Vec<u32> {
         .map(|(r, c)| (r, calc_digit_range(&matrix[r], c)))
         .collect::<HashSet<_>>()
         .iter()
-        .map(|(r, range)| {
-            String::from_iter(&matrix[*r][range.start..=range.end])
+        .map(|(r, (begin, end))| {
+            String::from_iter(&matrix[*r][*begin..=*end])
                 .parse::<u32>()
                 .expect("Failed to parse adjacent number")
         })
         .collect::<Vec<u32>>()
 }
 
-fn adjacent_positions(matrix: &[Vec<char>], row: usize, col: usize) -> Vec<Position> {
+fn adjacent_positions(matrix: &[Vec<char>], row: usize, col: usize) -> Vec<(usize, usize)> {
     let up = row > 0;
     let down = row < matrix.len() - 1;
     let left = col > 0;
@@ -128,7 +125,7 @@ fn adjacent_positions(matrix: &[Vec<char>], row: usize, col: usize) -> Vec<Posit
     positions
 }
 
-fn calc_digit_range(input: &[char], pos: usize) -> Range<usize> {
+fn calc_digit_range(input: &[char], pos: usize) -> (usize, usize) {
     let mut begin = pos;
     while begin > 0 {
         if input[begin - 1].is_numeric() {
@@ -145,11 +142,7 @@ fn calc_digit_range(input: &[char], pos: usize) -> Range<usize> {
             break;
         }
     }
-    // String::from_iter(&input[begin..end])
-    //     .parse::<u32>()
-    //     .expect("Failed to parse adjacent number")
-
-    begin..end
+    (begin, end)
 }
 
 #[cfg(test)]
