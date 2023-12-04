@@ -15,6 +15,27 @@ impl Card {
     }
 }
 
+impl From<&String> for Card {
+    fn from(value: &String) -> Self {
+        let (_, card_info) = value
+            .split_once(": ")
+            .expect("Card number delimiter not found");
+        let (win_numbers, card_numbers) = card_info
+            .split_once(" | ")
+            .expect("Win number delimiter not found");
+
+        let parse_numbers = |s: &str| -> HashSet<u32> {
+            s.split_whitespace()
+                .map(|x| x.parse::<u32>().expect("Number is expected"))
+                .collect::<HashSet<_>>()
+        };
+        Card {
+            win_numbers: parse_numbers(win_numbers),
+            current: parse_numbers(card_numbers),
+        }
+    }
+}
+
 pub struct AoC2023_04 {
     input: Vec<Card>,
 }
@@ -27,27 +48,7 @@ impl AoC2023_04 {
     }
 
     fn parse(lines: &[String]) -> Vec<Card> {
-        lines
-            .iter()
-            .map(|s| {
-                let (_, card_info) = s.split_once(": ").expect("Card number delimiter not found");
-                let (win_numbers, card_numbers) = card_info
-                    .split_once(" | ")
-                    .expect("Win number delimiter not found");
-                let win = Self::parse_numbers(win_numbers);
-                let current = Self::parse_numbers(card_numbers);
-                Card {
-                    win_numbers: win,
-                    current,
-                }
-            })
-            .collect::<Vec<_>>()
-    }
-
-    fn parse_numbers(s: &str) -> HashSet<u32> {
-        s.split_whitespace()
-            .map(|x| x.parse::<u32>().expect("Number is expected"))
-            .collect::<HashSet<_>>()
+        lines.iter().map(Card::from).collect::<Vec<_>>()
     }
 }
 
