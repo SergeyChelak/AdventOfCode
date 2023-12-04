@@ -1,10 +1,22 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
+use std::collections::HashSet;
 use std::io;
 
+struct Card {
+    win_numbers: HashSet<u32>,
+    current: HashSet<u32>,
+}
+
+impl Card {
+    fn matches_count(&self) -> usize {
+        self.current.intersection(&self.win_numbers).count()
+    }
+}
+
 pub struct AoC2023_04 {
-    input: Vec<(Vec<u32>, Vec<u32>)>,
+    input: Vec<Card>,
 }
 
 impl AoC2023_04 {
@@ -14,7 +26,7 @@ impl AoC2023_04 {
         Ok(Self { input })
     }
 
-    fn parse(lines: &[String]) -> Vec<(Vec<u32>, Vec<u32>)> {
+    fn parse(lines: &[String]) -> Vec<Card> {
         lines
             .iter()
             .map(|s| {
@@ -24,25 +36,26 @@ impl AoC2023_04 {
                     .expect("Win number delimiter not found");
                 let win = Self::parse_numbers(win_numbers);
                 let current = Self::parse_numbers(card_numbers);
-                (win, current)
+                Card {
+                    win_numbers: win,
+                    current,
+                }
             })
-            .collect::<Vec<(Vec<u32>, Vec<u32>)>>()
+            .collect::<Vec<_>>()
     }
 
-    fn parse_numbers(s: &str) -> Vec<u32> {
-        s.split(' ')
-            .map(|x| x.trim())
-            .filter(|x| !x.is_empty())
+    fn parse_numbers(s: &str) -> HashSet<u32> {
+        s.split_whitespace()
             .map(|x| x.parse::<u32>().expect("Number is expected"))
-            .collect::<Vec<_>>()
+            .collect::<HashSet<_>>()
     }
 }
 
 impl Solution for AoC2023_04 {
     fn part_one(&self) -> String {
         let mut total = 0;
-        for (win, cur) in &self.input {
-            let matches = cur.iter().filter(|x| win.contains(x)).count();
+        for card in &self.input {
+            let matches = card.matches_count();
             if matches > 0 {
                 total += 1 << (matches - 1);
             }
@@ -52,8 +65,8 @@ impl Solution for AoC2023_04 {
 
     fn part_two(&self) -> String {
         let mut instances = vec![1usize; self.input.len()];
-        for (i, (win, cur)) in self.input.iter().enumerate() {
-            let matches = cur.iter().filter(|x| win.contains(x)).count();
+        for (i, card) in self.input.iter().enumerate() {
+            let matches = card.matches_count();
             for j in 1..=matches {
                 instances[j + i] += instances[i];
             }
