@@ -54,14 +54,17 @@ impl AoC2023_04 {
 
 impl Solution for AoC2023_04 {
     fn part_one(&self) -> String {
-        let mut total = 0;
-        for card in &self.input {
-            let matches = card.matches_count();
-            if matches > 0 {
-                total += 1 << (matches - 1);
-            }
-        }
-        total.to_string()
+        self.input
+            .iter()
+            .fold(0, |acc, card| {
+                let matches = card.matches_count();
+                if matches > 0 {
+                    acc + (1 << (matches - 1))
+                } else {
+                    acc
+                }
+            })
+            .to_string()
     }
 
     fn part_two(&self) -> String {
