@@ -3,40 +3,9 @@ use crate::utils::*;
 
 use std::io;
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum Component {
-    Seed,
-    Soil,
-    Fertilizer,
-    Water,
-    Light,
-    Temperature,
-    Humidity,
-    Location,
-}
-
-impl TryFrom<&str> for Component {
-    type Error = ();
-
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
-        match value {
-            "seed" => Ok(Component::Seed),
-            "soil" => Ok(Component::Soil),
-            "fertilizer" => Ok(Component::Fertilizer),
-            "water" => Ok(Component::Water),
-            "light" => Ok(Component::Light),
-            "temperature" => Ok(Component::Temperature),
-            "humidity" => Ok(Component::Humidity),
-            "location" => Ok(Component::Location),
-            _ => Err(()),
-        }
-    }
-}
-
+#[derive(Clone)]
 struct MapItem {
-    src_type: Component,
     src_start: Int,
-    dest_type: Component,
     dest_start: Int,
     length: Int,
 }
@@ -45,7 +14,7 @@ type Int = u64;
 
 pub struct AoC2023_05 {
     seeds: Vec<Int>,
-    mapping: Vec<MapItem>,
+    mapping: Vec<Vec<MapItem>>,
 }
 
 impl AoC2023_05 {
@@ -55,7 +24,7 @@ impl AoC2023_05 {
         Ok(Self { seeds, mapping })
     }
 
-    fn parse_input(lines: &[String]) -> (Vec<Int>, Vec<MapItem>) {
+    fn parse_input(lines: &[String]) -> (Vec<Int>, Vec<Vec<MapItem>>) {
         let parse_nums = |s: &str| -> Vec<Int> {
             s.split_whitespace()
                 .map(|x| x.parse::<Int>().expect("Number is expected"))
@@ -70,39 +39,34 @@ impl AoC2023_05 {
             parse_nums(nums)
         };
 
+        let mut map: Vec<Vec<MapItem>> = Vec::new();
         let mut mapping: Vec<MapItem> = Vec::new();
-        let mut src = Component::Seed;
-        let mut dest = Component::Seed;
         for s in lines.iter().skip(1) {
             if s.is_empty() {
+                if !mapping.is_empty() {
+                    map.push(mapping.clone());
+                }
                 continue;
             }
             if s.contains("-to-") {
-                let (map_type, _) = s.split_once(' ').expect("Map header is invalid");
-                let (src_str, dest_str) = map_type.split_once("-to-").expect("Invalid map type");
-                src = Component::try_from(src_str).unwrap();
-                dest = Component::try_from(dest_str).unwrap();
+                mapping = Vec::new();
                 continue;
             }
             let nums = parse_nums(s);
             assert_eq!(3, nums.len(), "Invalid map parameters count");
             let item = MapItem {
-                src_type: src,
-                dest_type: dest,
                 dest_start: nums[0],
                 src_start: nums[1],
                 length: nums[2],
             };
             mapping.push(item);
         }
-        (seeds, mapping)
+        map.push(mapping);
+        (seeds, map)
     }
 
-    fn convert(&self, src_type: Component, dest_type: Component, value: Int) -> Int {
-        for item in &self.mapping {
-            if item.src_type != src_type || item.dest_type != dest_type {
-                continue;
-            }
+    fn convert(&self, map_id: usize, value: Int) -> Int {
+        for item in &self.mapping[map_id] {
             if (item.src_start..=item.src_start + item.length).contains(&value) {
                 let delta = value - item.src_start;
                 return delta + item.dest_start;
@@ -114,29 +78,26 @@ impl AoC2023_05 {
 
 impl Solution for AoC2023_05 {
     fn part_one(&self) -> String {
-        let flow = [
-            Component::Seed,
-            Component::Soil,
-            Component::Fertilizer,
-            Component::Water,
-            Component::Light,
-            Component::Temperature,
-            Component::Humidity,
-            Component::Location,
-        ];
         let mut values = self.seeds.clone();
-        for i in 0..flow.len() - 1 {
-            let src = flow[i];
-            let dest = flow[i + 1];
-            values
-                .iter_mut()
-                .for_each(|x| *x = self.convert(src, dest, *x));
+        for i in 0..self.mapping.len() {
+            values.iter_mut().for_each(|x| *x = self.convert(i, *x));
         }
         values.iter().min().expect("Incorrect state").to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut result = Int::MAX;
+        for chunk in self.seeds.chunks(2) {
+            for i in 0..chunk[1] {
+                let mut val = chunk[0] + i;
+                for i in 0..self.mapping.len() {
+                    val = self.convert(i, val);
+                }
+                result = result.min(val);
+            }
+        }
+        result.to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2023/Day 5: If You Give A Seed A Fertilizer".to_string()
@@ -156,10 +117,55 @@ mod test {
     }
 
     #[test]
+    fn aoc2023_05_ex2() {
+        let inp = [
+            "seeds: 79 14 55 13",
+            "",
+            "seed-to-soil map:",
+            "50 98 2",
+            "52 50 48",
+            "",
+            "soil-to-fertilizer map:",
+            "0 15 37",
+            "37 52 2",
+            "39 0 15",
+            "",
+            "fertilizer-to-water map:",
+            "49 53 8",
+            "0 11 42",
+            "42 0 7",
+            "57 7 4",
+            "",
+            "water-to-light map:",
+            "88 18 7",
+            "18 25 70",
+            "",
+            "light-to-temperature map:",
+            "45 77 23",
+            "81 45 19",
+            "68 64 13",
+            "",
+            "temperature-to-humidity map:",
+            "0 69 1",
+            "1 0 69",
+            "",
+            "humidity-to-location map:",
+            "60 56 37",
+            "56 93 4",
+        ]
+        .iter()
+        .map(|x| x.to_string())
+        .collect::<Vec<_>>();
+        let (seeds, mapping) = AoC2023_05::parse_input(&inp);
+        let sol = AoC2023_05 { seeds, mapping };
+        assert_eq!("46", sol.part_two());
+    }
+
+    #[test]
     fn aoc2023_05_correctness() -> io::Result<()> {
         let sol = AoC2023_05::new()?;
         assert_eq!(sol.part_one(), "57075758");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "31161857");
         Ok(())
     }
 }
