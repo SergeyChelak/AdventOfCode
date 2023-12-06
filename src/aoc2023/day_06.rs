@@ -12,7 +12,6 @@ struct Record {
 impl Record {
     fn win_options(&self) -> usize {
         (1..self.time)
-            .into_iter()
             .map(|i| i * (self.time - i))
             .filter(|d| *d > self.distance)
             .count()
@@ -21,7 +20,6 @@ impl Record {
 
 pub struct AoC2023_06 {
     input: Vec<Record>,
-    // input_part2: Record,
 }
 
 impl AoC2023_06 {
