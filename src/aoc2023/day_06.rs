@@ -10,8 +10,8 @@ struct Record {
 }
 
 pub struct AoC2023_06 {
-    input_part1: Vec<Record>,
-    input_part2: Record,
+    input: Vec<Record>,
+    // input_part2: Record,
 }
 
 impl AoC2023_06 {
@@ -22,24 +22,38 @@ impl AoC2023_06 {
         //
         Ok(Self {
             #[rustfmt::skip]
-            input_part1: vec![
+            input: vec![
                 Record { time: 61, distance: 430 },
                 Record { time: 67, distance: 1036 },
                 Record { time: 75, distance: 1307 },
                 Record { time: 71, distance: 1150 },
             ],
-            input_part2: Record {
-                time: 61677571,
-                distance: 430103613071150,
-            },
         })
+    }
+
+    fn merged_input(&self) -> Record {
+        let join_digit = |arr: &[Int]| -> Int {
+            arr.iter()
+                .map(|val| val.to_string())
+                .collect::<Vec<_>>()
+                .join("")
+                .parse::<Int>()
+                .expect("Int value is expected")
+        };
+        let time = self.input.iter().map(|x| x.time).collect::<Vec<_>>();
+        let distance = self.input.iter().map(|x| x.distance).collect::<Vec<_>>();
+
+        Record {
+            time: join_digit(&time),
+            distance: join_digit(&distance),
+        }
     }
 }
 
 impl Solution for AoC2023_06 {
     fn part_one(&self) -> String {
         let mut prod = 1;
-        for rec in &self.input_part1 {
+        for rec in &self.input {
             let mut count = 0;
             for charge in 1..rec.time {
                 let speed = charge;
@@ -56,11 +70,12 @@ impl Solution for AoC2023_06 {
     }
 
     fn part_two(&self) -> String {
+        let rec = self.merged_input();
         let mut count = 0;
-        for charge in 1..self.input_part2.time {
+        for charge in 1..rec.time {
             let speed = charge;
-            let dist = speed * (self.input_part2.time - charge);
-            if dist > self.input_part2.distance {
+            let dist = speed * (rec.time - charge);
+            if dist > rec.distance {
                 count += 1;
             }
         }
@@ -80,15 +95,11 @@ mod test {
     fn aoc2023_06_ex1() {
         let sol = AoC2023_06 {
             #[rustfmt::skip]
-            input_part1: vec![
+            input: vec![
                 Record { time: 7, distance: 9 },
                 Record { time: 15, distance: 40 },
                 Record { time: 30, distance: 200 },
             ],
-            input_part2: Record {
-                time: 0,
-                distance: 0,
-            },
         };
         assert_eq!("288", sol.part_one())
     }
