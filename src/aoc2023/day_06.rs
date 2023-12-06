@@ -10,7 +10,8 @@ struct Record {
 }
 
 pub struct AoC2023_06 {
-    input: Vec<Record>,
+    input_part1: Vec<Record>,
+    input_part2: Record,
 }
 
 impl AoC2023_06 {
@@ -21,12 +22,16 @@ impl AoC2023_06 {
         //
         Ok(Self {
             #[rustfmt::skip]
-            input: vec![
+            input_part1: vec![
                 Record { time: 61, distance: 430 },
                 Record { time: 67, distance: 1036 },
                 Record { time: 75, distance: 1307 },
                 Record { time: 71, distance: 1150 },
             ],
+            input_part2: Record {
+                time: 61677571,
+                distance: 430103613071150,
+            },
         })
     }
 }
@@ -34,7 +39,7 @@ impl AoC2023_06 {
 impl Solution for AoC2023_06 {
     fn part_one(&self) -> String {
         let mut prod = 1;
-        for rec in &self.input {
+        for rec in &self.input_part1 {
             let mut count = 0;
             for charge in 1..rec.time {
                 let speed = charge;
@@ -50,8 +55,17 @@ impl Solution for AoC2023_06 {
         prod.to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut count = 0;
+        for charge in 1..self.input_part2.time {
+            let speed = charge;
+            let dist = speed * (self.input_part2.time - charge);
+            if dist > self.input_part2.distance {
+                count += 1;
+            }
+        }
+        count.to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2023/Day 6: Wait For It".to_string()
@@ -66,11 +80,15 @@ mod test {
     fn aoc2023_06_ex1() {
         let sol = AoC2023_06 {
             #[rustfmt::skip]
-            input: vec![
+            input_part1: vec![
                 Record { time: 7, distance: 9 },
                 Record { time: 15, distance: 40 },
                 Record { time: 30, distance: 200 },
             ],
+            input_part2: Record {
+                time: 0,
+                distance: 0,
+            },
         };
         assert_eq!("288", sol.part_one())
     }
@@ -79,7 +97,7 @@ mod test {
     fn aoc2023_06_correctness() -> io::Result<()> {
         let sol = AoC2023_06::new()?;
         assert_eq!(sol.part_one(), "316800");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "45647654");
         Ok(())
     }
 }
