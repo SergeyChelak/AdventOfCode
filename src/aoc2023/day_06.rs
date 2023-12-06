@@ -9,6 +9,16 @@ struct Record {
     distance: Int,
 }
 
+impl Record {
+    fn win_options(&self) -> usize {
+        (1..self.time)
+            .into_iter()
+            .map(|i| i * (self.time - i))
+            .filter(|d| *d > self.distance)
+            .count()
+    }
+}
+
 pub struct AoC2023_06 {
     input: Vec<Record>,
     // input_part2: Record,
@@ -52,34 +62,16 @@ impl AoC2023_06 {
 
 impl Solution for AoC2023_06 {
     fn part_one(&self) -> String {
-        let mut prod = 1;
-        for rec in &self.input {
-            let mut count = 0;
-            for charge in 1..rec.time {
-                let speed = charge;
-                let dist = speed * (rec.time - charge);
-                if dist > rec.distance {
-                    count += 1;
-                }
-            }
-            if count > 0 {
-                prod *= count;
-            }
-        }
-        prod.to_string()
+        self.input
+            .iter()
+            .map(|rec| rec.win_options())
+            .filter(|x| *x > 0)
+            .product::<usize>()
+            .to_string()
     }
 
     fn part_two(&self) -> String {
-        let rec = self.merged_input();
-        let mut count = 0;
-        for charge in 1..rec.time {
-            let speed = charge;
-            let dist = speed * (rec.time - charge);
-            if dist > rec.distance {
-                count += 1;
-            }
-        }
-        count.to_string()
+        self.merged_input().win_options().to_string()
     }
 
     fn description(&self) -> String {
