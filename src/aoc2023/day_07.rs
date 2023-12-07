@@ -12,36 +12,31 @@ struct Item {
     bid: Int,
 }
 
-fn remap_hand(s: &str) -> String {
+fn remap_hand(s: &str, priority: &str) -> String {
+    let map: HashMap<char, char> = priority
+        .chars()
+        .rev()
+        .enumerate()
+        .map(|(idx, ch)| (ch, (b'a' + idx as u8) as char))
+        .collect();
     s.chars()
-        .map(|ch| match ch {
-            'A' => 'm',
-            'K' => 'l',
-            'Q' => 'k',
-            'J' => 'j',
-            'T' => 'i',
-            '9' => 'h',
-            '8' => 'g',
-            '7' => 'f',
-            '6' => 'e',
-            '5' => 'd',
-            '4' => 'c',
-            '3' => 'b',
-            '2' => 'a',
-            _ => panic!("Unexpected char {ch}"),
-        })
+        .map(|ch| map.get(&ch).expect("Unexpected char"))
         .collect()
 }
 
-const FIVE_OF_A_KIND: u8 = 9;
-const FOUR_OF_A_KIND: u8 = 8;
-const FULL_HOUSE: u8 = 7;
-const THREE_OF_A_KIND: u8 = 6;
-const TWO_PAIR: u8 = 5;
-const ONE_PAIR: u8 = 4;
-const HIGH_CARD: u8 = 3;
+#[repr(u8)]
+#[derive(PartialOrd, Ord, PartialEq, Eq, Debug)]
+enum HandType {
+    HighCard,
+    OnePair,
+    TwoPair,
+    ThreeOfKind,
+    FullHouse,
+    FourOfKind,
+    FiveOfKind,
+}
 
-fn hand_kind(s: &str) -> u8 {
+fn hand_kind(s: &str) -> HandType {
     let mut map: HashMap<char, u8> = HashMap::new();
     s.chars().for_each(|ch| {
         let entry = map.entry(ch).or_default();
@@ -52,24 +47,24 @@ fn hand_kind(s: &str) -> u8 {
         arr[val as usize] += 1;
     }
     if arr[5] == 1 {
-        return FIVE_OF_A_KIND;
+        return HandType::FiveOfKind;
     }
     if arr[4] == 1 {
-        return FOUR_OF_A_KIND;
+        return HandType::FourOfKind;
     }
     if arr[3] == 1 && arr[2] == 1 {
-        return FULL_HOUSE;
+        return HandType::FullHouse;
     }
     if arr[3] == 1 {
-        return THREE_OF_A_KIND;
+        return HandType::ThreeOfKind;
     }
     if arr[2] == 2 {
-        return TWO_PAIR;
+        return HandType::TwoPair;
     }
     if arr[2] == 1 {
-        return ONE_PAIR;
+        return HandType::OnePair;
     }
-    HIGH_CARD
+    HandType::HighCard
 }
 
 pub struct AoC2023_07 {
@@ -97,23 +92,21 @@ impl AoC2023_07 {
         Self { input }
     }
 
-    fn remap_hands(&self) -> Vec<Item> {
+    fn remap_hands(&self, priority: &str) -> Vec<Item> {
         self.input
             .iter()
             .map(|item| Item {
-                hand: remap_hand(&item.hand),
+                hand: remap_hand(&item.hand, priority),
                 ..*item
             })
             .collect()
     }
-}
 
-impl Solution for AoC2023_07 {
-    fn part_one(&self) -> String {
-        let mut input = self.remap_hands();
+    fn total_winnings(&self, priority: &str, kind_cmp: &dyn Fn(&str) -> HandType) -> Int {
+        let mut input = self.remap_hands(priority);
         input.sort_by(|a, b| {
-            let kind_a = hand_kind(&a.hand);
-            let kind_b = hand_kind(&b.hand);
+            let kind_a = kind_cmp(&a.hand);
+            let kind_b = kind_cmp(&b.hand);
             let cmp = kind_a.cmp(&kind_b);
             match cmp {
                 Ordering::Equal => a.hand.cmp(&b.hand),
@@ -125,7 +118,12 @@ impl Solution for AoC2023_07 {
             .enumerate()
             .map(|(rank, item)| (rank + 1) as Int * item.bid)
             .sum::<Int>()
-            .to_string()
+    }
+}
+
+impl Solution for AoC2023_07 {
+    fn part_one(&self) -> String {
+        self.total_winnings("AKQJT98765432", &hand_kind).to_string()
     }
 
     // fn part_two(&self) -> String {
@@ -166,15 +164,15 @@ mod test {
     #[test]
     fn aoc2023_07_kind() {
         [
-            ("23456", HIGH_CARD),
-            ("32T3K", ONE_PAIR),
-            ("T55J5", THREE_OF_A_KIND),
-            ("KK677", TWO_PAIR),
-            ("KTJJT", TWO_PAIR),
-            ("QQQJA", THREE_OF_A_KIND),
-            ("AAAAA", FIVE_OF_A_KIND),
-            ("AA8AA", FOUR_OF_A_KIND),
-            ("23332", FULL_HOUSE),
+            ("23456", HandType::HighCard),
+            ("32T3K", HandType::OnePair),
+            ("T55J5", HandType::ThreeOfKind),
+            ("KK677", HandType::TwoPair),
+            ("KTJJT", HandType::TwoPair),
+            ("QQQJA", HandType::ThreeOfKind),
+            ("AAAAA", HandType::FiveOfKind),
+            ("AA8AA", HandType::FourOfKind),
+            ("23332", HandType::FullHouse),
         ]
         .iter()
         .for_each(|(pattern, kind)| {
