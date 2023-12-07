@@ -3,15 +3,36 @@ use crate::utils::*;
 
 use std::io;
 
+type Int = i64;
+
+struct Item {
+    hand: String,
+    bid: Int,
+}
+
 pub struct AoC2023_07 {
-    // place required fields here
+    input: Vec<Item>,
 }
 
 impl AoC2023_07 {
     pub fn new() -> io::Result<Self> {
-        Ok(Self {
-            // initialize solution
-        })
+        let lines = read_file_as_lines("input/aoc2023_07")?;
+        Ok(Self::with_lines(&lines))
+    }
+
+    fn with_lines(lines: &[String]) -> Self {
+        let input = lines
+            .iter()
+            .filter_map(|s| {
+                let (h, b) = s.split_once(' ')?;
+                let bid = b.parse::<Int>().ok()?;
+                Some(Item {
+                    hand: h.to_string(),
+                    bid,
+                })
+            })
+            .collect::<Vec<_>>();
+        Self { input }
     }
 }
 
@@ -23,7 +44,7 @@ impl Solution for AoC2023_07 {
     // }
 
     fn description(&self) -> String {
-        "AoC 2023/".to_string()
+        "AoC 2023/Day 7: Camel Cards".to_string()
     }
 }
 
@@ -34,6 +55,7 @@ mod test {
     #[test]
     fn aoc2023_07_input_load_test() -> io::Result<()> {
         let sol = AoC2023_07::new()?;
+        assert!(!sol.input.is_empty());
         Ok(())
     }
 
