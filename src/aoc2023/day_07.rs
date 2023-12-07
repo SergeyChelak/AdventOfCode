@@ -68,15 +68,11 @@ fn hand_kind(s: &str) -> HandType {
 }
 
 fn hand_kind_wildcard(s: &str) -> HandType {
-    // println!("inp = {s}");
     let mut entries = [0u8; 13];
     s.chars().for_each(|ch| {
         let index = (ch as u8 - b'a') as usize;
         entries[index] += 1;
     });
-    // println!("Entries: {:?}", entries);
-    let jokers = entries[0];
-    // println!("jokers = {}", jokers);
 
     let mut arr = [0u8; 6];
     for val in entries {
@@ -86,6 +82,7 @@ fn hand_kind_wildcard(s: &str) -> HandType {
         return HandType::FiveOfKind;
     }
 
+    let jokers = entries[0];
     if arr[4] == 1 {
         return if jokers == 0 {
             HandType::FourOfKind
