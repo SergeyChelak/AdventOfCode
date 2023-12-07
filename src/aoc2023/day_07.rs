@@ -37,13 +37,13 @@ enum HandType {
 }
 
 fn hand_kind(s: &str) -> HandType {
-    let mut map: HashMap<char, u8> = HashMap::new();
+    let mut entries = [0u8; 13];
     s.chars().for_each(|ch| {
-        let entry = map.entry(ch).or_default();
-        *entry += 1;
+        let index = (ch as u8 - b'a') as usize;
+        entries[index] += 1;
     });
     let mut arr = [0u8; 6];
-    for &val in map.values() {
+    for val in entries {
         arr[val as usize] += 1;
     }
     if arr[5] == 1 {
@@ -65,6 +65,84 @@ fn hand_kind(s: &str) -> HandType {
         return HandType::OnePair;
     }
     HandType::HighCard
+}
+
+fn hand_kind_wildcard(s: &str) -> HandType {
+    // println!("inp = {s}");
+    let mut entries = [0u8; 13];
+    s.chars().for_each(|ch| {
+        let index = (ch as u8 - b'a') as usize;
+        entries[index] += 1;
+    });
+    // println!("Entries: {:?}", entries);
+    let jokers = entries[0];
+    // println!("jokers = {}", jokers);
+
+    let mut arr = [0u8; 6];
+    for val in entries {
+        arr[val as usize] += 1;
+    }
+    if arr[5] == 1 {
+        return HandType::FiveOfKind;
+    }
+
+    if arr[4] == 1 {
+        return if jokers == 0 {
+            HandType::FourOfKind
+        } else {
+            HandType::FiveOfKind
+        };
+    }
+
+    if arr[3] == 1 {
+        return match jokers {
+            3 => {
+                if arr[2] == 1 {
+                    HandType::FiveOfKind
+                } else {
+                    HandType::FourOfKind
+                }
+            }
+            2 => HandType::FiveOfKind,
+            1 => HandType::FourOfKind,
+            _ => {
+                assert_eq!(jokers, 0, "Incorrect state (1)");
+                if arr[2] == 1 {
+                    HandType::FullHouse
+                } else {
+                    assert_eq!(arr[2], 0, "Incorrect state (5)");
+                    HandType::ThreeOfKind
+                }
+            }
+        };
+    }
+    if arr[2] == 2 {
+        return match jokers {
+            2 => HandType::FourOfKind,
+            1 => HandType::FullHouse,
+            _ => {
+                assert_eq!(jokers, 0, "Incorrect state (2)");
+                HandType::TwoPair
+            }
+        };
+    }
+
+    if arr[2] == 1 {
+        return match jokers {
+            2 | 1 => HandType::ThreeOfKind, // ????
+            _ => {
+                assert_eq!(jokers, 0, "Incorrect state (3) {}", s);
+                HandType::OnePair
+            }
+        };
+    }
+
+    assert!(jokers < 2, "Incorrect state (4)");
+    if jokers == 1 {
+        HandType::OnePair
+    } else {
+        HandType::HighCard
+    }
 }
 
 pub struct AoC2023_07 {
@@ -126,8 +204,10 @@ impl Solution for AoC2023_07 {
         self.total_winnings("AKQJT98765432", &hand_kind).to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        self.total_winnings("AKQT98765432J", &hand_kind_wildcard)
+            .to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2023/Day 7: Camel Cards".to_string()
@@ -146,7 +226,7 @@ mod test {
     }
 
     #[test]
-    fn aoc2023_07_ex1() {
+    fn aoc2023_07_ex() {
         let lines = [
             "32T3K 765",
             "T55J5 684",
@@ -158,11 +238,13 @@ mod test {
         .map(|s| s.to_string())
         .collect::<Vec<_>>();
         let sol = AoC2023_07::with_lines(&lines);
-        assert_eq!(sol.part_one(), "6440")
+        assert_eq!(sol.part_one(), "6440");
+        assert_eq!(sol.part_two(), "5905");
     }
 
     #[test]
-    fn aoc2023_07_kind() {
+    fn aoc2023_07_kind_pt1() {
+        let p = "AKQJT98765432";
         [
             ("23456", HandType::HighCard),
             ("32T3K", HandType::OnePair),
@@ -176,7 +258,26 @@ mod test {
         ]
         .iter()
         .for_each(|(pattern, kind)| {
-            assert_eq!(*kind, hand_kind(pattern));
+            let remapped = remap_hand(pattern, p);
+            assert_eq!(*kind, hand_kind(&remapped));
+        });
+    }
+
+    #[test]
+    fn aoc2023_07_kind_pt2() {
+        let p = "AKQT98765432J";
+        [
+            ("QJJQ2", HandType::FourOfKind),
+            ("32T3K", HandType::OnePair),
+            ("KK677", HandType::TwoPair),
+            ("T55J5", HandType::FourOfKind),
+            ("KTJJT", HandType::FourOfKind),
+            ("QQQJA", HandType::FourOfKind),
+        ]
+        .iter()
+        .for_each(|(pattern, kind)| {
+            let remapped = remap_hand(pattern, p);
+            assert_eq!(*kind, hand_kind_wildcard(&remapped));
         });
     }
 
@@ -184,7 +285,7 @@ mod test {
     fn aoc2023_07_correctness() -> io::Result<()> {
         let sol = AoC2023_07::new()?;
         assert_eq!(sol.part_one(), "250957639");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "251515496");
         Ok(())
     }
 }
