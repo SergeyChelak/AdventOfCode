@@ -72,8 +72,46 @@ impl Solution for AoC2023_08 {
         steps.to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let route = self.route.chars().collect::<Vec<char>>();
+        let len = route.len();
+        let cycle_info = self
+            .map
+            .keys()
+            .filter(|s| s.ends_with('A'))
+            .map(|s| {
+                let mut cur = s.as_str();
+                let mut steps = 0usize;
+                let mut initial = 0usize;
+                let mut pass = 0;
+                loop {
+                    let m = self.map.get(cur).expect("Item not found (2)");
+                    cur = if route[steps % len] == 'L' {
+                        &m.left
+                    } else {
+                        &m.right
+                    };
+                    steps += 1;
+                    if cur.ends_with('Z') {
+                        pass += 1;
+                    }
+                    if pass == 1 {
+                        initial = steps;
+                        pass = 2;
+                    }
+                    if pass == 3 {
+                        break (initial, steps - initial);
+                    }
+                }
+            })
+            .collect::<Vec<_>>();
+
+        let mut result = cycle_info.first().unwrap().1;
+        for val in cycle_info.iter().skip(1) {
+            result = lcm(result, val.1);
+        }
+        result.to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2023/Day 8: Haunted Wasteland".to_string()
@@ -93,10 +131,31 @@ mod test {
     }
 
     #[test]
+    fn aoc2023_08_ex2() {
+        let lines = [
+            "LR",
+            "",
+            "11A = (11B, XXX)",
+            "11B = (XXX, 11Z)",
+            "11Z = (11B, XXX)",
+            "22A = (22B, XXX)",
+            "22B = (22C, 22C)",
+            "22C = (22Z, 22Z)",
+            "22Z = (22B, 22B)",
+            "XXX = (XXX, XXX)",
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect::<Vec<String>>();
+        let sol = AoC2023_08::with_lines(&lines);
+        assert_eq!(sol.part_two(), "6");
+    }
+
+    #[test]
     fn aoc2023_08_correctness() -> io::Result<()> {
         let sol = AoC2023_08::new()?;
         assert_eq!(sol.part_one(), "16409");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "11795205644011");
         Ok(())
     }
 }
