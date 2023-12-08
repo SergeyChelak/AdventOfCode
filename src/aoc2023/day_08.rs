@@ -50,14 +50,33 @@ impl AoC2023_08 {
 }
 
 impl Solution for AoC2023_08 {
-    // fn part_one(&self) -> String {
-    // }
+    fn part_one(&self) -> String {
+        let mut steps = 0usize;
+        let route = self.route.chars().collect::<Vec<char>>();
+        let len = route.len();
+        let mut current = "AAA".to_string();
+        loop {
+            if current == "ZZZ" {
+                break;
+            }
+            let Some(m) = self.map.get(&current) else {
+                panic!("Item not found {current}");
+            };
+            current = if route[steps % len] == 'L' {
+                m.left.clone()
+            } else {
+                m.right.clone()
+            };
+            steps += 1;
+        }
+        steps.to_string()
+    }
 
     // fn part_two(&self) -> String {
     // }
 
     fn description(&self) -> String {
-        "".to_string()
+        "AoC 2023/Day 8: Haunted Wasteland".to_string()
     }
 }
 
@@ -76,7 +95,7 @@ mod test {
     #[test]
     fn aoc2023_08_correctness() -> io::Result<()> {
         let sol = AoC2023_08::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "16409");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
