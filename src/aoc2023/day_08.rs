@@ -54,18 +54,18 @@ impl Solution for AoC2023_08 {
         let mut steps = 0usize;
         let route = self.route.chars().collect::<Vec<char>>();
         let len = route.len();
-        let mut current = "AAA".to_string();
+        let mut current = "AAA";
         loop {
             if current == "ZZZ" {
                 break;
             }
-            let Some(m) = self.map.get(&current) else {
+            let Some(m) = self.map.get(current) else {
                 panic!("Item not found {current}");
             };
             current = if route[steps % len] == 'L' {
-                m.left.clone()
+                &m.left
             } else {
-                m.right.clone()
+                &m.right
             };
             steps += 1;
         }
