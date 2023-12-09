@@ -37,8 +37,13 @@ impl Solution for AoC2023_09 {
             .to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        self.input
+            .iter()
+            .map(|arr| predict_backward(arr))
+            .sum::<Int>()
+            .to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2023/Day 9: Mirage Maintenance".to_string()
@@ -57,6 +62,27 @@ fn predict(arr: &[Int]) -> Int {
             .take(len - 1)
             .zip(cur.iter().skip(1))
             .map(|(a, b)| *b - *a)
+            .collect::<Vec<Int>>();
+        if out.iter().all(|x| *x == 0) {
+            break;
+        }
+        cur = &out;
+    }
+    acc
+}
+
+fn predict_backward(arr: &[Int]) -> Int {
+    let mut acc = 0;
+    let mut cur = arr;
+    let mut out: Vec<Int>;
+    loop {
+        let len = cur.len();
+        acc += cur[0];
+        out = cur
+            .iter()
+            .take(len - 1)
+            .zip(cur.iter().skip(1))
+            .map(|(a, b)| *a - *b)
             .collect::<Vec<Int>>();
         if out.iter().all(|x| *x == 0) {
             break;
@@ -85,10 +111,22 @@ mod test {
     }
 
     #[test]
+    fn aoc2023_09_ex2() {
+        #[rustfmt::skip]
+        let input = [
+            "0 3 6 9 12 15",
+            "1 3 6 10 15 21",
+            "10 13 16 21 30 45",
+        ].iter().map(|s| s.to_string()).collect::<Vec<_>>();
+        let puzzle = AoC2023_09::with_lines(&input);
+        assert_eq!(puzzle.part_two(), "2")
+    }
+
+    #[test]
     fn aoc2023_09_correctness() -> io::Result<()> {
         let sol = AoC2023_09::new()?;
         assert_eq!(sol.part_one(), "2101499000");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "1089");
         Ok(())
     }
 }
