@@ -21,3 +21,6 @@ pub use strings::*;
 
 pub mod coordinate;
 pub use coordinate::*;
+
+pub mod math;
+pub use math::*;
