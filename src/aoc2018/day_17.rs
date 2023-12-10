@@ -1,7 +1,7 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::io;
 
 type Int = i32;
@@ -32,6 +32,13 @@ impl Coordinate {
     fn down(&self) -> Self {
         Self {
             y: self.y + 1,
+            ..*self
+        }
+    }
+
+    fn up(&self) -> Self {
+        Self {
+            y: self.y - 1,
             ..*self
         }
     }
@@ -76,12 +83,35 @@ impl AoC2018_17 {
 
 impl Solution for AoC2018_17 {
     fn part_one(&self) -> String {
-        let mut map = self.map.clone();
-        _ = traverse(&mut map, Self::start_coord(), self.max_y);
-        map.values()
-            .filter(|&x| *x == MapElement::Water)
-            .count()
-            .to_string()
+        let mut seen: HashSet<Coordinate> = HashSet::new();
+
+        let mut deque = VecDeque::from([Self::start_coord()]);
+        while !deque.is_empty() {
+            let pos = deque.pop_front().expect("Deque shouldn't be empty");
+            println!("{},{}", pos.x, pos.y);
+            if pos.y > self.max_y {
+                continue;
+            }
+            let next = [pos.down(), pos.left(), pos.right(), pos.up()];
+            let mut is_acceptable = [false; 4];
+            for (i, item) in next.iter().enumerate() {
+                is_acceptable[i] = self.map.get(item).is_none() && !seen.contains(item);
+                // ???
+                if is_acceptable[i] {
+                    seen.insert(*item);
+                    deque.push_back(*item);
+                }
+                match i {
+                    // don't go further if there is way down
+                    0 if is_acceptable[0] => break,
+                    // don't go further if there is way left or right
+                    2 if is_acceptable[1] || is_acceptable[2] => break,
+                    // simulate water overflow effect
+                    _ => {}
+                }
+            }
+        }
+        seen.len().to_string()
     }
 
     // fn part_two(&self) -> String {
@@ -90,24 +120,6 @@ impl Solution for AoC2018_17 {
     fn description(&self) -> String {
         "AoC 2018/Day 17: Reservoir Research".to_string()
     }
-}
-
-fn traverse(map: &mut HashMap<Coordinate, MapElement>, coord: Coordinate, max_y: Int) -> bool {
-    println!("{},{}", coord.x, coord.y);
-    if coord.y > max_y {
-        return false;
-    }
-    map.insert(coord, MapElement::Water);
-    let next = [coord.down(), coord.left(), coord.right()];
-    for item in next {
-        if map.get(&item).is_some() {
-            continue;
-        }
-        if !traverse(map, item, max_y) {
-            return false;
-        }
-    }
-    true
 }
 
 #[cfg(test)]
