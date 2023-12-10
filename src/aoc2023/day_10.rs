@@ -2,7 +2,7 @@ use crate::solution::Solution;
 use crate::utils::*;
 
 use std::cell::RefCell;
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::io;
 
 #[derive(Debug, Eq, Hash, PartialEq, Clone, Copy)]
@@ -36,7 +36,7 @@ impl TryFrom<char> for Pipe {
 
 type Int = i32;
 
-#[derive(Eq, Hash, PartialEq, Copy, Clone)]
+#[derive(Debug, Eq, Hash, PartialEq, Copy, Clone)]
 struct Position(Int, Int);
 
 impl Position {
@@ -62,6 +62,8 @@ type Maze = HashMap<Position, Pipe>;
 pub struct AoC2023_10 {
     maze: RefCell<Maze>,
     start: Position,
+    rows: Int,
+    cols: Int,
 }
 
 impl AoC2023_10 {
@@ -84,32 +86,26 @@ impl AoC2023_10 {
                 }
             }
         }
+        let Some(start) = start else {
+            panic!("Start position should be present")
+        };
+        let Some(start_value) = Self::calc_start_value(&maze, start) else {
+            panic!("Failed to calculate start value")
+        };
+        maze.insert(start, start_value);
         Self {
             maze: RefCell::new(maze),
-            start: start.expect("Start position should be present"),
+            start,
+            rows: lines.len() as Int,
+            cols: lines[0].len() as Int,
         }
     }
 
-    fn possible_start_values(&self) -> Vec<Pipe> {
-        // NorthSouth, // | is a vertical pipe connecting north and south
-        // EastWest,   // - is a horizontal pipe connecting east and west
-        // NorthEast,  // L is a 90-degree bend connecting north and east
-        // NorthWest,  // J is a 90-degree bend connecting north and west
-        // SouthWest,  // 7 is a 90-degree bend connecting south and west
-        // SouthEast,  // F is a 90-degree bend connecting south and east
-
-        let mut possible = Vec::new();
-        let maze = self.maze.borrow();
-
-        let up = maze.get(&self.start.up());
-        let down = maze.get(&self.start.down());
-        let left = maze.get(&self.start.left());
-        let right = maze.get(&self.start.right());
-
-        println!(
-            "Adjacent cells:\nUP = {:?}\nDOWN = {:?}\nLEFT = {:?}\nRIGHT = {:?}",
-            up, down, left, right
-        );
+    fn calc_start_value(maze: &Maze, start: Position) -> Option<Pipe> {
+        let up = maze.get(&start.up());
+        let down = maze.get(&start.down());
+        let left = maze.get(&start.left());
+        let right = maze.get(&start.right());
 
         use Pipe::*;
         let allowed_up = HashSet::from([SouthWest, NorthSouth, SouthEast]);
@@ -119,95 +115,111 @@ impl AoC2023_10 {
 
         if let (Some(up), Some(down)) = (up, down) {
             if allowed_up.contains(up) && allowed_down.contains(down) {
-                possible.push(NorthSouth);
+                return Some(NorthSouth);
             }
         }
         if let (Some(left), Some(right)) = (left, right) {
             if allowed_left.contains(left) && allowed_right.contains(right) {
-                possible.push(EastWest);
+                return Some(EastWest);
             }
         }
 
         if let (Some(up), Some(left)) = (up, left) {
             if allowed_left.contains(left) && allowed_up.contains(up) {
-                possible.push(NorthWest);
+                return Some(NorthWest);
             }
         }
 
         if let (Some(down), Some(left)) = (down, left) {
             if allowed_left.contains(left) && allowed_down.contains(down) {
-                possible.push(SouthWest);
+                return Some(SouthWest);
             }
         }
         if let (Some(up), Some(right)) = (up, right) {
             if allowed_up.contains(up) && allowed_right.contains(right) {
-                possible.push(NorthEast);
+                return Some(NorthEast);
             }
         }
         if let (Some(down), Some(right)) = (down, right) {
             if allowed_down.contains(down) && allowed_right.contains(right) {
-                possible.push(SouthEast);
+                return Some(SouthEast);
             }
         }
-        possible
+        None
     }
 
-    fn find_loop_len(
-        &self,
-        pos: Position,
-        reached: &mut HashSet<Position>,
-        step: usize,
-        result: &mut Option<usize>,
-    ) {
-        if result.is_some() {
-            return;
+    fn find_loop(&self) -> HashSet<Position> {
+        let mut seen = HashSet::new();
+        let mut deque: VecDeque<Position> = VecDeque::from([self.start]);
+        while !deque.is_empty() {
+            let pos = deque.pop_front().expect("Deque shouldn't be empty");
+            let value = {
+                let maze = self.maze.borrow();
+                let Some(val) = maze.get(&pos) else {
+                    panic!("Unexpected case (1)")
+                };
+                *val
+            };
+            use Pipe::*;
+            let adjacent = match value {
+                NorthSouth => [pos.up(), pos.down()],
+                EastWest => [pos.left(), pos.right()],
+                NorthEast => [pos.up(), pos.right()],
+                NorthWest => [pos.up(), pos.left()],
+                SouthWest => [pos.down(), pos.left()],
+                SouthEast => [pos.down(), pos.right()],
+                Ground => panic!("Ground is not expected value"),
+            };
+            adjacent.iter().for_each(|p| {
+                if !seen.contains(p) {
+                    seen.insert(*p);
+                    deque.push_back(*p)
+                }
+            });
         }
-        let maze = self.maze.borrow();
-        let Some(val) = maze.get(&pos) else {
-            return;
-        };
-        if reached.contains(&pos) {
-            if pos == self.start && step > 2 {
-                *result = Some(step);
+        seen
+    }
+
+    fn print_maze(&self) {
+        let mut maze = self.maze.borrow();
+        for row in 0..self.rows {
+            for col in 0..self.cols {
+                let pos = Position(row, col);
+                let val = *maze.get(&pos).unwrap();
+                match val {
+                    Pipe::Ground => print!("."),
+                    _ => print!("#"),
+                }
             }
-            return;
-        }
-        reached.insert(pos);
-        use Pipe::*;
-        let adjacent = match val {
-            NorthSouth => [pos.up(), pos.down()], // | is a vertical pipe connecting north and south
-            EastWest => [pos.left(), pos.right()], // - is a horizontal pipe connecting east and west
-            NorthEast => [pos.up(), pos.right()], // L is a 90-degree bend connecting north and east
-            NorthWest => [pos.up(), pos.left()],  // J is a 90-degree bend connecting north and west
-            SouthWest => [pos.down(), pos.left()], // 7 is a 90-degree bend connecting south and west
-            SouthEast => [pos.down(), pos.right()], // F is a 90-degree bend connecting south and east
-            Ground => panic!("Ground is not expected value"),
-        };
-        for next in adjacent {
-            self.find_loop_len(next, reached, step + 1, result);
+            println!();
         }
     }
 }
 
 impl Solution for AoC2023_10 {
     fn part_one(&self) -> String {
-        for pipe in self.possible_start_values() {
-            println!("Trying with {pipe:?}");
-            {
-                let mut maze = self.maze.borrow_mut();
-                maze.insert(self.start, pipe);
-            }
-            let mut result: Option<usize> = None;
-            self.find_loop_len(self.start, &mut HashSet::new(), 0, &mut result);
-            if let Some(val) = result {
-                return (val / 2).to_string();
-            }
-        }
-        "Not found".to_string()
+        let path = self.find_loop();
+        (path.len() / 2).to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let path = self.find_loop();
+        // simplify maze
+        {
+            let mut maze = self.maze.borrow_mut();
+            for row in 0..self.rows {
+                for col in 0..self.cols {
+                    let pos = Position(row, col);
+                    if !path.contains(&pos) {
+                        maze.insert(pos, Pipe::Ground);
+                    }
+                }
+            }
+        }
+        self.print_maze();
+        // "".to_string()
+        todo!()
+    }
 
     fn description(&self) -> String {
         "AoC 2023/Day 10: Pipe Maze".to_string()
@@ -240,6 +252,49 @@ mod test {
         .collect::<Vec<_>>();
         let puzzle = AoC2023_10::with_lines(&inp);
         assert_eq!(puzzle.part_one(), "4");
+    }
+
+    #[test]
+    fn aoc2023_10_ex2_1() {
+        #[rustfmt::skip]
+        let inp = [
+            "...........",
+            ".S-------7.",
+            ".|F-----7|.",
+            ".||.....||.",
+            ".||.....||.",
+            ".|L-7.F-J|.",
+            ".|..|.|..|.",
+            ".L--J.L--J.",
+            "...........",
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect::<Vec<_>>();
+        let puzzle = AoC2023_10::with_lines(&inp);
+        assert_eq!(puzzle.part_two(), "4");
+    }
+
+    #[test]
+    fn aoc2023_10_ex2_2() {
+        #[rustfmt::skip]
+        let inp = [
+            "FF7FSF7F7F7F7F7F---7",
+            "L|LJ||||||||||||F--J",
+            "FL-7LJLJ||||||LJL-77",
+            "F--JF--7||LJLJ7F7FJ-",
+            "L---JF-JLJ.||-FJLJJ7",
+            "|F|F-JF---7F7-L7L|7|",
+            "|FFJF7L7F-JF7|JL---7",
+            "7-L-JL7||F7|L7F-7F7|",
+            "L.L7LFJ|||||FJL7||LJ",
+            "L7JLJL-JLJLJL--JLJ.L",
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect::<Vec<_>>();
+        let puzzle = AoC2023_10::with_lines(&inp);
+        assert_eq!(puzzle.part_two(), "10");
     }
 
     #[test]
