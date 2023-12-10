@@ -1,16 +1,10 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashSet, VecDeque};
 use std::io;
 
 type Int = i32;
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-enum MapElement {
-    Clay,
-    Water,
-}
 
 type Coordinate = Point2d<Int>;
 
@@ -35,17 +29,10 @@ impl Coordinate {
             ..*self
         }
     }
-
-    fn up(&self) -> Self {
-        Self {
-            y: self.y - 1,
-            ..*self
-        }
-    }
 }
 
 pub struct AoC2018_17 {
-    map: HashMap<Coordinate, MapElement>,
+    map: HashSet<Coordinate>,
     max_y: Int,
 }
 
@@ -56,7 +43,7 @@ impl AoC2018_17 {
     }
 
     fn with_lines(lines: &[String]) -> Self {
-        let mut map = HashMap::new();
+        let mut map = HashSet::new();
         let mut max_y: Int = 0;
         for line in lines {
             let (part1, part2) = line.split_once(", ").expect("Invalid input string");
@@ -69,7 +56,7 @@ impl AoC2018_17 {
             for i in start..=end {
                 let (x, y) = if axe == "x" { (val, i) } else { (i, val) };
                 let coord = Coordinate { x, y };
-                map.insert(coord, MapElement::Clay);
+                map.insert(coord);
                 max_y = max_y.max(y);
             }
         }
@@ -89,20 +76,19 @@ impl Solution for AoC2018_17 {
         let mut vertical: Vec<Coordinate> = Vec::new();
         while !deque.is_empty() {
             let pos = deque.pop_front().expect("Deque shouldn't be empty");
-            println!("{},{}", pos.x, pos.y);
+            // println!("{},{}", pos.x, pos.y);
             if pos.y > self.max_y {
                 continue;
             }
             let next = [pos.down(), pos.left(), pos.right()];
-            let mut is_acceptable = [false; 3];
             for (i, item) in next.iter().enumerate() {
-                is_acceptable[i] = self.map.get(item).is_none() && !seen.contains(item);
-                if is_acceptable[i] {
+                let is_acceptable = !self.map.contains(item) && !seen.contains(item);
+                if is_acceptable {
                     seen.insert(*item);
                     deque.push_back(*item);
                 }
                 // don't go further if there is way down
-                if is_acceptable[0] {
+                if is_acceptable && i == 0 {
                     vertical.push(*item);
                     break;
                 }
