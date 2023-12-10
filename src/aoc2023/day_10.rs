@@ -179,21 +179,6 @@ impl AoC2023_10 {
         }
         seen
     }
-
-    fn print_maze(&self) {
-        let mut maze = self.maze.borrow();
-        for row in 0..self.rows {
-            for col in 0..self.cols {
-                let pos = Position(row, col);
-                let val = *maze.get(&pos).unwrap();
-                match val {
-                    Pipe::Ground => print!("."),
-                    _ => print!("#"),
-                }
-            }
-            println!();
-        }
-    }
 }
 
 impl Solution for AoC2023_10 {
@@ -216,14 +201,72 @@ impl Solution for AoC2023_10 {
                 }
             }
         }
-        self.print_maze();
-        // "".to_string()
-        todo!()
+        let maze = self.maze.borrow();
+        let mut outside: HashSet<Position> = HashSet::new();
+        for row in 0..self.rows {
+            let mut is_within = false;
+            let mut edge_start = EdgeStart::Nope;
+            for col in 0..self.cols {
+                let pos = Position(row, col);
+                let item = *maze.get(&pos).expect("Expected item (3)");
+                match item {
+                    Pipe::NorthSouth => {
+                        // |
+                        assert_eq!(edge_start, EdgeStart::Nope);
+                        is_within = !is_within;
+                    }
+                    Pipe::EastWest => {
+                        // -
+                        assert_ne!(edge_start, EdgeStart::Nope);
+                    }
+                    Pipe::NorthEast => {
+                        // L
+                        assert_eq!(edge_start, EdgeStart::Nope);
+                        edge_start = EdgeStart::North;
+                    }
+                    Pipe::SouthEast => {
+                        // F
+                        assert_eq!(edge_start, EdgeStart::Nope);
+                        edge_start = EdgeStart::South;
+                    }
+                    Pipe::NorthWest => {
+                        // J
+                        assert_ne!(edge_start, EdgeStart::Nope);
+                        if edge_start == EdgeStart::South {
+                            is_within = !is_within;
+                        }
+                        edge_start = EdgeStart::Nope;
+                    }
+                    Pipe::SouthWest => {
+                        // 7
+                        assert_ne!(edge_start, EdgeStart::Nope);
+                        if edge_start == EdgeStart::North {
+                            is_within = !is_within;
+                        }
+                        edge_start = EdgeStart::Nope;
+                    }
+                    Pipe::Ground => {
+                        if !is_within {
+                            outside.insert(pos);
+                        }
+                    }
+                }
+            }
+        }
+        let result = self.rows * self.cols - outside.len() as Int - path.len() as Int;
+        result.to_string()
     }
 
     fn description(&self) -> String {
         "AoC 2023/Day 10: Pipe Maze".to_string()
     }
+}
+
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+enum EdgeStart {
+    North,
+    South,
+    Nope,
 }
 
 #[cfg(test)]
@@ -301,7 +344,7 @@ mod test {
     fn aoc2023_10_correctness() -> io::Result<()> {
         let sol = AoC2023_10::new()?;
         assert_eq!(sol.part_one(), "6956");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "455");
         Ok(())
     }
 }
