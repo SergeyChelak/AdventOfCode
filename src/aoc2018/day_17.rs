@@ -82,13 +82,13 @@ impl Solution for AoC2018_17 {
             }
             let next = [pos.down(), pos.left(), pos.right()];
             for (i, item) in next.iter().enumerate() {
-                let is_acceptable = !self.map.contains(item) && !seen.contains(item);
-                if is_acceptable {
-                    seen.insert(*item);
-                    deque.push_back(*item);
+                if self.map.contains(item) || seen.contains(item) {
+                    continue;
                 }
+                seen.insert(*item);
+                deque.push_back(*item);
                 // don't go further if there is way down
-                if is_acceptable && i == 0 {
+                if i == 0 {
                     vertical.push(*item);
                     break;
                 }
