@@ -95,23 +95,19 @@ impl Solution for AoC2018_17 {
 fn traverse(map: &mut HashMap<Coordinate, MapElement>, coord: Coordinate, max_y: Int) -> bool {
     println!("{},{}", coord.x, coord.y);
     if coord.y > max_y {
-        return true;
+        return false;
     }
     map.insert(coord, MapElement::Water);
     let next = [coord.down(), coord.left(), coord.right()];
-    for n in next {
-        if !is_allowed(map, n) {
+    for item in next {
+        if map.get(&item).is_some() {
             continue;
         }
-        if !traverse(map, n, max_y) {
+        if !traverse(map, item, max_y) {
             return false;
         }
     }
     true
-}
-
-fn is_allowed(map: &mut HashMap<Coordinate, MapElement>, coord: Coordinate) -> bool {
-    map.get(&coord).is_none()
 }
 
 #[cfg(test)]
