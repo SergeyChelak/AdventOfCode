@@ -86,32 +86,38 @@ impl Solution for AoC2018_17 {
         let mut seen: HashSet<Coordinate> = HashSet::new();
 
         let mut deque = VecDeque::from([Self::start_coord()]);
+        let mut vertical: Vec<Coordinate> = Vec::new();
         while !deque.is_empty() {
             let pos = deque.pop_front().expect("Deque shouldn't be empty");
             println!("{},{}", pos.x, pos.y);
             if pos.y > self.max_y {
                 continue;
             }
-            let next = [pos.down(), pos.left(), pos.right(), pos.up()];
-            let mut is_acceptable = [false; 4];
+            let next = [pos.down(), pos.left(), pos.right()];
+            let mut is_acceptable = [false; 3];
             for (i, item) in next.iter().enumerate() {
                 is_acceptable[i] = self.map.get(item).is_none() && !seen.contains(item);
-                // ???
                 if is_acceptable[i] {
                     seen.insert(*item);
                     deque.push_back(*item);
                 }
-                match i {
-                    // don't go further if there is way down
-                    0 if is_acceptable[0] => break,
-                    // don't go further if there is way left or right
-                    2 if is_acceptable[1] || is_acceptable[2] => break,
-                    // simulate water overflow effect
-                    _ => {}
+                // don't go further if there is way down
+                if is_acceptable[0] {
+                    vertical.push(*item);
+                    break;
+                }
+            }
+            if deque.is_empty() {
+                vertical.pop();
+                if let Some(item) = vertical.last() {
+                    deque.push_back(*item);
                 }
             }
         }
-        seen.len().to_string()
+        seen.iter()
+            .filter(|p| (1..=self.max_y).contains(&p.y))
+            .count()
+            .to_string()
     }
 
     // fn part_two(&self) -> String {
