@@ -1,12 +1,12 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::io;
 
 type Int = i32;
 
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 enum MapElement {
     Clay,
     Water,
@@ -77,9 +77,11 @@ impl AoC2018_17 {
 impl Solution for AoC2018_17 {
     fn part_one(&self) -> String {
         let mut map = self.map.clone();
-        let mut reached = HashSet::new();
-        traverse(&mut map, Self::start_coord(), &mut reached, self.max_y);
-        reached.len().to_string()
+        _ = traverse(&mut map, Self::start_coord(), self.max_y);
+        map.values()
+            .filter(|&x| *x == MapElement::Water)
+            .count()
+            .to_string()
     }
 
     // fn part_two(&self) -> String {
@@ -90,51 +92,26 @@ impl Solution for AoC2018_17 {
     }
 }
 
-fn traverse(
-    map: &mut HashMap<Coordinate, MapElement>,
-    cur: Coordinate,
-    reached: &mut HashSet<Coordinate>,
-    max_y: Int,
-) {
-    if cur.y > max_y {
-        return;
+fn traverse(map: &mut HashMap<Coordinate, MapElement>, coord: Coordinate, max_y: Int) -> bool {
+    println!("{},{}", coord.x, coord.y);
+    if coord.y > max_y {
+        return true;
     }
-    let bottom = cur.down();
-    for c in &[bottom, cur.left(), cur.right()] {
-        if let Some(MapElement::Clay) = map.get(c) {
-            reached.insert(*c);
+    map.insert(coord, MapElement::Water);
+    let next = [coord.down(), coord.left(), coord.right()];
+    for n in next {
+        if !is_allowed(map, n) {
+            continue;
+        }
+        if !traverse(map, n, max_y) {
+            return false;
         }
     }
-    map.insert(cur, MapElement::Water);
+    true
+}
 
-    if map.get(&bottom).is_none() {
-        traverse(map, bottom, reached, max_y);
-    }
-
-    let mut is_right_deadend = false;
-    let mut is_left_deadend = false;
-    let mut left = cur;
-    let mut right = cur;
-    loop {
-        left = {
-            let tmp = left.left();
-            if map.get(&tmp).is_none() {
-                tmp
-            } else {
-                left
-            }
-        };
-        right = {
-            let tmp = right.right();
-            if map.get(&tmp).is_none() {
-                tmp
-            } else {
-                right
-            }
-        }
-    }
-
-    todo!()
+fn is_allowed(map: &mut HashMap<Coordinate, MapElement>, coord: Coordinate) -> bool {
+    map.get(&coord).is_none()
 }
 
 #[cfg(test)]
@@ -150,8 +127,21 @@ mod test {
 
     #[test]
     fn aoc2018_17_ex1() {
-        let input = vec![];
+        let input = [
+            "x=495, y=2..7",
+            "y=7, x=495..501",
+            "x=501, y=3..7",
+            "x=498, y=2..4",
+            "x=506, y=1..2",
+            "x=498, y=10..13",
+            "x=504, y=10..13",
+            "y=13, x=498..504",
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect::<Vec<_>>();
         let sol = AoC2018_17::with_lines(&input);
+        assert_eq!(sol.max_y, 13);
         assert_eq!(sol.part_one(), "57")
     }
 
