@@ -7,18 +7,18 @@ use std::io;
 type Int = i32;
 type Location = (Int, Int);
 
-fn dump_locations(locations: &[Location]) {
-    let mut cc = 0;
-    for loc in locations {
-        cc += 1;
-        let s = format!("{},{}", loc.0, loc.1);
-        print!("{s:10}");
-        if cc % 11 == 0 {
-            println!();
-        }
-    }
-    println!();
-}
+// fn dump_locations(locations: &[Location]) {
+//     let mut cc = 0;
+//     for loc in locations {
+//         cc += 1;
+//         let s = format!("{},{}", loc.0, loc.1);
+//         print!("{s:10}");
+//         if cc % 11 == 0 {
+//             println!();
+//         }
+//     }
+//     println!();
+// }
 
 pub struct AoC2023_11 {
     locations: HashSet<Location>,
@@ -33,8 +33,8 @@ impl AoC2023_11 {
     }
 
     fn with_lines(lines: &[String]) -> Self {
-        let rows = lines.len();
-        let cols = lines[0].len();
+        let mut rows = lines.len();
+        let mut cols = lines[0].len();
         let mut empty_rows = HashSet::new();
         let mut empty_cols = HashSet::new();
         for i in 0usize..cols {
@@ -53,6 +53,9 @@ impl AoC2023_11 {
                 empty_rows.insert(row);
             }
         }
+
+        rows += empty_rows.len();
+        cols += empty_cols.len();
 
         println!("Empty rows count: {}", empty_rows.len());
         println!("Empty cols count: {}", empty_cols.len());
@@ -77,6 +80,19 @@ impl AoC2023_11 {
             locations: HashSet::from_iter(locations),
             rows,
             cols,
+        }
+    }
+
+    fn dump_map(&self) {
+        for row in 0..self.rows {
+            for col in 0..self.cols {
+                if self.locations.contains(&(row as Int, col as Int)) {
+                    print!("#")
+                } else {
+                    print!(".")
+                }
+            }
+            println!()
         }
     }
 }
@@ -104,6 +120,28 @@ mod test {
         assert_ne!(sol.cols, 0);
         assert!(!sol.locations.is_empty());
         Ok(())
+    }
+
+    #[test]
+    fn aoc2023_11_ex1() {
+        let lines = [
+            "...#......",
+            ".......#..",
+            "#.........",
+            "..........",
+            "......#...",
+            ".#........",
+            ".........#",
+            "..........",
+            ".......#..",
+            "#...#.....",
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect::<Vec<_>>();
+        let puzzle = AoC2023_11::with_lines(&lines);
+        puzzle.dump_map();
+        assert_eq!(puzzle.part_one(), "374")
     }
 
     #[test]
