@@ -8,6 +8,8 @@ type Location = (Int, Int);
 
 pub struct AoC2023_11 {
     locations: Vec<Location>,
+    is_empty_row: Vec<bool>,
+    is_empty_col: Vec<bool>,
 }
 
 impl AoC2023_11 {
@@ -34,8 +36,18 @@ impl AoC2023_11 {
                 is_empty_row[row] = false;
             }
         }
+        Self {
+            locations,
+            is_empty_row,
+            is_empty_col,
+        }
+    }
 
-        for (row, _) in is_empty_row
+    fn calculate(&self, sparse: usize) -> usize {
+        // expand galaxy
+        let mut locations = self.locations.clone();
+        for (row, _) in self
+            .is_empty_row
             .iter()
             .enumerate()
             .filter(|(_, val)| **val)
@@ -44,10 +56,11 @@ impl AoC2023_11 {
             locations
                 .iter_mut()
                 .filter(|elem| elem.0 > row)
-                .for_each(|elem| elem.0 += 1);
+                .for_each(|elem| elem.0 += sparse);
         }
 
-        for (col, _) in is_empty_col
+        for (col, _) in self
+            .is_empty_col
             .iter()
             .enumerate()
             .filter(|(_, val)| **val)
@@ -56,32 +69,30 @@ impl AoC2023_11 {
             locations
                 .iter_mut()
                 .filter(|elem| elem.1 > col)
-                .for_each(|elem| elem.1 += 1);
+                .for_each(|elem| elem.1 += sparse);
         }
-        Self { locations }
-    }
 
-    fn distance(&self, from: usize, to: usize) -> usize {
-        let (row_a, col_a) = self.locations[from];
-        let (row_b, col_b) = self.locations[to];
-        row_a.abs_diff(row_b) + col_a.abs_diff(col_b)
+        let mut sum = 0;
+        let count = locations.len();
+        for from in 0..count - 1 {
+            for to in from + 1..count {
+                let (row_a, col_a) = locations[from];
+                let (row_b, col_b) = locations[to];
+                sum += row_a.abs_diff(row_b) + col_a.abs_diff(col_b);
+            }
+        }
+        sum
     }
 }
 
 impl Solution for AoC2023_11 {
     fn part_one(&self) -> String {
-        let mut sum = 0;
-        let count = self.locations.len();
-        for from in 0..count - 1 {
-            for to in from + 1..count {
-                sum += self.distance(from, to);
-            }
-        }
-        sum.to_string()
+        self.calculate(1).to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        self.calculate(1000000 - 1).to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2023/Day 11: Cosmic Expansion".to_string()
@@ -101,6 +112,16 @@ mod test {
 
     #[test]
     fn aoc2023_11_ex1() {
+        assert_eq!(puzzle_example().part_one(), "374")
+    }
+
+    #[test]
+    fn aoc2023_11_ex2() {
+        assert_eq!(puzzle_example().calculate(10 - 1), 1030);
+        assert_eq!(puzzle_example().calculate(100 - 1), 8410);
+    }
+
+    fn puzzle_example() -> AoC2023_11 {
         let lines = [
             "...#......",
             ".......#..",
@@ -116,8 +137,7 @@ mod test {
         .iter()
         .map(|s| s.to_string())
         .collect::<Vec<_>>();
-        let puzzle = AoC2023_11::with_lines(&lines);
-        assert_eq!(puzzle.part_one(), "374")
+        AoC2023_11::with_lines(&lines)
     }
 
     #[test]
