@@ -4,11 +4,12 @@ use crate::utils::*;
 use std::collections::{HashMap, HashSet};
 use std::io;
 
-type Int = i32;
+type Int = usize;
 type Location = (Int, Int);
 
 pub struct AoC2023_11 {
     locations: Vec<Location>,
+    galaxy: HashMap<Location, usize>,
     rows: usize,
     cols: usize,
 }
@@ -22,44 +23,58 @@ impl AoC2023_11 {
     fn with_lines(lines: &[String]) -> Self {
         let mut rows = lines.len();
         let mut cols = lines[0].len();
-        let mut empty_rows = HashSet::new();
-        let mut empty_cols = HashSet::new();
-        for i in 0usize..cols {
-            empty_cols.insert(i);
-        }
+        let mut is_empty_row = vec![true; rows];
+        let mut is_empty_col = vec![true; cols];
         let mut locations: Vec<Location> = Vec::new();
         for (row, line) in lines.iter().enumerate() {
             let size_before = locations.len();
             for (col, ch) in line.chars().enumerate() {
                 if ch == '#' {
                     locations.push((row as Int, col as Int));
-                    empty_cols.remove(&col);
+                    is_empty_col[col] = false;
                 }
             }
-            if locations.len() == size_before {
-                empty_rows.insert(row);
+            if locations.len() > size_before {
+                is_empty_row[row] = false;
             }
         }
 
-        rows += empty_rows.len();
-        cols += empty_cols.len();
+        rows += is_empty_row.len();
+        cols += is_empty_col.len();
 
-        for row in empty_rows {
+        for (row, _) in is_empty_row
+            .iter()
+            .enumerate()
+            .filter(|(_, val)| **val)
+            .rev()
+        {
             locations
                 .iter_mut()
-                .filter(|l| l.0 > row as Int)
-                .for_each(|l| l.0 += 1);
+                .filter(|elem| elem.0 > row)
+                .for_each(|elem| elem.0 += 1);
         }
 
-        for col in empty_cols {
+        for (col, _) in is_empty_col
+            .iter()
+            .enumerate()
+            .filter(|(_, val)| **val)
+            .rev()
+        {
             locations
                 .iter_mut()
-                .filter(|l| l.1 > col as Int)
-                .for_each(|l| l.1 += 1);
+                .filter(|elem| elem.1 > col)
+                .for_each(|elem| elem.1 += 1);
         }
 
+        let galaxy = HashMap::from_iter(
+            locations
+                .iter()
+                .enumerate()
+                .map(|(idx, value)| (*value, idx)),
+        );
         Self {
             locations,
+            galaxy,
             rows,
             cols,
         }
@@ -71,46 +86,43 @@ impl AoC2023_11 {
         to: usize,
         cache: &mut HashMap<(usize, usize), usize>,
     ) -> usize {
-        let mut seen = HashSet::new(); //from([self.locations[from]]);
+        let mut seen = HashSet::from([self.locations[from]]);
         let mut steps = 0;
-        let mut current = vec![self.locations[from]];
+        let mut current = HashSet::from([self.locations[from]]);
         'bfs: while !current.is_empty() {
-            steps += 1;
-            let mut next = Vec::new();
-            for (row, col) in current {
-                seen.insert((row, col));
-                let adjacent = [
-                    (row + 1, col),
-                    (row - 1, col),
-                    (row, col + 1),
-                    (row, col - 1),
-                ];
-                for loc in adjacent {
-                    if loc == self.locations[to] {
-                        cache.insert((from, to), steps);
+            let mut next = HashSet::new();
+            for item in current {
+                if let Some(&idx) = self.galaxy.get(&item) {
+                    let start = from.min(idx);
+                    let end = from.max(idx);
+                    cache.insert((start, end), steps);
+                    if idx == to {
                         break 'bfs;
                     }
-                    if !(0..self.rows).contains(&(loc.0 as usize))
-                        || !(0..self.cols).contains(&(loc.1 as usize))
-                    {
+                }
+                let mut adjacent = Vec::new();
+                let (row, col) = (item.0, item.1);
+                if row > 0 {
+                    adjacent.push((row - 1, col));
+                }
+                if row < self.rows - 1 {
+                    adjacent.push((row + 1, col));
+                }
+                if col > 0 {
+                    adjacent.push((row, col - 1));
+                }
+                if col < self.cols - 1 {
+                    adjacent.push((row, col + 1));
+                }
+                for point in adjacent {
+                    if seen.contains(&point) {
                         continue;
                     }
-                    if seen.contains(&loc) {
-                        continue;
-                    }
-                    if let Some(index) = self.locations.iter().position(|elem| *elem == loc) {
-                        let a = from.min(index);
-                        let b = from.max(index);
-                        cache.insert((a, b), steps);
-                        seen.insert(loc);
-                        continue;
-                    }
-                    if next.contains(&loc) {
-                        continue;
-                    }
-                    next.push(loc)
+                    seen.insert(item);
+                    next.insert(point);
                 }
             }
+            steps += 1;
             current = next;
         }
         steps
@@ -124,14 +136,11 @@ impl Solution for AoC2023_11 {
         let mut cache: HashMap<(usize, usize), usize> = HashMap::new();
         for from in 0..len - 1 {
             for to in from + 1..len {
-                // print!("{} -> {}", from + 1, to + 1);
-                let val = self.path_len(from, to, &mut cache);
-                // print!(" calculated {val}");
-                sum += val;
-                // if let Some(cached) = cache.get(&(from, to)) {
-                //     print!(" cached {cached}");
-                // }
-                // println!()
+                if let Some(cached) = cache.get(&(from, to)) {
+                    sum += cached;
+                } else {
+                    sum += self.path_len(from, to, &mut cache);
+                }
             }
         }
         sum.to_string()
@@ -182,7 +191,7 @@ mod test {
     #[test]
     fn aoc2023_11_correctness() -> io::Result<()> {
         let sol = AoC2023_11::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "9521550");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
