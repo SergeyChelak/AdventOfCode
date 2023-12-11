@@ -1,27 +1,14 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::io;
 
 type Int = i32;
 type Location = (Int, Int);
 
-// fn dump_locations(locations: &[Location]) {
-//     let mut cc = 0;
-//     for loc in locations {
-//         cc += 1;
-//         let s = format!("{},{}", loc.0, loc.1);
-//         print!("{s:10}");
-//         if cc % 11 == 0 {
-//             println!();
-//         }
-//     }
-//     println!();
-// }
-
 pub struct AoC2023_11 {
-    locations: HashSet<Location>,
+    locations: Vec<Location>,
     rows: usize,
     cols: usize,
 }
@@ -57,9 +44,6 @@ impl AoC2023_11 {
         rows += empty_rows.len();
         cols += empty_cols.len();
 
-        println!("Empty rows count: {}", empty_rows.len());
-        println!("Empty cols count: {}", empty_cols.len());
-
         for row in empty_rows {
             locations
                 .iter_mut()
@@ -74,32 +58,84 @@ impl AoC2023_11 {
                 .for_each(|l| l.1 += 1);
         }
 
-        println!("Size {}x{}", rows, cols);
-
         Self {
-            locations: HashSet::from_iter(locations),
+            locations,
             rows,
             cols,
         }
     }
 
-    fn dump_map(&self) {
-        for row in 0..self.rows {
-            for col in 0..self.cols {
-                if self.locations.contains(&(row as Int, col as Int)) {
-                    print!("#")
-                } else {
-                    print!(".")
+    fn path_len(
+        &self,
+        from: usize,
+        to: usize,
+        cache: &mut HashMap<(usize, usize), usize>,
+    ) -> usize {
+        let mut seen = HashSet::new(); //from([self.locations[from]]);
+        let mut steps = 0;
+        let mut current = vec![self.locations[from]];
+        'bfs: while !current.is_empty() {
+            steps += 1;
+            let mut next = Vec::new();
+            for (row, col) in current {
+                seen.insert((row, col));
+                let adjacent = [
+                    (row + 1, col),
+                    (row - 1, col),
+                    (row, col + 1),
+                    (row, col - 1),
+                ];
+                for loc in adjacent {
+                    if loc == self.locations[to] {
+                        cache.insert((from, to), steps);
+                        break 'bfs;
+                    }
+                    if !(0..self.rows).contains(&(loc.0 as usize))
+                        || !(0..self.cols).contains(&(loc.1 as usize))
+                    {
+                        continue;
+                    }
+                    if seen.contains(&loc) {
+                        continue;
+                    }
+                    if let Some(index) = self.locations.iter().position(|elem| *elem == loc) {
+                        let a = from.min(index);
+                        let b = from.max(index);
+                        cache.insert((a, b), steps);
+                        seen.insert(loc);
+                        continue;
+                    }
+                    if next.contains(&loc) {
+                        continue;
+                    }
+                    next.push(loc)
                 }
             }
-            println!()
+            current = next;
         }
+        steps
     }
 }
 
 impl Solution for AoC2023_11 {
-    // fn part_one(&self) -> String {
-    // }
+    fn part_one(&self) -> String {
+        let len = self.locations.len();
+        let mut sum = 0;
+        let mut cache: HashMap<(usize, usize), usize> = HashMap::new();
+        for from in 0..len - 1 {
+            for to in from + 1..len {
+                // print!("{} -> {}", from + 1, to + 1);
+                let val = self.path_len(from, to, &mut cache);
+                // print!(" calculated {val}");
+                sum += val;
+                // if let Some(cached) = cache.get(&(from, to)) {
+                //     print!(" cached {cached}");
+                // }
+                // println!()
+            }
+        }
+        sum.to_string()
+    }
 
     // fn part_two(&self) -> String {
     // }
@@ -140,7 +176,6 @@ mod test {
         .map(|s| s.to_string())
         .collect::<Vec<_>>();
         let puzzle = AoC2023_11::with_lines(&lines);
-        puzzle.dump_map();
         assert_eq!(puzzle.part_one(), "374")
     }
 
