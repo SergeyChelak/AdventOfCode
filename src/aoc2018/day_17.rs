@@ -33,6 +33,8 @@ impl Coordinate {
 
 pub struct AoC2018_17 {
     map: HashSet<Coordinate>,
+    max_x: Int,
+    min_x: Int,
     max_y: Int,
 }
 
@@ -45,6 +47,8 @@ impl AoC2018_17 {
     fn with_lines(lines: &[String]) -> Self {
         let mut map = HashSet::new();
         let mut max_y: Int = 0;
+        let mut max_x: Int = 0;
+        let mut min_x: Int = Int::MAX;
         for line in lines {
             let (part1, part2) = line.split_once(", ").expect("Invalid input string");
             let (axe, val_1) = part1.split_once('=').expect("The '=' is expected (1)");
@@ -58,19 +62,43 @@ impl AoC2018_17 {
                 let coord = Coordinate { x, y };
                 map.insert(coord);
                 max_y = max_y.max(y);
+                max_x = max_x.max(x);
+                min_x = min_x.min(x);
             }
         }
-        Self { map, max_y }
+        Self {
+            map,
+            min_x,
+            max_x,
+            max_y,
+        }
     }
 
     fn start_coord() -> Coordinate {
         Coordinate { x: 500, y: 0 }
+    }
+
+    fn dump(&self, seen: &HashSet<Coordinate>) {
+        for y in 0..=self.max_y {
+            for x in self.min_x..=self.max_x {
+                let coord = Coordinate { x, y };
+                if self.map.contains(&coord) {
+                    print!("#")
+                } else if seen.contains(&coord) {
+                    print!("O")
+                } else {
+                    print!(".")
+                }
+            }
+            println!();
+        }
     }
 }
 
 impl Solution for AoC2018_17 {
     fn part_one(&self) -> String {
         let mut seen: HashSet<Coordinate> = HashSet::new();
+        self.dump(&seen);
 
         let mut deque = VecDeque::from([Self::start_coord()]);
         let mut vertical: Vec<Coordinate> = Vec::new();
@@ -100,6 +128,7 @@ impl Solution for AoC2018_17 {
                 }
             }
         }
+
         seen.iter()
             .filter(|p| (1..=self.max_y).contains(&p.y))
             .count()
