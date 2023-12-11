@@ -144,7 +144,7 @@ mod test {
     fn aoc2023_11_correctness() -> io::Result<()> {
         let sol = AoC2023_11::new()?;
         assert_eq!(sol.part_one(), "9521550");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "298932923702");
         Ok(())
     }
 }
