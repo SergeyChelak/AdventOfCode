@@ -1,7 +1,6 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::collections::{HashMap, HashSet};
 use std::io;
 
 type Int = usize;
@@ -9,9 +8,6 @@ type Location = (Int, Int);
 
 pub struct AoC2023_11 {
     locations: Vec<Location>,
-    galaxy: HashMap<Location, usize>,
-    rows: usize,
-    cols: usize,
 }
 
 impl AoC2023_11 {
@@ -21,8 +17,8 @@ impl AoC2023_11 {
     }
 
     fn with_lines(lines: &[String]) -> Self {
-        let mut rows = lines.len();
-        let mut cols = lines[0].len();
+        let rows = lines.len();
+        let cols = lines[0].len();
         let mut is_empty_row = vec![true; rows];
         let mut is_empty_col = vec![true; cols];
         let mut locations: Vec<Location> = Vec::new();
@@ -38,9 +34,6 @@ impl AoC2023_11 {
                 is_empty_row[row] = false;
             }
         }
-
-        rows += is_empty_row.len();
-        cols += is_empty_col.len();
 
         for (row, _) in is_empty_row
             .iter()
@@ -65,82 +58,23 @@ impl AoC2023_11 {
                 .filter(|elem| elem.1 > col)
                 .for_each(|elem| elem.1 += 1);
         }
-
-        let galaxy = HashMap::from_iter(
-            locations
-                .iter()
-                .enumerate()
-                .map(|(idx, value)| (*value, idx)),
-        );
-        Self {
-            locations,
-            galaxy,
-            rows,
-            cols,
-        }
+        Self { locations }
     }
 
-    fn path_len(
-        &self,
-        from: usize,
-        to: usize,
-        cache: &mut HashMap<(usize, usize), usize>,
-    ) -> usize {
-        let mut seen = HashSet::from([self.locations[from]]);
-        let mut steps = 0;
-        let mut current = HashSet::from([self.locations[from]]);
-        'bfs: while !current.is_empty() {
-            let mut next = HashSet::new();
-            for item in current {
-                if let Some(&idx) = self.galaxy.get(&item) {
-                    let start = from.min(idx);
-                    let end = from.max(idx);
-                    cache.insert((start, end), steps);
-                    if idx == to {
-                        break 'bfs;
-                    }
-                }
-                let mut adjacent = Vec::new();
-                let (row, col) = (item.0, item.1);
-                if row > 0 {
-                    adjacent.push((row - 1, col));
-                }
-                if row < self.rows - 1 {
-                    adjacent.push((row + 1, col));
-                }
-                if col > 0 {
-                    adjacent.push((row, col - 1));
-                }
-                if col < self.cols - 1 {
-                    adjacent.push((row, col + 1));
-                }
-                for point in adjacent {
-                    if seen.contains(&point) {
-                        continue;
-                    }
-                    seen.insert(item);
-                    next.insert(point);
-                }
-            }
-            steps += 1;
-            current = next;
-        }
-        steps
+    fn distance(&self, from: usize, to: usize) -> usize {
+        let (row_a, col_a) = self.locations[from];
+        let (row_b, col_b) = self.locations[to];
+        row_a.abs_diff(row_b) + col_a.abs_diff(col_b)
     }
 }
 
 impl Solution for AoC2023_11 {
     fn part_one(&self) -> String {
-        let len = self.locations.len();
         let mut sum = 0;
-        let mut cache: HashMap<(usize, usize), usize> = HashMap::new();
-        for from in 0..len - 1 {
-            for to in from + 1..len {
-                if let Some(cached) = cache.get(&(from, to)) {
-                    sum += cached;
-                } else {
-                    sum += self.path_len(from, to, &mut cache);
-                }
+        let count = self.locations.len();
+        for from in 0..count - 1 {
+            for to in from + 1..count {
+                sum += self.distance(from, to);
             }
         }
         sum.to_string()
@@ -161,8 +95,6 @@ mod test {
     #[test]
     fn aoc2023_11_input_load_test() -> io::Result<()> {
         let sol = AoC2023_11::new()?;
-        assert_ne!(sol.rows, 0);
-        assert_ne!(sol.cols, 0);
         assert!(!sol.locations.is_empty());
         Ok(())
     }
