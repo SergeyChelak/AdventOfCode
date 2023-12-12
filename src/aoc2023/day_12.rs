@@ -3,6 +3,7 @@ use crate::utils::*;
 
 use std::io;
 
+#[derive(Debug)]
 struct GroupInfo {
     pattern: String,
     damaged_lengths: Vec<usize>,
@@ -19,6 +20,12 @@ impl From<&str> for GroupInfo {
             pattern: pattern.to_string(),
             damaged_lengths,
         }
+    }
+}
+
+impl GroupInfo {
+    fn arrangements_count(&self) -> usize {
+        todo!()
     }
 }
 
@@ -42,8 +49,13 @@ impl AoC2023_12 {
 }
 
 impl Solution for AoC2023_12 {
-    // fn part_one(&self) -> String {
-    // }
+    fn part_one(&self) -> String {
+        self.input
+            .iter()
+            .map(|elem| elem.arrangements_count())
+            .sum::<usize>()
+            .to_string()
+    }
 
     // fn part_two(&self) -> String {
     // }
@@ -62,6 +74,37 @@ mod test {
         let sol = AoC2023_12::new()?;
         assert!(!sol.input.is_empty());
         Ok(())
+    }
+
+    #[test]
+    fn aoc2023_12_arrangements() {
+        [
+            ("???.### 1,1,3", 1),
+            (".??..??...?##. 1,1,3", 4),
+            ("?###???????? 3,2,1", 10),
+        ]
+        .iter()
+        .for_each(|(inp, expected)| {
+            let group = GroupInfo::from(*inp);
+            assert_eq!(group.arrangements_count(), *expected);
+        });
+    }
+
+    #[test]
+    fn aoc2023_12_ex1() {
+        let lines = [
+            "???.### 1,1,3",
+            ".??..??...?##. 1,1,3",
+            "?#?#?#?#?#?#?#? 1,3,1,6",
+            "????.#...#... 4,1,1",
+            "????.######..#####. 1,6,5",
+            "?###???????? 3,2,1",
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect::<Vec<_>>();
+        let puzzle = AoC2023_12::with_lines(&lines);
+        assert_eq!(puzzle.part_one(), "21");
     }
 
     #[test]
