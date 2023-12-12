@@ -1,7 +1,7 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::collections::{HashSet, VecDeque};
+use std::collections::VecDeque;
 use std::io;
 
 enum PatternMatch {
@@ -12,34 +12,32 @@ enum PatternMatch {
 
 #[derive(Debug)]
 struct GroupInfo {
-    spring: Vec<char>,
-    pattern: Vec<usize>,
+    pattern: Vec<char>,
+    sizes: Vec<usize>,
 }
 
 impl From<&str> for GroupInfo {
     fn from(value: &str) -> Self {
-        let (springs, pattern_str) = value.split_once(' ').expect("Separator not found");
-        let pattern = pattern_str
+        let (springs, sizes) = value.split_once(' ').expect("Separator not found");
+        let sizes = sizes
             .split(',')
             .map(|s| s.parse::<usize>().expect("Length should be integer"))
             .collect::<Vec<_>>();
         Self {
-            spring: springs.chars().collect(),
-            pattern,
+            pattern: springs.chars().collect(),
+            sizes,
         }
     }
 }
 
 impl GroupInfo {
     fn arrangements_count(&self) -> usize {
-        //let mut backtrack = HashSet::new();
         let mut count = 0;
-        let mut state = VecDeque::from([self.spring.clone()]);
+        let mut state = VecDeque::from([self.pattern.clone()]);
         while !state.is_empty() {
             let spring = state.pop_front().expect("state isn't expected to be empty");
             match self.matching(&spring) {
                 PatternMatch::Yes => {
-                    // backtrack.insert(spring);
                     count += 1;
                 }
                 PatternMatch::Possible => {
@@ -57,7 +55,6 @@ impl GroupInfo {
                 _ => {}
             }
         }
-        // backtrack.len()
         count
     }
 
@@ -87,13 +84,13 @@ impl GroupInfo {
             inp_pattern.push(acc);
         }
         let size = inp_pattern.len();
-        if is_completed && size != self.pattern.len() {
+        if is_completed && size != self.sizes.len() {
             return PatternMatch::No;
         }
-        if size > self.pattern.len() {
+        if size > self.sizes.len() {
             return PatternMatch::No;
         }
-        for (a, b) in self.pattern[0..size].iter().zip(inp_pattern.iter()) {
+        for (a, b) in self.sizes[0..size].iter().zip(inp_pattern.iter()) {
             if *a != *b {
                 return PatternMatch::No;
             }
@@ -106,16 +103,19 @@ impl GroupInfo {
     }
 
     fn unfolded(&self) -> Self {
-        let pattern = vec![self.pattern.clone(); 5]
+        let pattern = vec![self.sizes.clone(); 5]
             .iter()
             .flat_map(|x| x)
             .copied()
             .collect::<Vec<_>>();
 
         let sep = ['?'];
-        let spring = vec![self.spring.clone(); 5].join(&sep[..]);
+        let spring = vec![self.pattern.clone(); 5].join(&sep[..]);
 
-        Self { pattern, spring }
+        Self {
+            sizes: pattern,
+            pattern: spring,
+        }
     }
 }
 
