@@ -9,9 +9,12 @@ pub struct AoC2023_12 {
 
 impl AoC2023_12 {
     pub fn new() -> io::Result<Self> {
-        Ok(Self {
-            // initialize solution
-        })
+        let lines = read_file_as_lines("input/aoc2023_12")?;
+        Ok(Self::with_lines(&lines))
+    }
+
+    fn with_lines(lines: &[String]) -> Self {
+        todo!()
     }
 }
 
@@ -23,7 +26,7 @@ impl Solution for AoC2023_12 {
     // }
 
     fn description(&self) -> String {
-        "AoC 2023".to_string()
+        "AoC 2023/Day 12: Hot Springs".to_string()
     }
 }
 
