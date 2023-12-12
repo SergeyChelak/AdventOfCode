@@ -1,22 +1,15 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::collections::VecDeque;
 use std::io;
 
-enum PatternMatch {
-    Yes,
-    No,
-    Possible,
-}
-
 #[derive(Debug)]
-struct GroupInfo {
+struct SpringGroup {
     pattern: Vec<char>,
     sizes: Vec<usize>,
 }
 
-impl From<&str> for GroupInfo {
+impl From<&str> for SpringGroup {
     fn from(value: &str) -> Self {
         let (springs, sizes) = value.split_once(' ').expect("Separator not found");
         let sizes = sizes
@@ -30,97 +23,27 @@ impl From<&str> for GroupInfo {
     }
 }
 
-impl GroupInfo {
+impl SpringGroup {
     fn arrangements_count(&self) -> usize {
-        let mut count = 0;
-        let mut state = VecDeque::from([self.pattern.clone()]);
-        while !state.is_empty() {
-            let spring = state.pop_front().expect("state isn't expected to be empty");
-            match self.matching(&spring) {
-                PatternMatch::Yes => {
-                    count += 1;
-                }
-                PatternMatch::Possible => {
-                    let Some(idx) = spring.iter().position(|ch| *ch == '?') else {
-                        let s = String::from_iter(spring);
-                        println!(">>> {s}");
-                        panic!("'?' is expected");
-                    };
-                    let mut next = spring.clone();
-                    next[idx] = '.';
-                    state.push_back(next.clone());
-                    next[idx] = '#';
-                    state.push_back(next);
-                }
-                _ => {}
-            }
-        }
-        count
-    }
-
-    fn matching(&self, spring: &Vec<char>) -> PatternMatch {
-        let mut inp_pattern = Vec::new();
-        let mut acc = 0usize;
-        let mut is_completed = true;
-        for ch in spring {
-            match ch {
-                '?' => {
-                    is_completed = false;
-                    break;
-                }
-                '.' => {
-                    if acc > 0 {
-                        inp_pattern.push(acc);
-                    }
-                    acc = 0;
-                }
-                '#' => {
-                    acc += 1;
-                }
-                ch => panic!("Unexpected char {ch}"),
-            }
-        }
-        if is_completed && acc > 0 {
-            inp_pattern.push(acc);
-        }
-        let size = inp_pattern.len();
-        if is_completed && size != self.sizes.len() {
-            return PatternMatch::No;
-        }
-        if size > self.sizes.len() {
-            return PatternMatch::No;
-        }
-        for (a, b) in self.sizes[0..size].iter().zip(inp_pattern.iter()) {
-            if *a != *b {
-                return PatternMatch::No;
-            }
-        }
-        if is_completed {
-            PatternMatch::Yes
-        } else {
-            PatternMatch::Possible
-        }
+        todo!()
     }
 
     fn unfolded(&self) -> Self {
-        let pattern = vec![self.sizes.clone(); 5]
+        let sizes = vec![self.sizes.clone(); 5]
             .iter()
             .flat_map(|x| x)
             .copied()
             .collect::<Vec<_>>();
 
         let sep = ['?'];
-        let spring = vec![self.pattern.clone(); 5].join(&sep[..]);
+        let pattern = vec![self.pattern.clone(); 5].join(&sep[..]);
 
-        Self {
-            sizes: pattern,
-            pattern: spring,
-        }
+        Self { sizes, pattern }
     }
 }
 
 pub struct AoC2023_12 {
-    input: Vec<GroupInfo>,
+    input: Vec<SpringGroup>,
 }
 
 impl AoC2023_12 {
@@ -132,7 +55,7 @@ impl AoC2023_12 {
     fn with_lines(lines: &[String]) -> Self {
         let input = lines
             .iter()
-            .map(|s| GroupInfo::from(s.as_str()))
+            .map(|s| SpringGroup::from(s.as_str()))
             .collect::<Vec<_>>();
         Self { input }
     }
@@ -184,7 +107,7 @@ mod test {
         ]
         .iter()
         .for_each(|(inp, expected)| {
-            let group = GroupInfo::from(*inp);
+            let group = SpringGroup::from(*inp);
             assert_eq!(group.arrangements_count(), *expected);
         });
     }
@@ -212,12 +135,6 @@ mod test {
         .map(|s| s.to_string())
         .collect::<Vec<_>>();
         AoC2023_12::with_lines(&lines)
-    }
-
-    #[test]
-    fn aoc2023_12_unfold() {
-        // let item = GroupInfo::from(".# 1");
-        // let unfolded =
     }
 
     #[test]
