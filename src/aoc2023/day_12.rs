@@ -32,13 +32,15 @@ impl From<&str> for GroupInfo {
 
 impl GroupInfo {
     fn arrangements_count(&self) -> usize {
-        let mut backtrack = HashSet::new();
+        //let mut backtrack = HashSet::new();
+        let mut count = 0;
         let mut state = VecDeque::from([self.spring.clone()]);
         while !state.is_empty() {
             let spring = state.pop_front().expect("state isn't expected to be empty");
             match self.matching(&spring) {
                 PatternMatch::Yes => {
-                    backtrack.insert(spring);
+                    // backtrack.insert(spring);
+                    count += 1;
                 }
                 PatternMatch::Possible => {
                     let Some(idx) = spring.iter().position(|ch| *ch == '?') else {
@@ -55,7 +57,8 @@ impl GroupInfo {
                 _ => {}
             }
         }
-        backtrack.len()
+        // backtrack.len()
+        count
     }
 
     fn matching(&self, spring: &Vec<char>) -> PatternMatch {
@@ -101,6 +104,19 @@ impl GroupInfo {
             PatternMatch::Possible
         }
     }
+
+    fn unfolded(&self) -> Self {
+        let pattern = vec![self.pattern.clone(); 5]
+            .iter()
+            .flat_map(|x| x)
+            .copied()
+            .collect::<Vec<_>>();
+
+        let sep = ['?'];
+        let spring = vec![self.spring.clone(); 5].join(&sep[..]);
+
+        Self { pattern, spring }
+    }
 }
 
 pub struct AoC2023_12 {
@@ -131,8 +147,14 @@ impl Solution for AoC2023_12 {
             .to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        self.input
+            .iter()
+            .map(|elem| elem.unfolded())
+            .map(|elem| elem.arrangements_count())
+            .sum::<usize>()
+            .to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2023/Day 12: Hot Springs".to_string()
@@ -169,6 +191,15 @@ mod test {
 
     #[test]
     fn aoc2023_12_ex1() {
+        assert_eq!(puzzle().part_one(), "21");
+    }
+
+    #[test]
+    fn aoc2023_12_ex2() {
+        assert_eq!(puzzle().part_two(), "525152");
+    }
+
+    fn puzzle() -> AoC2023_12 {
         let lines = [
             "???.### 1,1,3",
             ".??..??...?##. 1,1,3",
@@ -180,8 +211,13 @@ mod test {
         .iter()
         .map(|s| s.to_string())
         .collect::<Vec<_>>();
-        let puzzle = AoC2023_12::with_lines(&lines);
-        assert_eq!(puzzle.part_one(), "21");
+        AoC2023_12::with_lines(&lines)
+    }
+
+    #[test]
+    fn aoc2023_12_unfold() {
+        // let item = GroupInfo::from(".# 1");
+        // let unfolded =
     }
 
     #[test]
