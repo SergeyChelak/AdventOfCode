@@ -1,6 +1,7 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
+use std::collections::HashMap;
 use std::io;
 
 #[derive(Debug)]
@@ -24,14 +25,52 @@ impl From<&str> for SpringGroup {
 }
 
 impl SpringGroup {
+    // Original solution is here:
+    // https://github.com/hyper-neutrino/advent-of-code/blob/main/2023/day12p2.py
     fn arrangements_count(&self) -> usize {
-        todo!()
+        fn count<'a>(
+            pattern: &'a [char],
+            sizes: &'a [usize],
+            memo: &mut HashMap<(&'a [char], &'a [usize]), usize>,
+        ) -> usize {
+            if pattern.is_empty() {
+                return if sizes.is_empty() { 1 } else { 0 };
+            }
+            if sizes.is_empty() {
+                return if pattern.contains(&'#') { 0 } else { 1 };
+            }
+            let key = (pattern, sizes);
+            if let Some(val) = memo.get(&key) {
+                return *val;
+            }
+            let mut result = 0usize;
+            if matches!(pattern[0], '.' | '?') {
+                result += count(&pattern[1..], sizes, memo);
+            }
+            if matches!(pattern[0], '#' | '?')
+                && sizes[0] <= pattern.len()
+                && !pattern[..sizes[0]].contains(&'.')
+                && (sizes[0] == pattern.len() || pattern[sizes[0]] != '#')
+            {
+                let next = if sizes[0] + 1 < pattern.len() {
+                    &pattern[sizes[0] + 1..]
+                } else {
+                    &[]
+                };
+                result += count(next, &sizes[1..], memo)
+            }
+            memo.insert(key, result);
+            result
+        }
+
+        count(&self.pattern, &self.sizes, &mut HashMap::new())
     }
 
+    #[allow(clippy::useless_vec)]
     fn unfolded(&self) -> Self {
         let sizes = vec![self.sizes.clone(); 5]
             .iter()
-            .flat_map(|x| x)
+            .flatten()
             .copied()
             .collect::<Vec<_>>();
 
@@ -141,7 +180,7 @@ mod test {
     fn aoc2023_12_correctness() -> io::Result<()> {
         let sol = AoC2023_12::new()?;
         assert_eq!(sol.part_one(), "7361");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "83317216247365");
         Ok(())
     }
 }
