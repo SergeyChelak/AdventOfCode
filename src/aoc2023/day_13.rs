@@ -20,10 +20,8 @@ impl AoC2023_13 {
             .collect::<Vec<_>>();
         Self { blocks }
     }
-}
 
-impl Solution for AoC2023_13 {
-    fn part_one(&self) -> String {
+    fn calculate(&self, reflection_line: &dyn Fn(&[Vec<char>]) -> usize) -> usize {
         let mut total_above = 0usize;
         let mut total_left = 0usize;
         for block in &self.blocks {
@@ -32,21 +30,28 @@ impl Solution for AoC2023_13 {
                 .iter()
                 .map(|s| s.chars().collect::<Vec<_>>())
                 .collect::<Vec<_>>();
-            total_above += block_reflection_line(&chars);
-            total_left += block_reflection_line(&transpose(&chars));
+            total_above += reflection_line(&chars);
+            total_left += reflection_line(&transpose(&chars));
         }
-        (total_left + 100 * total_above).to_string()
+        total_left + 100 * total_above
+    }
+}
+
+impl Solution for AoC2023_13 {
+    fn part_one(&self) -> String {
+        self.calculate(&mirror_reflection_line).to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        self.calculate(&smudge_reflection_line).to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2023/Day 13: Point of Incidence".to_string()
     }
 }
 
-fn block_reflection_line(block: &[Vec<char>]) -> usize {
+fn mirror_reflection_line(block: &[Vec<char>]) -> usize {
     for i in 1..block.len() {
         let above = block[..i].iter().rev().cloned().collect::<Vec<_>>();
         let below = &block[i..];
@@ -54,6 +59,29 @@ fn block_reflection_line(block: &[Vec<char>]) -> usize {
         let above = &above[..len];
         let below = &below[..len];
         if above == below {
+            return i;
+        }
+    }
+    0
+}
+
+fn smudge_reflection_line(block: &[Vec<char>]) -> usize {
+    for i in 1..block.len() {
+        let above = block[..i].iter().rev().cloned().collect::<Vec<_>>();
+        let below = &block[i..];
+
+        let sum = above
+            .iter()
+            .zip(below.iter())
+            .map(|(vec_a, vec_b)| {
+                vec_a
+                    .iter()
+                    .zip(vec_b.iter())
+                    .filter(|(a, b)| **a != **b)
+                    .count()
+            })
+            .sum::<usize>();
+        if sum == 1 {
             return i;
         }
     }
@@ -110,8 +138,8 @@ mod test {
     #[test]
     fn aoc2023_13_correctness() -> io::Result<()> {
         let sol = AoC2023_13::new()?;
-        assert_eq!(sol.part_one(), "");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_one(), "34772");
+        assert_eq!(sol.part_two(), "35554");
         Ok(())
     }
 }
