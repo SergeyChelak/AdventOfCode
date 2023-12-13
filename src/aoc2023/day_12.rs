@@ -27,6 +27,7 @@ impl From<&str> for SpringGroup {
 impl SpringGroup {
     // Original solution is here:
     // https://github.com/hyper-neutrino/advent-of-code/blob/main/2023/day12p2.py
+    // It's a dynamic programming method. Rewrite with tabulation approach
     fn arrangements_count(&self) -> usize {
         fn count<'a>(
             pattern: &'a [char],
