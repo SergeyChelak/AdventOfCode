@@ -88,6 +88,7 @@ fn smudge_reflection_line(block: &[Vec<char>]) -> usize {
     0
 }
 
+#[allow(clippy::needless_range_loop)]
 fn transpose(inp: &[Vec<char>]) -> Vec<Vec<char>> {
     let inp_rows = inp.len();
     let inp_cols = inp[0].len();

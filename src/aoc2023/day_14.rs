@@ -120,6 +120,7 @@ fn _dump(input: &[Vec<char>]) {
     }
 }
 
+#[allow(clippy::needless_range_loop)]
 fn total_load(input: &[Vec<char>]) -> usize {
     let mut total = 0;
     for col in 0..input[0].len() {
