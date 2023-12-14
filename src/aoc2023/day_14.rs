@@ -1,7 +1,16 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
+use std::collections::HashMap;
 use std::io;
+
+#[derive(Copy, Clone, PartialEq, Eq)]
+enum Direction {
+    North,
+    South,
+    West,
+    East,
+}
 
 pub struct AoC2023_14 {
     input: Vec<Vec<char>>,
@@ -24,39 +33,102 @@ impl AoC2023_14 {
 
 impl Solution for AoC2023_14 {
     fn part_one(&self) -> String {
-        let map = slide_north(&self.input);
-        total_load(&map).to_string()
+        let mut platform = self.input.clone();
+        slide(Direction::North, &mut platform);
+        total_load(&platform).to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let cycles = 1000000000_usize;
+        let mut platform = self.input.clone();
+        let mut load = Vec::new();
+        let mut map = HashMap::new();
+        for i in 0..cycles {
+            // north, then west, then south, then east
+            slide(Direction::North, &mut platform);
+            slide(Direction::West, &mut platform);
+            slide(Direction::South, &mut platform);
+            slide(Direction::East, &mut platform);
+            if let Some(from) = map.get(&platform) {
+                let in_loop: &[usize] = &load[*from..];
+                return in_loop[(cycles - i - 1) % in_loop.len()].to_string();
+            }
+            load.push(total_load(&platform));
+            map.insert(platform.clone(), i);
+        }
+
+        "Age later...".to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2023/Day 14: Parabolic Reflector Dish".to_string()
     }
 }
 
-fn slide_north(input: &Vec<Vec<char>>) -> Vec<Vec<char>> {
-    let mut result = input.clone();
-    for row in 1..input.len() {
-        for col in 0..input[row].len() {
-            if result[row][col] != 'O' {
+fn slide(direction: Direction, platform: &mut Vec<Vec<char>>) {
+    let rows = platform.len();
+    for row in 0..rows {
+        let cols = platform[row].len();
+        for col in 0..cols {
+            // remap current row, cols
+            let cur_row = if direction == Direction::South {
+                rows - row - 1
+            } else {
+                row
+            };
+
+            let cur_col = if direction == Direction::East {
+                cols - col - 1
+            } else {
+                col
+            };
+
+            if platform[cur_row][cur_col] != 'O' {
                 continue;
             }
-            let mut lift = 0;
-            for k in 1..=row {
-                if result[row - k][col] != '.' {
+            let mut r = cur_row;
+            let mut c = cur_col;
+            loop {
+                let prev_r = r;
+                let prev_c = c;
+                match direction {
+                    Direction::North => {
+                        if r > 0 {
+                            r -= 1;
+                        } else {
+                            break;
+                        }
+                    }
+                    Direction::South => {
+                        if r < rows - 1 {
+                            r += 1;
+                        } else {
+                            break;
+                        }
+                    }
+                    Direction::West => {
+                        if c > 0 {
+                            c -= 1;
+                        } else {
+                            break;
+                        }
+                    }
+                    Direction::East => {
+                        if c < cols - 1 {
+                            c += 1;
+                        } else {
+                            break;
+                        }
+                    }
+                }
+                if platform[r][c] != '.' {
                     break;
                 }
-                lift = k;
-            }
-            if lift > 0 {
-                result[row - lift][col] = 'O';
-                result[row][col] = '.'
+                platform[prev_r][prev_c] = '.';
+                platform[r][c] = 'O';
             }
         }
     }
-    result
 }
 
 fn _dump(input: &[Vec<char>]) {
@@ -94,6 +166,15 @@ mod test {
 
     #[test]
     fn aoc2023_14_ex1() {
+        assert_eq!(puzzle().part_one(), "136");
+    }
+
+    #[test]
+    fn aoc2023_14_ex2() {
+        assert_eq!(puzzle().part_two(), "64");
+    }
+
+    fn puzzle() -> AoC2023_14 {
         let input = [
             "O....#....",
             "O.OO#....#",
@@ -109,15 +190,14 @@ mod test {
         .iter()
         .map(|s| s.to_string())
         .collect::<Vec<_>>();
-        let puzzle = AoC2023_14::with_lines(&input);
-        assert_eq!(puzzle.part_one(), "136");
+        AoC2023_14::with_lines(&input)
     }
 
     #[test]
     fn aoc2023_14_correctness() -> io::Result<()> {
         let sol = AoC2023_14::new()?;
         assert_eq!(sol.part_one(), "109385");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "93102");
         Ok(())
     }
 }
