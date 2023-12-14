@@ -70,56 +70,36 @@ fn slide(direction: Direction, platform: &mut Vec<Vec<char>>) {
     for row in 0..rows {
         let cols = platform[row].len();
         for col in 0..cols {
+            let mut r = row;
+            let mut c = col;
             // remap current row, cols
-            let cur_row = if direction == Direction::South {
-                rows - row - 1
-            } else {
-                row
+            if direction == Direction::South {
+                r = rows - row - 1
             };
-
-            let cur_col = if direction == Direction::East {
-                cols - col - 1
-            } else {
-                col
-            };
-
-            if platform[cur_row][cur_col] != 'O' {
+            if direction == Direction::East {
+                c = cols - col - 1
+            }
+            if platform[r][c] != 'O' {
                 continue;
             }
-            let mut r = cur_row;
-            let mut c = cur_col;
+
             loop {
                 let prev_r = r;
                 let prev_c = c;
                 match direction {
-                    Direction::North => {
-                        if r > 0 {
-                            r -= 1;
-                        } else {
-                            break;
-                        }
+                    Direction::North if r > 0 => {
+                        r -= 1;
                     }
-                    Direction::South => {
-                        if r < rows - 1 {
-                            r += 1;
-                        } else {
-                            break;
-                        }
+                    Direction::South if r < rows - 1 => {
+                        r += 1;
                     }
-                    Direction::West => {
-                        if c > 0 {
-                            c -= 1;
-                        } else {
-                            break;
-                        }
+                    Direction::West if c > 0 => {
+                        c -= 1;
                     }
-                    Direction::East => {
-                        if c < cols - 1 {
-                            c += 1;
-                        } else {
-                            break;
-                        }
+                    Direction::East if c < cols - 1 => {
+                        c += 1;
                     }
+                    _ => {}
                 }
                 if platform[r][c] != '.' {
                     break;
