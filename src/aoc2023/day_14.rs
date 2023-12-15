@@ -111,15 +111,6 @@ fn slide(direction: Direction, platform: &mut Vec<Vec<char>>) {
     }
 }
 
-fn _dump(input: &[Vec<char>]) {
-    for row in input {
-        for ch in row {
-            print!("{ch}");
-        }
-        println!();
-    }
-}
-
 #[allow(clippy::needless_range_loop)]
 fn total_load(input: &[Vec<char>]) -> usize {
     let mut total = 0;
