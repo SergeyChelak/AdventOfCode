@@ -97,7 +97,7 @@ impl AoC2018_17 {
         self.clay.iter().map(|coord| (*coord, Scan::Clay)).collect()
     }
 
-    fn fill(&self) -> GroundMap {
+    fn fill(&self) -> (usize, usize) {
         let mut map = self.make_map();
         let mut flow = Vec::from([Self::start_coord()]);
         while !flow.is_empty() {
@@ -138,27 +138,25 @@ impl AoC2018_17 {
                 }
             }
         }
-        map
+        map.iter()
+            .filter(|(coord, _)| coord.y >= self.min_y && coord.y <= self.max_y)
+            .fold((0, 0), |acc, val| match val.1 {
+                Scan::FlowingWater => (acc.0 + 1, acc.1),
+                Scan::StillWater => (acc.0, acc.1 + 1),
+                _ => acc,
+            })
     }
 }
 
 impl Solution for AoC2018_17 {
     fn part_one(&self) -> String {
-        self.fill()
-            .iter()
-            .filter(|(_, value)| matches!(*value, Scan::FlowingWater | Scan::StillWater))
-            .filter(|(coord, _)| coord.y >= self.min_y && coord.y <= self.max_y)
-            .count()
-            .to_string()
+        let (flowing, still) = self.fill();
+        (flowing + still).to_string()
     }
 
     fn part_two(&self) -> String {
-        self.fill()
-            .iter()
-            .filter(|(_, value)| matches!(*value, Scan::StillWater))
-            .filter(|(coord, _)| coord.y >= self.min_y && coord.y <= self.max_y)
-            .count()
-            .to_string()
+        let (_, still) = self.fill();
+        still.to_string()
     }
 
     fn description(&self) -> String {
