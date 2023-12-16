@@ -2,7 +2,6 @@ use crate::solution::Solution;
 use crate::utils::*;
 
 use std::collections::{HashSet, VecDeque};
-use std::fmt::Display;
 use std::io;
 
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
@@ -11,17 +10,6 @@ enum Direction {
     Down,
     Left,
     Right,
-}
-
-impl Display for Direction {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Direction::Down => write!(f, "Down"),
-            Direction::Up => write!(f, "Up"),
-            Direction::Left => write!(f, "Left"),
-            Direction::Right => write!(f, "Right"),
-        }
-    }
 }
 
 impl Direction {
@@ -54,21 +42,6 @@ struct Location {
 struct Beam {
     dir: Direction,
     loc: Location,
-}
-
-impl Default for Beam {
-    fn default() -> Self {
-        Self {
-            dir: Direction::Right,
-            loc: Location { row: 0, col: 0 },
-        }
-    }
-}
-
-impl Display for Beam {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} @ r:{} c:{}", self.dir, self.loc.row, self.loc.col)
-    }
 }
 
 pub struct AoC2023_16 {
@@ -118,18 +91,14 @@ impl AoC2023_16 {
         }
         res
     }
-}
 
-impl Solution for AoC2023_16 {
-    fn part_one(&self) -> String {
-        let start = Beam::default();
+    fn energized(&self, start: Beam) -> usize {
         let mut energized = HashSet::from([start]);
         let mut beams = VecDeque::from([start]);
         while !beams.is_empty() {
             let beam = beams
                 .pop_front()
                 .expect("Beams must contain 1 item at least");
-            // println!("Beam = {beam}");
             for next in self.next(&beam) {
                 if energized.contains(&next) {
                     continue;
@@ -143,11 +112,59 @@ impl Solution for AoC2023_16 {
             .map(|beam| beam.loc)
             .collect::<HashSet<_>>()
             .len()
-            .to_string()
+    }
+}
+
+impl Solution for AoC2023_16 {
+    fn part_one(&self) -> String {
+        let start = Beam {
+            dir: Direction::Right,
+            loc: Location { row: 0, col: 0 },
+        };
+        self.energized(start).to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut directions = Vec::new();
+        for row in 0..self.contraption.len() {
+            let right = Beam {
+                dir: Direction::Right,
+                loc: Location { row, col: 0 },
+            };
+
+            let left = Beam {
+                dir: Direction::Left,
+                loc: Location {
+                    row,
+                    col: self.contraption[row].len() - 1,
+                },
+            };
+            directions.push(left);
+            directions.push(right);
+        }
+        for col in 0..self.contraption[0].len() {
+            let down = Beam {
+                dir: Direction::Down,
+                loc: Location { row: 0, col },
+            };
+
+            let up = Beam {
+                dir: Direction::Left,
+                loc: Location {
+                    row: self.contraption.len() - 1,
+                    col,
+                },
+            };
+            directions.push(up);
+            directions.push(down);
+        }
+        directions
+            .iter()
+            .map(|beam| self.energized(*beam))
+            .max()
+            .expect("Expected at least 1 energized configuration")
+            .to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2023/Day 16: The Floor Will Be Lava".to_string()
@@ -167,6 +184,15 @@ mod test {
 
     #[test]
     fn aoc2023_16_ex1() {
+        assert_eq!(puzzle().part_one(), "46")
+    }
+
+    #[test]
+    fn aoc2023_16_ex2() {
+        assert_eq!(puzzle().part_two(), "51")
+    }
+
+    fn puzzle() -> AoC2023_16 {
         let lines = [
             r#".|...\...."#,
             r#"|.-.\....."#,
@@ -182,15 +208,14 @@ mod test {
         .iter()
         .map(|s| s.to_string())
         .collect::<Vec<_>>();
-        let puzzle = AoC2023_16::with_lines(&lines);
-        assert_eq!(puzzle.part_one(), "46")
+        AoC2023_16::with_lines(&lines)
     }
 
     #[test]
     fn aoc2023_16_correctness() -> io::Result<()> {
         let sol = AoC2023_16::new()?;
         assert_eq!(sol.part_one(), "7307");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "7635");
         Ok(())
     }
 }
