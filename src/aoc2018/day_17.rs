@@ -135,15 +135,12 @@ impl AoC2018_17 {
             println!();
         }
     }
-}
 
-impl Solution for AoC2018_17 {
-    fn part_one(&self) -> String {
+    fn fill(&self) -> GroundMap {
         let mut map = self.make_map();
         let mut flow = Vec::from([Self::start_coord()]);
         while !flow.is_empty() {
             let position = *flow.last().expect("Unreachable (1)");
-            // println!(">> {}, {}", position.x, position.y);
             if position.y > self.max_y {
                 _ = flow.pop();
                 continue;
@@ -180,15 +177,29 @@ impl Solution for AoC2018_17 {
                     }
                 }
             }
-            // self.dump(&map);
-            // println!();
         }
-        self.dump(&map);
-        self.reached(&map).to_string()
+        map
+    }
+}
+
+impl Solution for AoC2018_17 {
+    fn part_one(&self) -> String {
+        self.fill()
+            .iter()
+            .filter(|(_, value)| matches!(*value, Scan::FlowingWater | Scan::StillWater))
+            .filter(|(coord, _)| coord.y >= self.min_y && coord.y <= self.max_y)
+            .count()
+            .to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        self.fill()
+            .iter()
+            .filter(|(_, value)| matches!(*value, Scan::StillWater))
+            .filter(|(coord, _)| coord.y >= self.min_y && coord.y <= self.max_y)
+            .count()
+            .to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2018/Day 17: Reservoir Research".to_string()
