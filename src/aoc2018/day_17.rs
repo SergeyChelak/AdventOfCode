@@ -56,8 +56,6 @@ type GroundMap = HashMap<Coordinate, Scan>;
 
 pub struct AoC2018_17 {
     clay: HashSet<Coordinate>,
-    max_x: Int,
-    min_x: Int,
     min_y: Int,
     max_y: Int,
 }
@@ -72,8 +70,6 @@ impl AoC2018_17 {
         let mut clay = HashSet::new();
         let mut max_y: Int = 0;
         let mut min_y: Int = Int::MAX;
-        let mut max_x: Int = 0;
-        let mut min_x: Int = Int::MAX;
         for line in lines {
             let (part1, part2) = line.split_once(", ").expect("Invalid input string");
             let (axe, val_1) = part1.split_once('=').expect("The '=' is expected (1)");
@@ -88,17 +84,9 @@ impl AoC2018_17 {
                 clay.insert(coord);
                 min_y = min_y.min(y);
                 max_y = max_y.max(y);
-                max_x = max_x.max(x);
-                min_x = min_x.min(x);
             }
         }
-        Self {
-            clay,
-            min_x,
-            max_x,
-            min_y,
-            max_y,
-        }
+        Self { clay, min_y, max_y }
     }
 
     fn start_coord() -> Coordinate {
@@ -107,33 +95,6 @@ impl AoC2018_17 {
 
     fn make_map(&self) -> GroundMap {
         self.clay.iter().map(|coord| (*coord, Scan::Clay)).collect()
-    }
-
-    fn reached(&self, map: &GroundMap) -> usize {
-        map.iter()
-            .filter(|(_, value)| matches!(*value, Scan::FlowingWater | Scan::StillWater))
-            .filter(|(coord, _)| coord.y >= self.min_y && coord.y <= self.max_y)
-            .count()
-    }
-
-    fn dump(&self, map: &GroundMap) {
-        for y in self.min_y..=self.max_y {
-            for x in self.min_x - 1..=self.max_x + 1 {
-                let coord = Coordinate { x, y };
-                let ch = if let Some(scan) = map.get(&coord) {
-                    match scan {
-                        Scan::Clay => '#',
-                        Scan::FlowingWater => '|',
-                        Scan::StillWater => '~',
-                        Scan::Sand => '.',
-                    }
-                } else {
-                    '.'
-                };
-                print!("{ch}")
-            }
-            println!();
-        }
     }
 
     fn fill(&self) -> GroundMap {
@@ -223,7 +184,7 @@ fn horizontal_flow(
         };
         let down = next.down();
         let scan = map.get(&down).unwrap_or(&Scan::Sand);
-        let can_flow_down = matches!(scan, Scan::Sand | Scan::FlowingWater); // ???
+        let can_flow_down = matches!(scan, Scan::Sand | Scan::FlowingWater);
 
         if can_flow_down {
             tiles.push(down);
@@ -272,7 +233,7 @@ mod test {
     fn aoc2018_17_correctness() -> io::Result<()> {
         let sol = AoC2018_17::new()?;
         assert_eq!(sol.part_one(), "27331");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "22245");
         Ok(())
     }
 }
