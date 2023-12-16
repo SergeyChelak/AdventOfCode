@@ -58,6 +58,7 @@ pub struct AoC2018_17 {
     clay: HashSet<Coordinate>,
     max_x: Int,
     min_x: Int,
+    min_y: Int,
     max_y: Int,
 }
 
@@ -70,6 +71,7 @@ impl AoC2018_17 {
     fn with_lines(lines: &[String]) -> Self {
         let mut clay = HashSet::new();
         let mut max_y: Int = 0;
+        let mut min_y: Int = Int::MAX;
         let mut max_x: Int = 0;
         let mut min_x: Int = Int::MAX;
         for line in lines {
@@ -84,6 +86,7 @@ impl AoC2018_17 {
                 let (x, y) = if axe == "x" { (val, i) } else { (i, val) };
                 let coord = Coordinate { x, y };
                 clay.insert(coord);
+                min_y = min_y.min(y);
                 max_y = max_y.max(y);
                 max_x = max_x.max(x);
                 min_x = min_x.min(x);
@@ -93,6 +96,7 @@ impl AoC2018_17 {
             clay,
             min_x,
             max_x,
+            min_y,
             max_y,
         }
     }
@@ -108,12 +112,12 @@ impl AoC2018_17 {
     fn reached(&self, map: &GroundMap) -> usize {
         map.iter()
             .filter(|(_, value)| matches!(*value, Scan::FlowingWater | Scan::StillWater))
-            .filter(|(coord, _)| coord.y > 0 && coord.y <= self.max_y)
+            .filter(|(coord, _)| coord.y >= self.min_y && coord.y <= self.max_y)
             .count()
     }
 
     fn dump(&self, map: &GroundMap) {
-        for y in 1..=self.max_y {
+        for y in self.min_y..=self.max_y {
             for x in self.min_x - 1..=self.max_x + 1 {
                 let coord = Coordinate { x, y };
                 let ch = if let Some(scan) = map.get(&coord) {
@@ -256,7 +260,7 @@ mod test {
     #[test]
     fn aoc2018_17_correctness() -> io::Result<()> {
         let sol = AoC2018_17::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "27331");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
