@@ -44,7 +44,7 @@ impl Coordinate {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
 enum Scan {
     Clay,
     StillWater,
@@ -116,19 +116,18 @@ impl AoC2018_17 {
                     _ = flow.pop();
                 }
                 _ => {
-                    let (left_tiles, left_flow) =
+                    _ = flow.pop();
+                    let (left_tiles, left_flowing) =
                         horizontal_flow(position, HorizontalDirection::Left, &map);
-                    let (right_tiles, right_flow) =
+                    let (right_tiles, right_flowing) =
                         horizontal_flow(position, HorizontalDirection::Right, &map);
                     let merged = [left_tiles, right_tiles].concat();
-                    if left_flow.is_none() && right_flow.is_none() {
-                        _ = flow.pop();
+                    if !left_flowing && !right_flowing {
                         map.insert(position, Scan::StillWater);
                         merged.iter().for_each(|coord| {
                             map.insert(*coord, Scan::StillWater);
                         })
                     } else {
-                        _ = flow.pop();
                         merged.iter().for_each(|coord| {
                             if map.get(coord).is_none() && !flow.contains(coord) {
                                 flow.push(*coord);
@@ -171,7 +170,7 @@ fn horizontal_flow(
     position: Coordinate,
     direction: HorizontalDirection,
     map: &GroundMap,
-) -> (Vec<Coordinate>, Option<Coordinate>) {
+) -> (Vec<Coordinate>, bool) {
     let mut cur = position;
     let mut tiles = Vec::new();
     loop {
@@ -182,17 +181,12 @@ fn horizontal_flow(
         } else {
             tiles.push(next);
         };
-        let down = next.down();
-        let scan = map.get(&down).unwrap_or(&Scan::Sand);
-        let can_flow_down = matches!(scan, Scan::Sand | Scan::FlowingWater);
-
-        if can_flow_down {
-            tiles.push(down);
-            return (tiles, Some(down));
+        let scan = map.get(&next.down()).unwrap_or(&Scan::Sand);
+        if matches!(scan, Scan::Sand | Scan::FlowingWater) {
+            return (tiles, true);
         }
-
         if is_clay {
-            return (tiles, None);
+            return (tiles, false);
         }
         cur = next;
     }
