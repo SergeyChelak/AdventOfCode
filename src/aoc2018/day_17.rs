@@ -106,25 +106,15 @@ impl AoC2018_17 {
     }
 
     fn reached(&self, map: &GroundMap) -> usize {
-        let mut total = 0;
-        for x in self.min_x..=self.max_x {
-            for y in 1..=self.max_y {
-                let coord = Coordinate { x, y };
-                let Some(scan) = map.get(&coord) else {
-                    continue;
-                };
-                total += match scan {
-                    Scan::FlowingWater | Scan::StillWater => 1,
-                    _ => 0,
-                }
-            }
-        }
-        total
+        map.iter()
+            .filter(|(_, value)| matches!(*value, Scan::FlowingWater | Scan::StillWater))
+            .filter(|(coord, _)| coord.y > 0 && coord.y <= self.max_y)
+            .count()
     }
 
     fn dump(&self, map: &GroundMap) {
-        for y in 0..=self.max_y {
-            for x in self.min_x..=self.max_x {
+        for y in 1..=self.max_y {
+            for x in self.min_x - 1..=self.max_x + 1 {
                 let coord = Coordinate { x, y };
                 let ch = if let Some(scan) = map.get(&coord) {
                     match scan {
@@ -164,36 +154,25 @@ impl Solution for AoC2018_17 {
                     _ = flow.pop();
                 }
                 _ => {
-                    let mut edges = 0;
-                    let mut new_flows = 0;
-                    for dir in [HorizontalDirection::Left, HorizontalDirection::Right] {
-                        let result = horizontal_flow(position, dir, &map);
-                        match result {
-                            FlowResult::FlowWater(tiles) => {
-                                tiles.iter().for_each(|t| {
-                                    map.insert(*t, Scan::FlowingWater);
-                                    if !flow.contains(t) {
-                                        new_flows += 1;
-                                        flow.push(*t);
-                                    }
-                                });
-                            }
-                            FlowResult::StillWater(tiles) => {
-                                edges += 1;
-                                tiles.iter().for_each(|t| {
-                                    map.insert(*t, Scan::StillWater);
-                                    // if let Some(idx) = flow.iter().position(|x| *x == *t) {
-                                    //     flow.remove(idx);
-                                    // }
-                                });
-                            }
-                        }
-                    }
-                    if edges == 2 {
+                    let (left_tiles, left_flow) =
+                        horizontal_flow(position, HorizontalDirection::Left, &map);
+                    let (right_tiles, right_flow) =
+                        horizontal_flow(position, HorizontalDirection::Right, &map);
+                    let merged = [left_tiles, right_tiles].concat();
+                    if left_flow.is_none() && right_flow.is_none() {
+                        _ = flow.pop();
                         map.insert(position, Scan::StillWater);
+                        merged.iter().for_each(|coord| {
+                            map.insert(*coord, Scan::StillWater);
+                        })
+                    } else {
                         _ = flow.pop();
-                    } else if new_flows == 0 {
-                        _ = flow.pop();
+                        merged.iter().for_each(|coord| {
+                            if map.get(coord).is_none() && !flow.contains(coord) {
+                                flow.push(*coord);
+                            }
+                            map.insert(*coord, Scan::FlowingWater);
+                        });
                     }
                 }
             }
@@ -201,7 +180,6 @@ impl Solution for AoC2018_17 {
             // println!();
         }
         self.dump(&map);
-
         self.reached(&map).to_string()
     }
 
@@ -213,48 +191,32 @@ impl Solution for AoC2018_17 {
     }
 }
 
-enum FlowResult {
-    StillWater(Vec<Coordinate>),
-    FlowWater(Vec<Coordinate>),
-}
-
 fn horizontal_flow(
     position: Coordinate,
     direction: HorizontalDirection,
     map: &GroundMap,
-) -> FlowResult {
+) -> (Vec<Coordinate>, Option<Coordinate>) {
     let mut cur = position;
     let mut tiles = Vec::new();
     loop {
         let next = cur.horizontal_move(direction);
-        let scan = map.get(&next).unwrap_or(&Scan::Sand);
         let mut is_clay = false;
-        match scan {
-            Scan::StillWater => {
-                return FlowResult::StillWater(tiles);
-            }
-            Scan::FlowingWater => {
-                return FlowResult::FlowWater(tiles);
-            }
-            Scan::Clay => {
-                is_clay = true;
-            }
-            _ => {
-                tiles.push(next);
-            }
-        }
-        // can move down?
+        if let Some(Scan::Clay) = map.get(&next) {
+            is_clay = true;
+        } else {
+            tiles.push(next);
+        };
         let down = next.down();
         let scan = map.get(&down).unwrap_or(&Scan::Sand);
-        let can_flow_down = matches!(scan, Scan::Sand | Scan::FlowingWater);
+        let can_flow_down = matches!(scan, Scan::Sand | Scan::FlowingWater); // ???
 
         if can_flow_down {
             tiles.push(down);
-            return FlowResult::FlowWater(tiles);
+            return (tiles, Some(down));
         }
 
         if is_clay {
-            return FlowResult::StillWater(tiles);
+            return (tiles, None);
         }
         cur = next;
     }
