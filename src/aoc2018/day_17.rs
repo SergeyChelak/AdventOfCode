@@ -1,12 +1,18 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::collections::{HashSet, VecDeque};
+use std::collections::{HashMap, HashSet};
 use std::io;
 
 type Int = i32;
 
 type Coordinate = Point2d<Int>;
+
+#[derive(Clone, Copy)]
+enum HorizontalDirection {
+    Left,
+    Right,
+}
 
 impl Coordinate {
     fn left(&self) -> Self {
@@ -29,10 +35,27 @@ impl Coordinate {
             ..*self
         }
     }
+
+    fn horizontal_move(&self, dir: HorizontalDirection) -> Self {
+        match dir {
+            HorizontalDirection::Left => self.left(),
+            HorizontalDirection::Right => self.right(),
+        }
+    }
 }
 
+#[derive(Debug, Clone, Copy)]
+enum Scan {
+    Clay,
+    StillWater,
+    FlowingWater,
+    Sand,
+}
+
+type GroundMap = HashMap<Coordinate, Scan>;
+
 pub struct AoC2018_17 {
-    map: HashSet<Coordinate>,
+    clay: HashSet<Coordinate>,
     max_x: Int,
     min_x: Int,
     max_y: Int,
@@ -45,7 +68,7 @@ impl AoC2018_17 {
     }
 
     fn with_lines(lines: &[String]) -> Self {
-        let mut map = HashSet::new();
+        let mut clay = HashSet::new();
         let mut max_y: Int = 0;
         let mut max_x: Int = 0;
         let mut min_x: Int = Int::MAX;
@@ -60,14 +83,14 @@ impl AoC2018_17 {
             for i in start..=end {
                 let (x, y) = if axe == "x" { (val, i) } else { (i, val) };
                 let coord = Coordinate { x, y };
-                map.insert(coord);
+                clay.insert(coord);
                 max_y = max_y.max(y);
                 max_x = max_x.max(x);
                 min_x = min_x.min(x);
             }
         }
         Self {
-            map,
+            clay,
             min_x,
             max_x,
             max_y,
@@ -78,17 +101,42 @@ impl AoC2018_17 {
         Coordinate { x: 500, y: 0 }
     }
 
-    fn dump(&self, seen: &HashSet<Coordinate>) {
+    fn make_map(&self) -> GroundMap {
+        self.clay.iter().map(|coord| (*coord, Scan::Clay)).collect()
+    }
+
+    fn reached(&self, map: &GroundMap) -> usize {
+        let mut total = 0;
+        for x in self.min_x..=self.max_x {
+            for y in 1..=self.max_y {
+                let coord = Coordinate { x, y };
+                let Some(scan) = map.get(&coord) else {
+                    continue;
+                };
+                total += match scan {
+                    Scan::FlowingWater | Scan::StillWater => 1,
+                    _ => 0,
+                }
+            }
+        }
+        total
+    }
+
+    fn dump(&self, map: &GroundMap) {
         for y in 0..=self.max_y {
             for x in self.min_x..=self.max_x {
                 let coord = Coordinate { x, y };
-                if self.map.contains(&coord) {
-                    print!("#")
-                } else if seen.contains(&coord) {
-                    print!("O")
+                let ch = if let Some(scan) = map.get(&coord) {
+                    match scan {
+                        Scan::Clay => '#',
+                        Scan::FlowingWater => '|',
+                        Scan::StillWater => '~',
+                        Scan::Sand => '.',
+                    }
                 } else {
-                    print!(".")
-                }
+                    '.'
+                };
+                print!("{ch}")
             }
             println!();
         }
@@ -97,42 +145,64 @@ impl AoC2018_17 {
 
 impl Solution for AoC2018_17 {
     fn part_one(&self) -> String {
-        let mut seen: HashSet<Coordinate> = HashSet::new();
-        self.dump(&seen);
-
-        let mut deque = VecDeque::from([Self::start_coord()]);
-        let mut vertical: Vec<Coordinate> = Vec::new();
-        while !deque.is_empty() {
-            let pos = deque.pop_front().expect("Deque shouldn't be empty");
-            // println!("{},{}", pos.x, pos.y);
-            if pos.y > self.max_y {
+        let mut map = self.make_map();
+        let mut flow = Vec::from([Self::start_coord()]);
+        while !flow.is_empty() {
+            let position = *flow.last().expect("Unreachable (1)");
+            // println!(">> {}, {}", position.x, position.y);
+            if position.y > self.max_y {
+                _ = flow.pop();
                 continue;
             }
-            let next = [pos.down(), pos.left(), pos.right()];
-            for (i, item) in next.iter().enumerate() {
-                if self.map.contains(item) || seen.contains(item) {
-                    continue;
+            let down = position.down();
+            match map.get(&down).unwrap_or(&Scan::Sand) {
+                Scan::Sand => {
+                    flow.push(down);
+                    map.insert(down, Scan::FlowingWater);
                 }
-                seen.insert(*item);
-                deque.push_back(*item);
-                // don't go further if there is way down
-                if i == 0 {
-                    vertical.push(*item);
-                    break;
+                Scan::FlowingWater => {
+                    _ = flow.pop();
+                }
+                _ => {
+                    let mut edges = 0;
+                    let mut new_flows = 0;
+                    for dir in [HorizontalDirection::Left, HorizontalDirection::Right] {
+                        let result = horizontal_flow(position, dir, &map);
+                        match result {
+                            FlowResult::FlowWater(tiles) => {
+                                tiles.iter().for_each(|t| {
+                                    map.insert(*t, Scan::FlowingWater);
+                                    if !flow.contains(t) {
+                                        new_flows += 1;
+                                        flow.push(*t);
+                                    }
+                                });
+                            }
+                            FlowResult::StillWater(tiles) => {
+                                edges += 1;
+                                tiles.iter().for_each(|t| {
+                                    map.insert(*t, Scan::StillWater);
+                                    // if let Some(idx) = flow.iter().position(|x| *x == *t) {
+                                    //     flow.remove(idx);
+                                    // }
+                                });
+                            }
+                        }
+                    }
+                    if edges == 2 {
+                        map.insert(position, Scan::StillWater);
+                        _ = flow.pop();
+                    } else if new_flows == 0 {
+                        _ = flow.pop();
+                    }
                 }
             }
-            if deque.is_empty() {
-                vertical.pop();
-                if let Some(item) = vertical.last() {
-                    deque.push_back(*item);
-                }
-            }
+            // self.dump(&map);
+            // println!();
         }
+        self.dump(&map);
 
-        seen.iter()
-            .filter(|p| (1..=self.max_y).contains(&p.y))
-            .count()
-            .to_string()
+        self.reached(&map).to_string()
     }
 
     // fn part_two(&self) -> String {
@@ -143,6 +213,53 @@ impl Solution for AoC2018_17 {
     }
 }
 
+enum FlowResult {
+    StillWater(Vec<Coordinate>),
+    FlowWater(Vec<Coordinate>),
+}
+
+fn horizontal_flow(
+    position: Coordinate,
+    direction: HorizontalDirection,
+    map: &GroundMap,
+) -> FlowResult {
+    let mut cur = position;
+    let mut tiles = Vec::new();
+    loop {
+        let next = cur.horizontal_move(direction);
+        let scan = map.get(&next).unwrap_or(&Scan::Sand);
+        let mut is_clay = false;
+        match scan {
+            Scan::StillWater => {
+                return FlowResult::StillWater(tiles);
+            }
+            Scan::FlowingWater => {
+                return FlowResult::FlowWater(tiles);
+            }
+            Scan::Clay => {
+                is_clay = true;
+            }
+            _ => {
+                tiles.push(next);
+            }
+        }
+        // can move down?
+        let down = next.down();
+        let scan = map.get(&down).unwrap_or(&Scan::Sand);
+        let can_flow_down = matches!(scan, Scan::Sand | Scan::FlowingWater);
+
+        if can_flow_down {
+            tiles.push(down);
+            return FlowResult::FlowWater(tiles);
+        }
+
+        if is_clay {
+            return FlowResult::StillWater(tiles);
+        }
+        cur = next;
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -150,7 +267,7 @@ mod test {
     #[test]
     fn aoc2018_17_input_load_test() -> io::Result<()> {
         let sol = AoC2018_17::new()?;
-        assert!(!sol.map.is_empty());
+        assert!(!sol.clay.is_empty());
         Ok(())
     }
 
