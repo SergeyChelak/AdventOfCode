@@ -1,7 +1,6 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::collections::{HashMap, HashSet, VecDeque};
 use std::io;
 
 enum Direction {
@@ -12,12 +11,13 @@ enum Direction {
 }
 
 impl From<&str> for Direction {
+    // The last hexadecimal digit encodes the direction to dig: 0 means R, 1 means D, 2 means L, and 3 means U.
     fn from(value: &str) -> Self {
         match value {
-            "U" => Self::Up,
-            "D" => Self::Down,
-            "L" => Self::Left,
-            "R" => Self::Right,
+            "3" | "U" => Self::Up,
+            "1" | "D" => Self::Down,
+            "2" | "L" => Self::Left,
+            "0" | "R" => Self::Right,
             _ => panic!("A '{value}' is not expected direction value"),
         }
     }
@@ -65,7 +65,7 @@ impl AoC2023_18 {
 
 impl Solution for AoC2023_18 {
     fn part_one(&self) -> String {
-        square(&self.plan).to_string()
+        plan_square(&self.plan).to_string()
     }
 
     fn part_two(&self) -> String {
@@ -76,15 +76,7 @@ impl Solution for AoC2023_18 {
                 let color = &item.color[2..item.color.len() - 1];
                 let depth = Int::from_str_radix(&color[..5], 16)
                     .expect("Color should be hexadecimal value");
-                // The last hexadecimal digit encodes the direction to dig: 0 means R, 1 means D, 2 means L, and 3 means U.
-                let direction = match &color[5..] {
-                    "0" => Direction::Right,
-                    "1" => Direction::Down,
-                    "2" => Direction::Left,
-                    "3" => Direction::Up,
-                    val => panic!("Unexpected direction {val}"),
-                };
-
+                let direction = Direction::from(&color[5..]);
                 PlanItem {
                     depth,
                     direction,
@@ -92,7 +84,7 @@ impl Solution for AoC2023_18 {
                 }
             })
             .collect::<Vec<_>>();
-        square(&plan).to_string()
+        plan_square(&plan).to_string()
     }
 
     fn description(&self) -> String {
@@ -100,58 +92,38 @@ impl Solution for AoC2023_18 {
     }
 }
 
-fn square(plan: &[PlanItem]) -> Int {
-    let mut row_min = Int::MAX;
-    let mut row_max: Int = 0;
-    let mut col_min = Int::MAX;
-    let mut col_max: Int = 0;
+type Vertex = (Int, Int);
 
+fn plan_square(plan: &[PlanItem]) -> Int {
+    let list = vertex_list(plan);
+    square(&list)
+}
+
+fn vertex_list(plan: &[PlanItem]) -> Vec<Vertex> {
+    let mut vertex = vec![(0, 0)];
     let (mut row, mut col) = (0, 0);
-    let mut map = HashMap::new();
     for item in plan {
-        let (dr, dc) = match item.direction {
-            Direction::Up => (-1, 0),
-            Direction::Down => (1, 0),
-            Direction::Left => (0, -1),
-            Direction::Right => (0, 1),
+        match item.direction {
+            Direction::Up => row -= item.depth,
+            Direction::Down => row += item.depth,
+            Direction::Left => col -= item.depth,
+            Direction::Right => col += item.depth,
         };
-        for _ in 0..item.depth {
-            row += dr;
-            col += dc;
-            map.insert((row, col), 0);
-        }
-        row_min = row_min.min(row);
-        row_max = row_max.max(row);
-        col_min = col_min.min(col);
-        col_max = col_max.max(col);
+        vertex.push((row, col));
     }
+    vertex
+}
 
-    let row_range = row_min - 1..=row_max + 1;
-    let col_range = col_min - 1..=col_max + 1;
-
-    let start = (row_min - 1, col_min - 1);
-    let mut deque = VecDeque::from([start]);
-    let mut seen = HashSet::from([start]);
-    while !deque.is_empty() {
-        let item = deque.pop_front().unwrap();
-
-        [(0, 1), (0, -1), (1, 0), (-1, 0)]
-            .iter()
-            .map(|(dr, dc)| (item.0 + dr, item.1 + dc))
-            .filter(|elem| row_range.contains(&elem.0) && col_range.contains(&elem.1))
-            .filter(|elem| map.get(elem).is_none())
-            .for_each(|elem| {
-                if seen.contains(&elem) {
-                    return;
-                }
-                seen.insert(elem.clone());
-                deque.push_back(elem.clone());
-            });
+// Shoelace formula
+fn square(vertex: &[Vertex]) -> Int {
+    let n = vertex.len();
+    let mut upper_sum = vertex[n - 1].0 * vertex[0].1;
+    let mut lower_sum = vertex[0].0 * vertex[n - 1].1;
+    for i in 0..n - 1 {
+        upper_sum += vertex[i].0 * vertex[i + 1].1;
+        lower_sum += vertex[i + 1].0 * vertex[i].1;
     }
-    let square = (row_range.end() - row_range.start() + 1)
-        * (col_range.end() - col_range.start() + 1)
-        - seen.len() as Int;
-    square
+    (upper_sum.abs_diff(lower_sum) >> 1) as Int
 }
 
 #[cfg(test)]
@@ -206,5 +178,31 @@ mod test {
         assert_eq!(sol.part_one(), "106459");
         assert_eq!(sol.part_two(), "");
         Ok(())
+    }
+
+    #[test]
+    fn gauss_square() {
+        let vertex = [(3, 4), (5, 11), (12, 8), (9, 5), (5, 6)];
+        assert_eq!(square(&vertex), 30);
+
+        let vertex = [(-1000, 500), (-500, 1000), (2, 10), (35, 60)];
+        assert_eq!(square(&vertex), 339865);
+
+        let vertex = [
+            (51, -20),
+            (15, 3),
+            (45, 200),
+            (100, -100),
+            (201, 55),
+            (70, -80),
+            (25, 333),
+            (999, 0),
+            (500, 77),
+            (5, -6),
+        ];
+        assert_eq!(square(&vertex), 124562);
+
+        let vertex = [(13, -92), (44, 0), (-800, 30), (27, 2), (1, 2)];
+        assert_eq!(square(&vertex), 1446);
     }
 }
