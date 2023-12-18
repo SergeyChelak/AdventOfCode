@@ -28,7 +28,7 @@ type Int = i32;
 struct PlanItem {
     direction: Direction,
     depth: Int,
-    color: usize,
+    color: String,
 }
 
 impl From<&str> for PlanItem {
@@ -36,15 +36,10 @@ impl From<&str> for PlanItem {
         let tokens = value.split(' ').collect::<Vec<_>>();
         let direction = Direction::from(tokens[0]);
         let depth = tokens[1].parse::<Int>().expect("Depth should be integer");
-        let color = {
-            let sub_str = tokens[2];
-            usize::from_str_radix(&sub_str[2..sub_str.len() - 1], 16)
-                .expect("Color should be a hex number")
-        };
         Self {
             direction,
             depth,
-            color,
+            color: tokens[2].to_string(),
         }
     }
 }
@@ -53,12 +48,7 @@ type Position = (Int, Int);
 type GroundMap = HashMap<Position, usize>;
 
 pub struct AoC2023_18 {
-    map: GroundMap,
     plan: Vec<PlanItem>,
-    row_min: Int,
-    row_max: Int,
-    col_min: Int,
-    col_max: Int,
 }
 
 impl AoC2023_18 {
@@ -72,14 +62,20 @@ impl AoC2023_18 {
             .iter()
             .map(|s| PlanItem::from(s.as_str()))
             .collect::<Vec<PlanItem>>();
+        Self { plan }
+    }
+}
 
+impl Solution for AoC2023_18 {
+    fn part_one(&self) -> String {
         let mut row_min = Int::MAX;
         let mut row_max: Int = 0;
         let mut col_min = Int::MAX;
         let mut col_max: Int = 0;
+
         let (mut row, mut col) = (0, 0);
         let mut map = HashMap::new();
-        for item in &plan {
+        for item in &self.plan {
             let (dr, dc) = match item.direction {
                 Direction::Up => (-1, 0),
                 Direction::Down => (1, 0),
@@ -89,43 +85,18 @@ impl AoC2023_18 {
             for _ in 0..item.depth {
                 row += dr;
                 col += dc;
-                map.insert((row, col), item.color);
+                map.insert((row, col), 0);
             }
             row_min = row_min.min(row);
             row_max = row_max.max(row);
             col_min = col_min.min(col);
             col_max = col_max.max(col);
         }
-        Self {
-            map,
-            plan,
-            row_min,
-            row_max,
-            col_min,
-            col_max,
-        }
-    }
 
-    fn dump(&self) {
-        for row in self.row_min - 1..=self.row_max + 1 {
-            for col in self.col_min - 1..=self.col_max + 1 {
-                if self.map.get(&(row, col)).is_some() {
-                    print!("#");
-                } else {
-                    print!(".");
-                }
-            }
-            println!()
-        }
-    }
-}
+        let row_range = row_min - 1..=row_max + 1;
+        let col_range = col_min - 1..=col_max + 1;
 
-impl Solution for AoC2023_18 {
-    fn part_one(&self) -> String {
-        let row_range = self.row_min - 1..=self.row_max + 1;
-        let col_range = self.col_min - 1..=self.col_max + 1;
-
-        let start = (self.row_min - 1, self.col_min - 1);
+        let start = (row_min - 1, col_min - 1);
         let mut deque = VecDeque::from([start]);
         let mut seen = HashSet::from([start]);
         while !deque.is_empty() {
@@ -135,7 +106,7 @@ impl Solution for AoC2023_18 {
                 .iter()
                 .map(|(dr, dc)| (item.0 + dr, item.1 + dc))
                 .filter(|elem| row_range.contains(&elem.0) && col_range.contains(&elem.1))
-                .filter(|elem| self.map.get(elem).is_none())
+                .filter(|elem| map.get(elem).is_none())
                 .for_each(|elem| {
                     if seen.contains(&elem) {
                         return;
@@ -172,7 +143,6 @@ mod test {
     #[test]
     fn aoc2023_18_ex1() {
         let puzzle = puzzle();
-        puzzle.dump();
         assert_eq!(puzzle.part_one(), "62")
     }
 
