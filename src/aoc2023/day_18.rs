@@ -95,26 +95,29 @@ impl Solution for AoC2023_18 {
 type Vertex = (Int, Int);
 
 fn plan_square(plan: &[PlanItem]) -> Int {
-    let list = vertex_list(plan);
-    square(&list)
-}
-
-fn vertex_list(plan: &[PlanItem]) -> Vec<Vertex> {
     let mut vertex = vec![(0, 0)];
+    let mut boundary_points = 0;
     let (mut row, mut col) = (0, 0);
     for item in plan {
+        let val = item.depth;
+        boundary_points += val;
         match item.direction {
-            Direction::Up => row -= item.depth,
-            Direction::Down => row += item.depth,
-            Direction::Left => col -= item.depth,
-            Direction::Right => col += item.depth,
+            Direction::Up => row -= val,
+            Direction::Down => row += val,
+            Direction::Left => col -= val,
+            Direction::Right => col += val,
         };
         vertex.push((row, col));
     }
-    vertex
+    // Pike's theorem
+    // https://en.wikipedia.org/wiki/Pick%27s_theorem
+    let a = square(&vertex);
+    let i = a - (boundary_points >> 1) + 1;
+    i + boundary_points
 }
 
 // Shoelace formula
+// TODO: make generics, move to math module
 fn square(vertex: &[Vertex]) -> Int {
     let n = vertex.len();
     let mut upper_sum = vertex[n - 1].0 * vertex[0].1;
@@ -176,12 +179,12 @@ mod test {
     fn aoc2023_18_correctness() -> io::Result<()> {
         let sol = AoC2023_18::new()?;
         assert_eq!(sol.part_one(), "106459");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "63806916814808");
         Ok(())
     }
 
     #[test]
-    fn gauss_square() {
+    fn aoc2023_18_gauss_square() {
         let vertex = [(3, 4), (5, 11), (12, 8), (9, 5), (5, 6)];
         assert_eq!(square(&vertex), 30);
 
