@@ -23,7 +23,7 @@ impl From<&str> for Direction {
     }
 }
 
-type Int = i32;
+type Int = i64;
 
 struct PlanItem {
     direction: Direction,
@@ -43,9 +43,6 @@ impl From<&str> for PlanItem {
         }
     }
 }
-
-type Position = (Int, Int);
-type GroundMap = HashMap<Position, usize>;
 
 pub struct AoC2023_18 {
     plan: Vec<PlanItem>,
@@ -68,65 +65,93 @@ impl AoC2023_18 {
 
 impl Solution for AoC2023_18 {
     fn part_one(&self) -> String {
-        let mut row_min = Int::MAX;
-        let mut row_max: Int = 0;
-        let mut col_min = Int::MAX;
-        let mut col_max: Int = 0;
-
-        let (mut row, mut col) = (0, 0);
-        let mut map = HashMap::new();
-        for item in &self.plan {
-            let (dr, dc) = match item.direction {
-                Direction::Up => (-1, 0),
-                Direction::Down => (1, 0),
-                Direction::Left => (0, -1),
-                Direction::Right => (0, 1),
-            };
-            for _ in 0..item.depth {
-                row += dr;
-                col += dc;
-                map.insert((row, col), 0);
-            }
-            row_min = row_min.min(row);
-            row_max = row_max.max(row);
-            col_min = col_min.min(col);
-            col_max = col_max.max(col);
-        }
-
-        let row_range = row_min - 1..=row_max + 1;
-        let col_range = col_min - 1..=col_max + 1;
-
-        let start = (row_min - 1, col_min - 1);
-        let mut deque = VecDeque::from([start]);
-        let mut seen = HashSet::from([start]);
-        while !deque.is_empty() {
-            let item = deque.pop_front().unwrap();
-
-            [(0, 1), (0, -1), (1, 0), (-1, 0)]
-                .iter()
-                .map(|(dr, dc)| (item.0 + dr, item.1 + dc))
-                .filter(|elem| row_range.contains(&elem.0) && col_range.contains(&elem.1))
-                .filter(|elem| map.get(elem).is_none())
-                .for_each(|elem| {
-                    if seen.contains(&elem) {
-                        return;
-                    }
-                    seen.insert(elem.clone());
-                    deque.push_back(elem.clone());
-                });
-        }
-        let square = (row_range.end() - row_range.start() + 1)
-            * (col_range.end() - col_range.start() + 1)
-            - seen.len() as i32;
-        square.to_string()
+        square(&self.plan).to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let plan = self
+            .plan
+            .iter()
+            .map(|item| {
+                let color = &item.color[2..item.color.len() - 1];
+                let depth = Int::from_str_radix(&color[..5], 16)
+                    .expect("Color should be hexadecimal value");
+                // The last hexadecimal digit encodes the direction to dig: 0 means R, 1 means D, 2 means L, and 3 means U.
+                let direction = match &color[5..] {
+                    "0" => Direction::Right,
+                    "1" => Direction::Down,
+                    "2" => Direction::Left,
+                    "3" => Direction::Up,
+                    val => panic!("Unexpected direction {val}"),
+                };
+
+                PlanItem {
+                    depth,
+                    direction,
+                    color: "".to_string(),
+                }
+            })
+            .collect::<Vec<_>>();
+        square(&plan).to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2023/Day 18: Lavaduct Lagoon".to_string()
     }
+}
+
+fn square(plan: &[PlanItem]) -> Int {
+    let mut row_min = Int::MAX;
+    let mut row_max: Int = 0;
+    let mut col_min = Int::MAX;
+    let mut col_max: Int = 0;
+
+    let (mut row, mut col) = (0, 0);
+    let mut map = HashMap::new();
+    for item in plan {
+        let (dr, dc) = match item.direction {
+            Direction::Up => (-1, 0),
+            Direction::Down => (1, 0),
+            Direction::Left => (0, -1),
+            Direction::Right => (0, 1),
+        };
+        for _ in 0..item.depth {
+            row += dr;
+            col += dc;
+            map.insert((row, col), 0);
+        }
+        row_min = row_min.min(row);
+        row_max = row_max.max(row);
+        col_min = col_min.min(col);
+        col_max = col_max.max(col);
+    }
+
+    let row_range = row_min - 1..=row_max + 1;
+    let col_range = col_min - 1..=col_max + 1;
+
+    let start = (row_min - 1, col_min - 1);
+    let mut deque = VecDeque::from([start]);
+    let mut seen = HashSet::from([start]);
+    while !deque.is_empty() {
+        let item = deque.pop_front().unwrap();
+
+        [(0, 1), (0, -1), (1, 0), (-1, 0)]
+            .iter()
+            .map(|(dr, dc)| (item.0 + dr, item.1 + dc))
+            .filter(|elem| row_range.contains(&elem.0) && col_range.contains(&elem.1))
+            .filter(|elem| map.get(elem).is_none())
+            .for_each(|elem| {
+                if seen.contains(&elem) {
+                    return;
+                }
+                seen.insert(elem.clone());
+                deque.push_back(elem.clone());
+            });
+    }
+    let square = (row_range.end() - row_range.start() + 1)
+        * (col_range.end() - col_range.start() + 1)
+        - seen.len() as Int;
+    square
 }
 
 #[cfg(test)]
@@ -144,6 +169,12 @@ mod test {
     fn aoc2023_18_ex1() {
         let puzzle = puzzle();
         assert_eq!(puzzle.part_one(), "62")
+    }
+
+    #[test]
+    fn aoc2023_18_ex2() {
+        let puzzle = puzzle();
+        assert_eq!(puzzle.part_two(), "952408144115")
     }
 
     fn puzzle() -> AoC2023_18 {
