@@ -1,7 +1,6 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::io;
 
@@ -182,11 +181,7 @@ impl AoC2023_07 {
         input.sort_by(|a, b| {
             let kind_a = kind_cmp(&a.hand);
             let kind_b = kind_cmp(&b.hand);
-            let cmp = kind_a.cmp(&kind_b);
-            match cmp {
-                Ordering::Equal => a.hand.cmp(&b.hand),
-                _ => cmp,
-            }
+            kind_a.cmp(&kind_b).then(a.hand.cmp(&b.hand))
         });
         input
             .iter()

@@ -77,11 +77,7 @@ impl From<Direction> for TrackElement {
 type Coordinate = Point2d<usize>;
 
 fn coordinate_cmp(a: &Coordinate, b: &Coordinate) -> Ordering {
-    let cmp = a.y.cmp(&b.y);
-    if cmp == Ordering::Equal {
-        return a.x.cmp(&b.x);
-    }
-    cmp
+    a.y.cmp(&b.y).then(a.x.cmp(&b.x))
 }
 
 type Track = Vec<Vec<TrackElement>>;

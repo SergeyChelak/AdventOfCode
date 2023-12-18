@@ -1,7 +1,6 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::cmp::Ordering;
 use std::io;
 
 struct RoomCode {
@@ -53,12 +52,7 @@ impl RoomCode {
             char_data.push((i, val));
         }
         char_data.sort_by(|(a_code, a_freq), (b_code, b_freq)| {
-            let ordering = b_freq.cmp(a_freq);
-            if ordering == Ordering::Equal {
-                a_code.cmp(b_code)
-            } else {
-                ordering
-            }
+            b_freq.cmp(a_freq).then(a_code.cmp(b_code))
         });
         char_data
             .iter()
