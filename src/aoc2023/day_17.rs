@@ -103,7 +103,7 @@ fn valid_points(point: Point, rows: usize, cols: usize) -> HashMap<Direction, Po
     adj
 }
 
-fn adjacent(map: &[Vec<Int>], node: Node) -> Vec<Node> {
+fn adjacent_pt1(map: &[Vec<Int>], node: Node) -> Vec<Node> {
     let rows = map.len();
     let cols = map[0].len();
     let mut adj = Vec::new();
@@ -121,7 +121,27 @@ fn adjacent(map: &[Vec<Int>], node: Node) -> Vec<Node> {
     adj
 }
 
-fn dijkstra(map: &[Vec<Int>], start: Point, target: Point) -> Option<Int> {
+fn adjacent_pt2(map: &[Vec<Int>], node: Node) -> Vec<Node> {
+    let rows = map.len();
+    let cols = map[0].len();
+    let mut adj = Vec::new();
+    let stripe = node.stripe;
+    for (direction, point) in valid_points(node.point, rows, cols) {
+        if direction.is_opposite(&node.direction) {
+            continue;
+        }
+        if direction != node.direction && stripe >= 4 {
+            adj.push(Node::new(point, direction, 1));
+        } else if direction == node.direction && stripe < 10 {
+            adj.push(Node::new(point, direction, 1 + stripe));
+        }
+    }
+    adj
+}
+
+type Adjacent = dyn Fn(&[Vec<Int>], Node) -> Vec<Node>;
+
+fn dijkstra(map: &[Vec<Int>], start: Point, target: Point, adjacent: &Adjacent) -> Option<Int> {
     // init
     let mut weights: HashMap<Node, Int> = HashMap::new();
     let mut queue: BinaryHeap<QueueItem> = BinaryHeap::new();
@@ -181,20 +201,30 @@ impl AoC2023_17 {
             .collect::<Vec<_>>();
         Self { map }
     }
+
+    fn start(&self) -> Point {
+        Point::new(0, 0)
+    }
+
+    fn target(&self) -> Point {
+        Point::new(self.map.len() - 1, self.map[0].len() - 1)
+    }
 }
 
 impl Solution for AoC2023_17 {
     fn part_one(&self) -> String {
-        let start = Point::new(0, 0);
-        let target = Point::new(self.map.len() - 1, self.map[0].len() - 1);
-        let Some(val) = dijkstra(&self.map, start, target) else {
+        let Some(val) = dijkstra(&self.map, self.start(), self.target(), &adjacent_pt1) else {
             return "Not found".to_string();
         };
         val.to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let Some(val) = dijkstra(&self.map, self.start(), self.target(), &adjacent_pt2) else {
+            return "Not found".to_string();
+        };
+        val.to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2023/Day 17: Clumsy Crucible".to_string()
@@ -240,10 +270,15 @@ mod test {
     }
 
     #[test]
+    fn aoc2023_17_ex2() {
+        assert_eq!(puzzle().part_two(), "94")
+    }
+
+    #[test]
     fn aoc2023_17_correctness() -> io::Result<()> {
         let sol = AoC2023_17::new()?;
-        assert_eq!(sol.part_one(), "");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_one(), "1008");
+        assert_eq!(sol.part_two(), "1210");
         Ok(())
     }
 }
