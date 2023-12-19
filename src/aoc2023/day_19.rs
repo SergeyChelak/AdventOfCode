@@ -4,6 +4,7 @@ use std::{collections::HashMap, io};
 
 type Int = u64;
 type Part = [Int; 4];
+type Intervals = [Interval; 4];
 
 const RATING_MIN: Int = 1;
 const RATING_MAX: Int = 4000;
@@ -30,10 +31,53 @@ impl From<&str> for Workflow {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+struct Interval {
+    begin: Int,
+    end: Int,
+}
+
+impl Default for Interval {
+    fn default() -> Self {
+        Self {
+            begin: RATING_MIN,
+            end: RATING_MAX,
+        }
+    }
+}
+
+impl Interval {
+    fn new(begin: Int, end: Int) -> Self {
+        Self { begin, end }
+    }
+
+    fn intersection(&self, other: &Self) -> Option<Self> {
+        let (l, r) = if self.begin < other.begin {
+            (self, other)
+        } else {
+            (other, self)
+        };
+
+        if r.begin > l.end {
+            return None;
+        }
+
+        Some(Interval {
+            begin: self.begin.max(other.begin),
+            end: self.end.min(other.end),
+        })
+    }
+
+    fn len(&self) -> Int {
+        self.end - self.begin + 1
+    }
+}
+
 enum Criteria {
     Greater,
     Less,
 }
+
 enum Rule {
     Operation(Criteria, usize, Int, String),
     Jump(String),
@@ -54,6 +98,28 @@ impl Rule {
                     None
                 }
             }
+        }
+    }
+
+    fn interval(&self) -> Option<Interval> {
+        match self {
+            Rule::Jump(_) => None,
+            Rule::Operation(Criteria::Greater, _, value, _) => {
+                Some(Interval::new(value + 1, RATING_MAX))
+            }
+            Rule::Operation(Criteria::Less, _, value, _) => {
+                Some(Interval::new(RATING_MIN, value - 1))
+            }
+        }
+    }
+
+    fn rev_interval(&self) -> Option<Interval> {
+        match self {
+            Rule::Jump(_) => None,
+            Rule::Operation(Criteria::Greater, _, value, _) => {
+                Some(Interval::new(RATING_MIN, *value))
+            }
+            Rule::Operation(Criteria::Less, _, value, _) => Some(Interval::new(*value, RATING_MAX)),
         }
     }
 }
@@ -151,8 +217,48 @@ impl Solution for AoC2023_19 {
             .to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut accepted: Vec<Intervals> = Vec::new();
+        let mut stack = vec![(WORKFLOW_START.to_string(), Intervals::default())];
+        while let Some(state) = stack.pop() {
+            let id = state.0;
+            let mut current = state.1.clone();
+            if id == WORKFLOW_ACCEPT {
+                accepted.push(current);
+                continue;
+            }
+            if id == WORKFLOW_REJECT {
+                continue;
+            }
+            let Some(workflow) = self.workflows.get(&id) else {
+                panic!("Workflow {id} should exist");
+            };
+            for rule in &workflow.rules {
+                match rule {
+                    Rule::Jump(next) => stack.push((next.clone(), current.clone())),
+                    Rule::Operation(_, idx, _, next) => {
+                        let interval = rule.interval().unwrap();
+                        if let Some(intersection) = interval.intersection(&current[*idx]) {
+                            let mut tmp = current.clone();
+                            tmp[*idx] = intersection;
+                            stack.push((next.clone(), tmp));
+                        }
+                        let interval = rule.rev_interval().unwrap();
+                        if let Some(intersection) = interval.intersection(&current[*idx]) {
+                            current[*idx] = intersection;
+                        } else {
+                            panic!("is it possible??");
+                        }
+                    }
+                }
+            }
+        }
+        accepted
+            .iter()
+            .map(|interval| interval.iter().map(|x| x.len()).product::<Int>())
+            .sum::<Int>()
+            .to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2023/Day 19: Aplenty".to_string()
@@ -183,6 +289,15 @@ mod test {
 
     #[test]
     fn aoc2023_19_ex1() {
+        assert_eq!(puzzle().part_one(), "19114");
+    }
+
+    #[test]
+    fn aoc2023_19_ex2() {
+        assert_eq!(puzzle().part_two(), "167409079868000");
+    }
+
+    fn puzzle() -> AoC2023_19 {
         let input = r#"
 px{a<2006:qkq,m>2090:A,rfg}
 pv{a>1716:R,A}
@@ -202,15 +317,14 @@ hdj{m>838:A,pv}
 {x=2461,m=1339,a=466,s=291}
 {x=2127,m=1623,a=2188,s=1013}
         "#;
-        let puzzle = AoC2023_19::with_str(input);
-        assert_eq!(puzzle.part_one(), "19114");
+        AoC2023_19::with_str(input)
     }
 
     #[test]
     fn aoc2023_19_correctness() -> io::Result<()> {
         let sol = AoC2023_19::new()?;
         assert_eq!(sol.part_one(), "446517");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "130090458884662");
         Ok(())
     }
 }
