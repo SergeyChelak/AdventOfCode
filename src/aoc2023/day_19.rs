@@ -2,7 +2,14 @@ use crate::{solution::Solution, utils::remove_first_and_last};
 
 use std::{collections::HashMap, io};
 
-type Int = i64;
+type Int = u64;
+type Part = [Int; 4];
+
+const RATING_MIN: Int = 1;
+const RATING_MAX: Int = 4000;
+const WORKFLOW_START: &str = "in";
+const WORKFLOW_ACCEPT: &str = "A";
+const WORKFLOW_REJECT: &str = "R";
 
 struct Workflow {
     id: String,
@@ -72,18 +79,6 @@ impl From<&str> for Rule {
     }
 }
 
-type Part = [Int; 4];
-
-fn ch_to_idx(ch: char) -> usize {
-    match ch {
-        'x' => 0,
-        'm' => 1,
-        'a' => 2,
-        's' => 3,
-        _ => panic!("Unexpected tag id {ch}"),
-    }
-}
-
 pub struct AoC2023_19 {
     parts: Vec<Part>,
     workflows: HashMap<String, Workflow>,
@@ -102,7 +97,7 @@ impl AoC2023_19 {
 
         let parts = parts
             .split_whitespace()
-            .map(|x| Self::parse_part(x))
+            .map(|x| Self::parse_ratings(x))
             .collect::<Vec<_>>();
         let workflows = workflows
             .split_whitespace()
@@ -112,7 +107,7 @@ impl AoC2023_19 {
         Self { workflows, parts }
     }
 
-    fn parse_part(value: &str) -> Part {
+    fn parse_ratings(value: &str) -> Part {
         let tokens = remove_first_and_last(value).split(',').collect::<Vec<_>>();
         let mut result = [0; 4];
         for token in tokens {
@@ -131,7 +126,7 @@ impl Solution for AoC2023_19 {
     fn part_one(&self) -> String {
         let mut accepted: Vec<&Part> = Vec::new();
         for part in &self.parts {
-            let mut id = "in".to_string();
+            let mut id = WORKFLOW_START.to_string();
             loop {
                 let workflow = self.workflows.get(&id).expect("workflow should be present");
                 for rule in &workflow.rules {
@@ -140,11 +135,11 @@ impl Solution for AoC2023_19 {
                         break;
                     }
                 }
-                if id == "A" {
+                if id == WORKFLOW_ACCEPT {
                     accepted.push(part);
                     break;
                 }
-                if id == "R" {
+                if id == WORKFLOW_REJECT {
                     break;
                 }
             }
@@ -161,6 +156,16 @@ impl Solution for AoC2023_19 {
 
     fn description(&self) -> String {
         "AoC 2023/Day 19: Aplenty".to_string()
+    }
+}
+
+fn ch_to_idx(ch: char) -> usize {
+    match ch {
+        'x' => 0,
+        'm' => 1,
+        'a' => 2,
+        's' => 3,
+        _ => panic!("Unexpected tag id {ch}"),
     }
 }
 
