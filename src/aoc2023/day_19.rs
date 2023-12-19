@@ -4,12 +4,6 @@ use std::{collections::HashMap, io};
 
 type Int = i64;
 
-enum WorkflowResult {
-    Accept,
-    Reject,
-    Jump(String),
-}
-
 struct Workflow {
     id: String,
     rules: Vec<Rule>,
@@ -30,18 +24,10 @@ impl From<&str> for Workflow {
 }
 
 impl Workflow {
-    fn process(&self, part: &Part) -> WorkflowResult {
-        let goto_result = |s: &str| -> WorkflowResult {
-            match s {
-                "A" => WorkflowResult::Accept,
-                "R" => WorkflowResult::Reject,
-                _ => WorkflowResult::Jump(s.to_string()),
-            }
-        };
-
+    fn process(&self, part: &Part) -> &str {
         for rule in &self.rules {
             match rule {
-                Rule::Goto(next) => return goto_result(&next),
+                Rule::Goto(next) => return next,
                 Rule::Compare(ch, cond, number, next) => {
                     let value = part.value(*ch);
                     let result = match cond {
@@ -49,7 +35,7 @@ impl Workflow {
                         Condition::Less => value < *number,
                     };
                     if result {
-                        return goto_result(next);
+                        return next;
                     }
                 }
             }
@@ -167,15 +153,15 @@ impl Solution for AoC2023_19 {
             loop {
                 let workflow = self.workflows.get(&id).expect("workflow should be present");
                 match workflow.process(part) {
-                    WorkflowResult::Accept => {
+                    "A" => {
                         accepted.push(part);
                         break;
                     }
-                    WorkflowResult::Reject => {
+                    "R" => {
                         break;
                     }
-                    WorkflowResult::Jump(next) => {
-                        id = next;
+                    next => {
+                        id = next.to_string();
                     }
                 }
             }
