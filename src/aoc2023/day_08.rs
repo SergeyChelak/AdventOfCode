@@ -106,10 +106,7 @@ impl Solution for AoC2023_08 {
             })
             .collect::<Vec<_>>();
 
-        let mut result = cycle_info.first().unwrap().1;
-        for val in cycle_info.iter().skip(1) {
-            result = lcm(result, val.1);
-        }
+        let result = cycle_info.iter().fold(1, |acc, (_, x)| lcm(acc, *x));
         result.to_string()
     }
 
