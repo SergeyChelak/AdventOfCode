@@ -27,28 +27,17 @@ enum Module {
 struct ModuleSystem {
     outputs: Link,
     modules: HashMap<String, Module>,
-    low_count: usize,
-    high_count: usize,
 }
 
 impl ModuleSystem {
     fn new(outputs: Link, modules: HashMap<String, Module>) -> Self {
-        Self {
-            outputs,
-            modules,
-            low_count: 0,
-            high_count: 0,
-        }
+        Self { outputs, modules }
     }
 
-    fn run(&mut self) {
+    fn perform(&mut self, callback: &mut dyn FnMut(&str, &str, &Pulse)) {
         let mut queue = VecDeque::from([(SENDER_BUTTON, MODULE_BROADCAST, Pulse::Low)]);
         while let Some((sender, current, pulse)) = queue.pop_front() {
-            if matches!(pulse, Pulse::High) {
-                self.high_count += 1;
-            } else {
-                self.low_count += 1;
-            }
+            callback(sender, current, &pulse);
             let Some(module) = self.modules.get(current) else {
                 continue;
             };
@@ -82,77 +71,6 @@ impl ModuleSystem {
                     }
                     self.modules
                         .insert(current.to_string(), Module::Conjunction(tmp));
-                }
-            }
-        }
-    }
-
-    fn button_presses(&mut self) -> usize {
-        let mut target: Option<String> = None;
-        for (name, output) in &self.outputs {
-            if output.contains(&"rx".to_string()) {
-                assert_eq!(target, None);
-                target = Some(name.clone());
-            }
-        }
-        let target = target.unwrap();
-        let Some(gate) = self.modules.get(&target) else {
-            panic!("Not found");
-        };
-        let Module::Conjunction(inputs) = gate else {
-            panic!("Can't resolve");
-        };
-        let inputs = inputs.keys().map(|s| s.to_string()).collect::<Vec<_>>();
-
-        let mut seen = HashMap::new();
-
-        let mut cycles = 0usize;
-        loop {
-            cycles += 1;
-            let mut queue = VecDeque::from([(SENDER_BUTTON, MODULE_BROADCAST, Pulse::Low)]);
-            while let Some((sender, current, pulse)) = queue.pop_front() {
-                if current == target && matches!(pulse, Pulse::High) {
-                    if seen.get(sender).is_none() {
-                        seen.insert(sender, cycles);
-                    }
-                    if seen.len() == inputs.len() {
-                        return seen.values().fold(1, |acc, x| lcm(acc, *x));
-                    }
-                }
-                let Some(module) = self.modules.get(current) else {
-                    continue;
-                };
-                let output = self.outputs.get(current).expect("Outputs not found (2)");
-                match module {
-                    Module::Broadcast => {
-                        for next in output {
-                            queue.push_back((current, next, pulse));
-                        }
-                    }
-                    Module::FlipFlop(is_active) => {
-                        if matches!(pulse, Pulse::Low) {
-                            let value = if *is_active { Pulse::Low } else { Pulse::High };
-                            for next in output {
-                                queue.push_back((current, next, value));
-                            }
-                            self.modules
-                                .insert(current.to_string(), Module::FlipFlop(!*is_active));
-                        }
-                    }
-                    Module::Conjunction(inputs) => {
-                        let mut tmp = inputs.clone();
-                        tmp.insert(sender.to_string(), pulse);
-                        let value = if tmp.values().all(|x| matches!(x, Pulse::High)) {
-                            Pulse::Low
-                        } else {
-                            Pulse::High
-                        };
-                        for next in output {
-                            queue.push_back((current, next, value));
-                        }
-                        self.modules
-                            .insert(current.to_string(), Module::Conjunction(tmp));
-                    }
                 }
             }
         }
@@ -221,15 +139,55 @@ impl AoC2023_20 {
 impl Solution for AoC2023_20 {
     fn part_one(&self) -> String {
         let mut system = ModuleSystem::new(self.outputs.clone(), self.modules.clone());
+        let (mut high_count, mut low_count) = (0, 0);
+        let mut callback = |_: &str, _: &str, pulse: &Pulse| {
+            if matches!(pulse, Pulse::High) {
+                high_count += 1;
+            } else {
+                low_count += 1;
+            }
+        };
         for _ in 0..1000 {
-            system.run();
+            system.perform(&mut callback);
         }
-        (system.high_count * system.low_count).to_string()
+        (high_count * low_count).to_string()
     }
 
     fn part_two(&self) -> String {
+        let mut target: Option<String> = None;
+        for (name, output) in &self.outputs {
+            if output.contains(&"rx".to_string()) {
+                assert_eq!(target, None);
+                target = Some(name.clone());
+            }
+        }
+        let target = target.unwrap();
+        let Some(gate) = self.modules.get(&target) else {
+            panic!("Not found");
+        };
+        let Module::Conjunction(inputs) = gate else {
+            panic!("Can't resolve");
+        };
+        let inputs = inputs.keys().map(|s| s.to_string()).collect::<Vec<_>>();
+        let mut cycle = 0usize;
+        let mut seen = HashMap::new();
         let mut system = ModuleSystem::new(self.outputs.clone(), self.modules.clone());
-        system.button_presses().to_string()
+        loop {
+            cycle += 1;
+            let mut callback = |sender: &str, current: &str, pulse: &Pulse| {
+                if current == target && matches!(pulse, Pulse::High) {
+                    if seen.get(sender).is_none() {
+                        seen.insert(sender.to_string(), cycle);
+                    }
+                }
+            };
+            system.perform(&mut callback);
+
+            if seen.len() == inputs.len() {
+                break seen.values().fold(1, |acc, x| lcm(acc, *x));
+            }
+        }
+        .to_string()
     }
 
     fn description(&self) -> String {
