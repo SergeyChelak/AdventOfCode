@@ -7,7 +7,7 @@ use std::io;
 const MODULE_BROADCAST: &str = "broadcaster";
 const SENDER_BUTTON: &str = "button";
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy)]
 enum Pulse {
     High,
     Low,
@@ -87,20 +87,72 @@ impl ModuleSystem {
         }
     }
 
-    fn dump(&self) {
-        let mut keys = self.modules.keys().map(|x| x).collect::<Vec<_>>();
-        keys.sort();
-        for key in keys {
-            let module = self.modules.get(key).unwrap();
-            match module {
-                Module::Broadcast => println!("Broadcast"),
-                Module::FlipFlop(state) => println!("%{key} {state}"),
-                Module::Conjunction(inputs) => {
-                    print!("&{key} ");
-                    for inp in inputs {
-                        print!("{}:{:?} ", inp.0, inp.1);
+    fn button_presses(&mut self) -> usize {
+        let mut target: Option<String> = None;
+        for (name, output) in &self.outputs {
+            if output.contains(&"rx".to_string()) {
+                assert_eq!(target, None);
+                target = Some(name.clone());
+            }
+        }
+        let target = target.unwrap();
+        let Some(gate) = self.modules.get(&target) else {
+            panic!("Not found");
+        };
+        let Module::Conjunction(inputs) = gate else {
+            panic!("Can't resolve");
+        };
+        let inputs = inputs.keys().map(|s| s.to_string()).collect::<Vec<_>>();
+
+        let mut seen = HashMap::new();
+
+        let mut cycles = 0usize;
+        loop {
+            cycles += 1;
+            let mut queue = VecDeque::from([(SENDER_BUTTON, MODULE_BROADCAST, Pulse::Low)]);
+            while let Some((sender, current, pulse)) = queue.pop_front() {
+                if current == target && matches!(pulse, Pulse::High) {
+                    if seen.get(sender).is_none() {
+                        seen.insert(sender, cycles);
                     }
-                    println!();
+                    if seen.len() == inputs.len() {
+                        return seen.values().fold(1, |acc, x| lcm(acc, *x));
+                    }
+                }
+                let Some(module) = self.modules.get(current) else {
+                    continue;
+                };
+                let output = self.outputs.get(current).expect("Outputs not found (2)");
+                match module {
+                    Module::Broadcast => {
+                        for next in output {
+                            queue.push_back((current, next, pulse));
+                        }
+                    }
+                    Module::FlipFlop(is_active) => {
+                        if matches!(pulse, Pulse::Low) {
+                            let value = if *is_active { Pulse::Low } else { Pulse::High };
+                            for next in output {
+                                queue.push_back((current, next, value));
+                            }
+                            self.modules
+                                .insert(current.to_string(), Module::FlipFlop(!*is_active));
+                        }
+                    }
+                    Module::Conjunction(inputs) => {
+                        let mut tmp = inputs.clone();
+                        tmp.insert(sender.to_string(), pulse);
+                        let value = if tmp.values().all(|x| matches!(x, Pulse::High)) {
+                            Pulse::Low
+                        } else {
+                            Pulse::High
+                        };
+                        for next in output {
+                            queue.push_back((current, next, value));
+                        }
+                        self.modules
+                            .insert(current.to_string(), Module::Conjunction(tmp));
+                    }
                 }
             }
         }
@@ -177,7 +229,7 @@ impl Solution for AoC2023_20 {
 
     fn part_two(&self) -> String {
         let mut system = ModuleSystem::new(self.outputs.clone(), self.modules.clone());
-        todo!()
+        system.button_presses().to_string()
     }
 
     fn description(&self) -> String {
@@ -233,7 +285,7 @@ mod test {
     fn aoc2023_20_correctness() -> io::Result<()> {
         let sol = AoC2023_20::new()?;
         assert_eq!(sol.part_one(), "806332748");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "228060006554227");
         Ok(())
     }
 }
