@@ -27,21 +27,29 @@ enum Module {
 struct ModuleSystem {
     outputs: Link,
     modules: HashMap<String, Module>,
+    low_count: usize,
+    high_count: usize,
 }
 
 impl ModuleSystem {
-    fn run(&mut self) -> (usize, usize) {
-        let (mut low_count, mut high_count) = (0, 0);
+    fn new(outputs: Link, modules: HashMap<String, Module>) -> Self {
+        Self {
+            outputs,
+            modules,
+            low_count: 0,
+            high_count: 0,
+        }
+    }
+
+    fn run(&mut self) {
         let mut queue = VecDeque::from([(SENDER_BUTTON, MODULE_BROADCAST, Pulse::Low)]);
         while let Some((sender, current, pulse)) = queue.pop_front() {
             if matches!(pulse, Pulse::High) {
-                high_count += 1;
+                self.high_count += 1;
             } else {
-                low_count += 1;
+                self.low_count += 1;
             }
-            // println!("{sender} -{pulse:?} -> {current}");
             let Some(module) = self.modules.get(current) else {
-                // panic!("Module {current} not found");
                 continue;
             };
             let output = self.outputs.get(current).expect("Outputs not found (2)");
@@ -77,7 +85,25 @@ impl ModuleSystem {
                 }
             }
         }
-        (low_count, high_count)
+    }
+
+    fn dump(&self) {
+        let mut keys = self.modules.keys().map(|x| x).collect::<Vec<_>>();
+        keys.sort();
+        for key in keys {
+            let module = self.modules.get(key).unwrap();
+            match module {
+                Module::Broadcast => println!("Broadcast"),
+                Module::FlipFlop(state) => println!("%{key} {state}"),
+                Module::Conjunction(inputs) => {
+                    print!("&{key} ");
+                    for inp in inputs {
+                        print!("{}:{:?} ", inp.0, inp.1);
+                    }
+                    println!();
+                }
+            }
+        }
     }
 }
 
@@ -142,21 +168,17 @@ impl AoC2023_20 {
 
 impl Solution for AoC2023_20 {
     fn part_one(&self) -> String {
-        let mut system = ModuleSystem {
-            outputs: self.outputs.clone(),
-            modules: self.modules.clone(),
-        };
-        let (mut total_low, mut total_high) = (0, 0);
+        let mut system = ModuleSystem::new(self.outputs.clone(), self.modules.clone());
         for _ in 0..1000 {
-            let (low, high) = system.run();
-            total_high += high;
-            total_low += low;
+            system.run();
         }
-        (total_low * total_high).to_string()
+        (system.high_count * system.low_count).to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut system = ModuleSystem::new(self.outputs.clone(), self.modules.clone());
+        todo!()
+    }
 
     fn description(&self) -> String {
         "AoC 2023/Day 20: Pulse Propagation".to_string()
