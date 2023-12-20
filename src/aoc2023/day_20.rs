@@ -1,10 +1,89 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
+use std::collections::{HashMap, VecDeque};
 use std::io;
 
+const MODULE_BROADCAST: &str = "broadcaster";
+const SENDER_BUTTON: &str = "button";
+
+#[derive(Clone, Copy, Debug)]
+enum Pulse {
+    High,
+    Low,
+}
+
+// input/output mapping
+type Link = HashMap<String, Vec<String>>;
+type Inputs = HashMap<String, Pulse>;
+
+#[derive(Clone)]
+enum Module {
+    FlipFlop(bool),
+    Conjunction(Inputs),
+    Broadcast,
+}
+
+struct ModuleSystem {
+    outputs: Link,
+    modules: HashMap<String, Module>,
+}
+
+impl ModuleSystem {
+    fn run(&mut self) -> (usize, usize) {
+        let (mut low_count, mut high_count) = (0, 0);
+        let mut queue = VecDeque::from([(SENDER_BUTTON, MODULE_BROADCAST, Pulse::Low)]);
+        while let Some((sender, current, pulse)) = queue.pop_front() {
+            if matches!(pulse, Pulse::High) {
+                high_count += 1;
+            } else {
+                low_count += 1;
+            }
+            // println!("{sender} -{pulse:?} -> {current}");
+            let Some(module) = self.modules.get(current) else {
+                // panic!("Module {current} not found");
+                continue;
+            };
+            let output = self.outputs.get(current).expect("Outputs not found (2)");
+            match module {
+                Module::Broadcast => {
+                    for next in output {
+                        queue.push_back((current, next, pulse));
+                    }
+                }
+                Module::FlipFlop(is_active) => {
+                    if matches!(pulse, Pulse::Low) {
+                        let value = if *is_active { Pulse::Low } else { Pulse::High };
+                        for next in output {
+                            queue.push_back((current, next, value));
+                        }
+                        self.modules
+                            .insert(current.to_string(), Module::FlipFlop(!*is_active));
+                    }
+                }
+                Module::Conjunction(inputs) => {
+                    let mut tmp = inputs.clone();
+                    tmp.insert(sender.to_string(), pulse);
+                    let value = if tmp.values().all(|x| matches!(x, Pulse::High)) {
+                        Pulse::Low
+                    } else {
+                        Pulse::High
+                    };
+                    for next in output {
+                        queue.push_back((current, next, value));
+                    }
+                    self.modules
+                        .insert(current.to_string(), Module::Conjunction(tmp));
+                }
+            }
+        }
+        (low_count, high_count)
+    }
+}
+
 pub struct AoC2023_20 {
-    // place required fields here
+    outputs: Link,
+    modules: HashMap<String, Module>,
 }
 
 impl AoC2023_20 {
@@ -14,13 +93,67 @@ impl AoC2023_20 {
     }
 
     fn with_lines(lines: &[String]) -> Self {
-        todo!()
+        let mut inputs = Link::new();
+        let mut outputs = Link::new();
+        let mut conjunction = Vec::new();
+        let mut flip_flop = Vec::new();
+        for line in lines {
+            let (module, dest) = line
+                .split_once(" -> ")
+                .expect("arrow separator is expected");
+            let name = if module == MODULE_BROADCAST {
+                module
+            } else {
+                &module[1..]
+            };
+            if module.starts_with('%') {
+                flip_flop.push(name.to_string());
+            } else if module.starts_with('&') {
+                conjunction.push(name.to_string());
+            }
+            let dest_names = dest.split(", ").map(|s| s.to_string()).collect::<Vec<_>>();
+            dest_names.iter().for_each(|key| {
+                let k = key.clone();
+                let entry = inputs.entry(k).or_insert(Vec::new());
+                entry.push(name.to_string());
+            });
+            outputs.insert(name.to_string(), dest_names);
+        }
+
+        let mut modules: HashMap<String, Module> = HashMap::new();
+        modules.insert(MODULE_BROADCAST.to_string(), Module::Broadcast);
+
+        for module in flip_flop {
+            modules.insert(module, Module::FlipFlop(false));
+        }
+
+        for module in conjunction {
+            let inp = inputs
+                .get(&module)
+                .expect("Inputs for conjunction not found")
+                .iter()
+                .map(|x| (x.clone(), Pulse::Low))
+                .collect::<HashMap<_, _>>();
+            modules.insert(module, Module::Conjunction(inp));
+        }
+        Self { outputs, modules }
     }
 }
 
 impl Solution for AoC2023_20 {
-    // fn part_one(&self) -> String {
-    // }
+    fn part_one(&self) -> String {
+        let mut system = ModuleSystem {
+            outputs: self.outputs.clone(),
+            modules: self.modules.clone(),
+        };
+        let (mut total_low, mut total_high) = (0, 0);
+        for _ in 0..1000 {
+            let (low, high) = system.run();
+            total_high += high;
+            total_low += low;
+        }
+        (total_low * total_high).to_string()
+    }
 
     // fn part_two(&self) -> String {
     // }
@@ -37,13 +170,47 @@ mod test {
     #[test]
     fn aoc2023_20_input_load_test() -> io::Result<()> {
         let sol = AoC2023_20::new()?;
+        assert!(!sol.modules.is_empty());
+        assert!(!sol.outputs.is_empty());
         Ok(())
+    }
+
+    #[test]
+    fn aoc2023_20_ex1_1() {
+        let lines = [
+            "broadcaster -> a, b, c",
+            "%a -> b",
+            "%b -> c",
+            "%c -> inv",
+            "&inv -> a",
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect::<Vec<_>>();
+        let puzzle = AoC2023_20::with_lines(&lines);
+        assert_eq!(puzzle.part_one(), "32000000");
+    }
+
+    #[test]
+    fn aoc2023_20_ex1_2() {
+        let lines = [
+            "broadcaster -> a",
+            "%a -> inv, con",
+            "&inv -> b",
+            "%b -> con",
+            "&con -> output",
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect::<Vec<_>>();
+        let puzzle = AoC2023_20::with_lines(&lines);
+        assert_eq!(puzzle.part_one(), "11687500");
     }
 
     #[test]
     fn aoc2023_20_correctness() -> io::Result<()> {
         let sol = AoC2023_20::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "806332748");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
