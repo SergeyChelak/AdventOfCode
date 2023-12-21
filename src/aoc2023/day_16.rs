@@ -4,14 +4,6 @@ use crate::utils::*;
 use std::collections::{HashSet, VecDeque};
 use std::io;
 
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-enum Direction {
-    Up,
-    Down,
-    Left,
-    Right,
-}
-
 impl Direction {
     fn turn(&self, ch: char) -> Vec<Self> {
         match (ch, self) {

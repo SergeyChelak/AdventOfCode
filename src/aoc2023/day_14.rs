@@ -4,14 +4,6 @@ use crate::utils::*;
 use std::collections::HashMap;
 use std::io;
 
-#[derive(Copy, Clone, PartialEq, Eq)]
-enum Direction {
-    North,
-    South,
-    West,
-    East,
-}
-
 pub struct AoC2023_14 {
     input: Vec<Vec<char>>,
 }
@@ -34,7 +26,7 @@ impl AoC2023_14 {
 impl Solution for AoC2023_14 {
     fn part_one(&self) -> String {
         let mut platform = self.input.clone();
-        slide(Direction::North, &mut platform);
+        slide(Direction::Up, &mut platform);
         total_load(&platform).to_string()
     }
 
@@ -45,10 +37,10 @@ impl Solution for AoC2023_14 {
         let mut map = HashMap::new();
         for i in 0..cycles {
             // north, then west, then south, then east
-            slide(Direction::North, &mut platform);
-            slide(Direction::West, &mut platform);
-            slide(Direction::South, &mut platform);
-            slide(Direction::East, &mut platform);
+            slide(Direction::Up, &mut platform);
+            slide(Direction::Left, &mut platform);
+            slide(Direction::Down, &mut platform);
+            slide(Direction::Right, &mut platform);
             if let Some(from) = map.get(&platform) {
                 let in_loop: &[usize] = &load[*from..];
                 return in_loop[(cycles - i - 1) % in_loop.len()].to_string();
@@ -73,10 +65,10 @@ fn slide(direction: Direction, platform: &mut Vec<Vec<char>>) {
             let mut r = row;
             let mut c = col;
             // remap current row, cols
-            if direction == Direction::South {
+            if direction == Direction::Down {
                 r = rows - row - 1
             };
-            if direction == Direction::East {
+            if direction == Direction::Right {
                 c = cols - col - 1
             }
             if platform[r][c] != 'O' {
@@ -87,16 +79,16 @@ fn slide(direction: Direction, platform: &mut Vec<Vec<char>>) {
                 let prev_r = r;
                 let prev_c = c;
                 match direction {
-                    Direction::North if r > 0 => {
+                    Direction::Up if r > 0 => {
                         r -= 1;
                     }
-                    Direction::South if r < rows - 1 => {
+                    Direction::Down if r < rows - 1 => {
                         r += 1;
                     }
-                    Direction::West if c > 0 => {
+                    Direction::Left if c > 0 => {
                         c -= 1;
                     }
-                    Direction::East if c < cols - 1 => {
+                    Direction::Right if c < cols - 1 => {
                         c += 1;
                     }
                     _ => {}

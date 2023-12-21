@@ -3,13 +3,6 @@ use crate::utils::*;
 
 use std::io;
 
-enum Direction {
-    Up,
-    Down,
-    Left,
-    Right,
-}
-
 impl From<&str> for Direction {
     // The last hexadecimal digit encodes the direction to dig: 0 means R, 1 means D, 2 means L, and 3 means U.
     fn from(value: &str) -> Self {

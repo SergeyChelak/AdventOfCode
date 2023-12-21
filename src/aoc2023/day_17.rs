@@ -13,14 +13,6 @@ struct Point {
     col: usize,
 }
 
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
-enum Direction {
-    Up,
-    Down,
-    Left,
-    Right,
-}
-
 impl Direction {
     fn opposite(&self) -> Self {
         use Direction::*;
