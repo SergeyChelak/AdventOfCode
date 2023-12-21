@@ -85,7 +85,6 @@ impl AoC2023_21 {
 
 impl Solution for AoC2023_21 {
     fn part_one(&self) -> String {
-        // 6298 high
         self.search(64).to_string()
     }
 
@@ -133,7 +132,7 @@ mod test {
     #[test]
     fn aoc2023_21_correctness() -> io::Result<()> {
         let sol = AoC2023_21::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "3532");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
