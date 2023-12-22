@@ -31,10 +31,7 @@ impl Point3d {
 }
 
 #[derive(Debug, Clone)]
-struct Brick {
-    a: Point3d,
-    b: Point3d,
-}
+struct Brick(Point3d, Point3d);
 
 pub struct AoC2023_22 {
     bricks: Vec<Brick>,
@@ -50,10 +47,7 @@ impl AoC2023_22 {
         let bricks = lines
             .iter()
             .map(|s| s.split_once('~').expect("Delimiter not found"))
-            .map(|(a, b)| Brick {
-                a: Point3d::from_csv(a),
-                b: Point3d::from_csv(b),
-            })
+            .map(|(a, b)| Brick(Point3d::from_csv(a), Point3d::from_csv(b)))
             .collect::<Vec<_>>();
         Self { bricks }
     }
@@ -80,6 +74,24 @@ mod test {
         let sol = AoC2023_22::new()?;
         assert!(!sol.bricks.is_empty());
         Ok(())
+    }
+
+    #[test]
+    fn aoc2023_22_ex1() {
+        let input = [
+            "1,0,1~1,2,1",
+            "0,0,2~2,0,2",
+            "0,2,3~2,2,3",
+            "0,0,4~0,2,4",
+            "2,0,5~2,2,5",
+            "0,1,6~2,1,6",
+            "1,1,8~1,1,9",
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect::<Vec<_>>();
+        let puzzle = AoC2023_22::with_lines(&input);
+        assert_eq!(puzzle.part_one(), "5");
     }
 
     #[test]
