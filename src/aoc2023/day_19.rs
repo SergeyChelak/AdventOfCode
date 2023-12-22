@@ -1,9 +1,13 @@
-use crate::{solution::Solution, utils::remove_first_and_last};
+use crate::{
+    solution::Solution,
+    utils::{remove_first_and_last, PlainInterval},
+};
 
 use std::{collections::HashMap, io};
 
 type Int = u64;
 type Part = [Int; 4];
+type Interval = PlainInterval<Int>;
 type Intervals = [Interval; 4];
 
 const RATING_MIN: Int = 1;
@@ -31,43 +35,13 @@ impl From<&str> for Workflow {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-struct Interval {
-    begin: Int,
-    end: Int,
-}
-
 impl Default for Interval {
     fn default() -> Self {
-        Self {
-            begin: RATING_MIN,
-            end: RATING_MAX,
-        }
+        Self::new(RATING_MIN, RATING_MAX)
     }
 }
 
 impl Interval {
-    fn new(begin: Int, end: Int) -> Self {
-        Self { begin, end }
-    }
-
-    fn intersection(&self, other: &Self) -> Option<Self> {
-        let (l, r) = if self.begin < other.begin {
-            (self, other)
-        } else {
-            (other, self)
-        };
-
-        if r.begin > l.end {
-            return None;
-        }
-
-        Some(Interval {
-            begin: self.begin.max(other.begin),
-            end: self.end.min(other.end),
-        })
-    }
-
     fn len(&self) -> Int {
         self.end - self.begin + 1
     }
