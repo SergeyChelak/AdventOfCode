@@ -14,7 +14,7 @@ const MAP_SLOPE_DOWN: char = 'v';
 const MAP_SLOPE_LEFT: char = '<';
 const MAP_SLOPE_RIGHT: char = '>';
 
-type ValidDirections = dyn Fn(char) -> Vec<Direction>;
+type DirectionProvider = dyn Fn(char) -> Vec<Direction>;
 
 pub struct AoC2023_23 {
     maze: Vec<Vec<char>>,
@@ -50,7 +50,7 @@ impl AoC2023_23 {
         self.path_position(row).expect("End position not found")
     }
 
-    fn find_longest_path(&self, valid_dir: &ValidDirections) -> usize {
+    fn find_longest_path(&self, valid_dir: &DirectionProvider) -> usize {
         let mut max = 0usize;
         let start = self.position_start();
         let target = self.position_end();
@@ -69,11 +69,37 @@ impl AoC2023_23 {
 
 impl Solution for AoC2023_23 {
     fn part_one(&self) -> String {
-        self.find_longest_path(&valid_directions_pt1).to_string()
+        let provider = |ch: char| -> Vec<Direction> {
+            match ch {
+                MAP_PATH => vec![
+                    Direction::Up,
+                    Direction::Down,
+                    Direction::Left,
+                    Direction::Right,
+                ],
+                MAP_SLOPE_UP => vec![Direction::Up],
+                MAP_SLOPE_DOWN => vec![Direction::Down],
+                MAP_SLOPE_LEFT => vec![Direction::Left],
+                MAP_SLOPE_RIGHT => vec![Direction::Right],
+                _ => vec![],
+            }
+        };
+        self.find_longest_path(&provider).to_string()
     }
 
     fn part_two(&self) -> String {
-        self.find_longest_path(&valid_directions_pt2).to_string()
+        let provider = |ch: char| -> Vec<Direction> {
+            match ch {
+                MAP_FOREST => vec![],
+                _ => vec![
+                    Direction::Up,
+                    Direction::Down,
+                    Direction::Left,
+                    Direction::Right,
+                ],
+            }
+        };
+        self.find_longest_path(&provider).to_string()
     }
 
     fn description(&self) -> String {
@@ -81,38 +107,10 @@ impl Solution for AoC2023_23 {
     }
 }
 
-fn valid_directions_pt1(ch: char) -> Vec<Direction> {
-    match ch {
-        MAP_PATH => vec![
-            Direction::Up,
-            Direction::Down,
-            Direction::Left,
-            Direction::Right,
-        ],
-        MAP_SLOPE_UP => vec![Direction::Up],
-        MAP_SLOPE_DOWN => vec![Direction::Down],
-        MAP_SLOPE_LEFT => vec![Direction::Left],
-        MAP_SLOPE_RIGHT => vec![Direction::Right],
-        _ => vec![],
-    }
-}
-
-fn valid_directions_pt2(ch: char) -> Vec<Direction> {
-    match ch {
-        MAP_FOREST => vec![],
-        _ => vec![
-            Direction::Up,
-            Direction::Down,
-            Direction::Left,
-            Direction::Right,
-        ],
-    }
-}
-
 fn bt_search(
     map: &[Vec<char>],
     target: &Position,
-    valid_dir: &ValidDirections,
+    provider: &DirectionProvider,
     pos: Position,
     seen: &mut HashSet<Position>,
     acc: usize,
@@ -120,7 +118,6 @@ fn bt_search(
 ) {
     if pos == *target {
         *max = acc.max(*max);
-        // println!("Acc: {acc}, max: {}", max);
         return;
     }
     let Position(row, col) = pos;
@@ -139,8 +136,7 @@ fn bt_search(
     if col < cols - 1 {
         possible.insert(Direction::Right, Position(row, col + 1));
     }
-    let valid_directions = valid_dir(map[row][col]);
-    for dir in valid_directions {
+    for dir in provider(map[row][col]) {
         let Some(next) = possible.get(&dir) else {
             continue;
         };
@@ -151,7 +147,7 @@ fn bt_search(
             continue;
         }
         seen.insert(*next);
-        bt_search(map, target, valid_dir, *next, seen, acc + 1, max);
+        bt_search(map, target, provider, *next, seen, acc + 1, max);
         seen.remove(next);
     }
 }
