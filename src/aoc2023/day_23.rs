@@ -144,6 +144,9 @@ fn bt_search(
         let Some(next) = possible.get(&dir) else {
             continue;
         };
+        if map[next.0][next.1] == MAP_FOREST {
+            continue;
+        }
         if seen.contains(next) {
             continue;
         }
