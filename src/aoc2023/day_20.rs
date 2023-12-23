@@ -110,7 +110,7 @@ impl AoC2023_20 {
             let dest_names = dest.split(", ").map(|s| s.to_string()).collect::<Vec<_>>();
             dest_names.iter().for_each(|key| {
                 let k = key.clone();
-                let entry = inputs.entry(k).or_insert(Vec::new());
+                let entry = inputs.entry(k).or_default();
                 entry.push(name.to_string());
             });
             outputs.insert(name.to_string(), dest_names);
@@ -175,10 +175,8 @@ impl Solution for AoC2023_20 {
         loop {
             cycle += 1;
             let mut callback = |sender: &str, current: &str, pulse: &Pulse| {
-                if current == target && matches!(pulse, Pulse::High) {
-                    if seen.get(sender).is_none() {
-                        seen.insert(sender.to_string(), cycle);
-                    }
+                if current == target && matches!(pulse, Pulse::High) && seen.get(sender).is_none() {
+                    seen.insert(sender.to_string(), cycle);
                 }
             };
             system.perform(&mut callback);

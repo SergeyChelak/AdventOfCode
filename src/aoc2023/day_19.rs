@@ -137,7 +137,7 @@ impl AoC2023_19 {
 
         let parts = parts
             .split_whitespace()
-            .map(|x| Self::parse_ratings(x))
+            .map(Self::parse_ratings)
             .collect::<Vec<_>>();
         let workflows = workflows
             .split_whitespace()
@@ -196,7 +196,7 @@ impl Solution for AoC2023_19 {
         let mut stack = vec![(WORKFLOW_START.to_string(), Intervals::default())];
         while let Some(state) = stack.pop() {
             let id = state.0;
-            let mut current = state.1.clone();
+            let mut current = state.1;
             if id == WORKFLOW_ACCEPT {
                 accepted.push(current);
                 continue;
@@ -209,11 +209,11 @@ impl Solution for AoC2023_19 {
             };
             for rule in &workflow.rules {
                 match rule {
-                    Rule::Jump(next) => stack.push((next.clone(), current.clone())),
+                    Rule::Jump(next) => stack.push((next.clone(), current)),
                     Rule::Operation(_, idx, _, next) => {
                         let interval = rule.interval().unwrap();
                         if let Some(intersection) = interval.intersection(&current[*idx]) {
-                            let mut tmp = current.clone();
+                            let mut tmp = current;
                             tmp[*idx] = intersection;
                             stack.push((next.clone(), tmp));
                         }

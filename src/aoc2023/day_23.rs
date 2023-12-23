@@ -60,7 +60,7 @@ impl AoC2023_23 {
             let mut seen = HashSet::from([*point]);
             while let Some((other, steps)) = stack.pop() {
                 if steps != 0 && branch_points.contains(&other) {
-                    let entry = graph.entry(*point).or_insert(Vec::new());
+                    let entry = graph.entry(*point).or_default();
                     entry.push((other, steps));
                     continue;
                 }
