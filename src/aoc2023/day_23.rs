@@ -14,6 +14,8 @@ const MAP_SLOPE_DOWN: char = 'v';
 const MAP_SLOPE_LEFT: char = '<';
 const MAP_SLOPE_RIGHT: char = '>';
 
+type ValidDirections = dyn Fn(char) -> Vec<Direction>;
+
 pub struct AoC2023_23 {
     maze: Vec<Vec<char>>,
 }
@@ -47,39 +49,31 @@ impl AoC2023_23 {
         let row = self.maze.len() - 1;
         self.path_position(row).expect("End position not found")
     }
+
+    fn find_longest_path(&self, valid_dir: &ValidDirections) -> usize {
+        let mut max = 0usize;
+        let start = self.position_start();
+        let target = self.position_end();
+        bt_search(
+            &self.maze,
+            &target,
+            valid_dir,
+            start,
+            &mut HashSet::new(),
+            0,
+            &mut max,
+        );
+        max
+    }
 }
 
 impl Solution for AoC2023_23 {
     fn part_one(&self) -> String {
-        let mut max = 0usize;
-        let start = self.position_start();
-        let target = self.position_end();
-        bt_search(
-            &self.maze,
-            &target,
-            &valid_directions_pt1,
-            start,
-            &mut HashSet::new(),
-            0,
-            &mut max,
-        );
-        max.to_string()
+        self.find_longest_path(&valid_directions_pt1).to_string()
     }
 
     fn part_two(&self) -> String {
-        let mut max = 0usize;
-        let start = self.position_start();
-        let target = self.position_end();
-        bt_search(
-            &self.maze,
-            &target,
-            &valid_directions_pt2,
-            start,
-            &mut HashSet::new(),
-            0,
-            &mut max,
-        );
-        max.to_string()
+        self.find_longest_path(&valid_directions_pt2).to_string()
     }
 
     fn description(&self) -> String {
@@ -118,7 +112,7 @@ fn valid_directions_pt2(ch: char) -> Vec<Direction> {
 fn bt_search(
     map: &[Vec<char>],
     target: &Position,
-    valid_dir: &dyn Fn(char) -> Vec<Direction>,
+    valid_dir: &ValidDirections,
     pos: Position,
     seen: &mut HashSet<Position>,
     acc: usize,
