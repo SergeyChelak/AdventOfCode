@@ -15,6 +15,7 @@ const MAP_SLOPE_LEFT: char = '<';
 const MAP_SLOPE_RIGHT: char = '>';
 
 type DirectionProvider = dyn Fn(char) -> Vec<Direction>;
+type Graph = HashMap<Position, Vec<(Position, usize)>>;
 
 pub struct AoC2023_23 {
     maze: Vec<Vec<char>>,
@@ -50,20 +51,74 @@ impl AoC2023_23 {
         self.path_position(row).expect("End position not found")
     }
 
-    fn find_longest_path(&self, valid_dir: &DirectionProvider) -> usize {
-        let mut max = 0usize;
-        let start = self.position_start();
-        let target = self.position_end();
-        bt_search(
-            &self.maze,
-            &target,
-            valid_dir,
-            start,
+    fn find_longest_path(&self, provider: &DirectionProvider) -> usize {
+        let branch_points = self.branch_points(provider);
+        // downsize complexity
+        let mut graph = Graph::new();
+        for point in &branch_points {
+            let mut stack = vec![(*point, 0)];
+            let mut seen = HashSet::from([*point]);
+            while let Some((other, steps)) = stack.pop() {
+                if steps != 0 && branch_points.contains(&other) {
+                    let entry = graph.entry(*point).or_insert(Vec::new());
+                    entry.push((other, steps));
+                    continue;
+                }
+                for next in self.adjacent(other, provider) {
+                    if seen.contains(&next) {
+                        continue;
+                    }
+                    seen.insert(next);
+                    stack.push((next, 1 + steps));
+                }
+            }
+        }
+        bfs(
+            &graph,
+            self.position_end(),
+            self.position_start(),
             &mut HashSet::new(),
-            0,
-            &mut max,
-        );
-        max
+        )
+        .expect("Not found")
+    }
+
+    fn branch_points(&self, provider: &DirectionProvider) -> Vec<Position> {
+        let mut result = vec![self.position_start(), self.position_end()];
+        for (r, row) in self.maze.iter().enumerate() {
+            for (c, _) in row.iter().enumerate() {
+                let pos = Position(r, c);
+                let adj = self.adjacent(pos, provider);
+                if adj.len() > 2 {
+                    result.push(pos);
+                }
+            }
+        }
+        result
+    }
+
+    fn adjacent(&self, pos: Position, provider: &DirectionProvider) -> Vec<Position> {
+        let Position(row, col) = pos;
+        let rows = self.maze.len();
+        let cols = self.maze[rows - 1].len();
+        let mut possible: HashMap<Direction, Position> = HashMap::new();
+        if row > 0 {
+            possible.insert(Direction::Up, Position(row - 1, col));
+        }
+        if row < rows - 1 {
+            possible.insert(Direction::Down, Position(row + 1, col));
+        }
+        if col > 0 {
+            possible.insert(Direction::Left, Position(row, col - 1));
+        }
+        if col < cols - 1 {
+            possible.insert(Direction::Right, Position(row, col + 1));
+        }
+        provider(self.maze[row][col])
+            .iter()
+            .filter_map(|dir| possible.get(dir))
+            .filter(|Position(r, c)| self.maze[*r][*c] != MAP_FOREST)
+            .copied()
+            .collect::<Vec<_>>()
     }
 }
 
@@ -107,49 +162,31 @@ impl Solution for AoC2023_23 {
     }
 }
 
-fn bt_search(
-    map: &[Vec<char>],
-    target: &Position,
-    provider: &DirectionProvider,
+fn bfs(
+    graph: &Graph,
+    target: Position,
     pos: Position,
     seen: &mut HashSet<Position>,
-    acc: usize,
-    max: &mut usize,
-) {
-    if pos == *target {
-        *max = acc.max(*max);
-        return;
+) -> Option<usize> {
+    if pos == target {
+        return Some(0);
     }
-    let Position(row, col) = pos;
-    let rows = map.len();
-    let cols = map[rows - 1].len();
-    let mut possible: HashMap<Direction, Position> = HashMap::new();
-    if row > 0 {
-        possible.insert(Direction::Up, Position(row - 1, col));
-    }
-    if row < rows - 1 {
-        possible.insert(Direction::Down, Position(row + 1, col));
-    }
-    if col > 0 {
-        possible.insert(Direction::Left, Position(row, col - 1));
-    }
-    if col < cols - 1 {
-        possible.insert(Direction::Right, Position(row, col + 1));
-    }
-    for dir in provider(map[row][col]) {
-        let Some(next) = possible.get(&dir) else {
-            continue;
-        };
-        if map[next.0][next.1] == MAP_FOREST {
-            continue;
-        }
+    let Some(linked) = graph.get(&pos) else {
+        return None;
+    };
+    let mut res = None;
+    seen.insert(pos);
+    for (next, steps) in linked {
         if seen.contains(next) {
             continue;
         }
-        seen.insert(*next);
-        bt_search(map, target, provider, *next, seen, acc + 1, max);
-        seen.remove(next);
+        if let Some(val) = bfs(graph, target, *next, seen) {
+            let val = steps + val;
+            res = Some(res.unwrap_or(0).max(val));
+        }
     }
+    seen.remove(&pos);
+    res
 }
 
 #[cfg(test)]
