@@ -8,7 +8,7 @@ use std::io;
 struct Position(usize, usize);
 
 const MAP_PATH: char = '.';
-// const MAP_FOREST: char = '#';
+const MAP_FOREST: char = '#';
 const MAP_SLOPE_UP: char = '^';
 const MAP_SLOPE_DOWN: char = 'v';
 const MAP_SLOPE_LEFT: char = '<';
@@ -54,21 +54,71 @@ impl Solution for AoC2023_23 {
         let mut max = 0usize;
         let start = self.position_start();
         let target = self.position_end();
-        bt_search(&self.maze, &target, start, &mut HashSet::new(), 0, &mut max);
+        bt_search(
+            &self.maze,
+            &target,
+            &valid_directions_pt1,
+            start,
+            &mut HashSet::new(),
+            0,
+            &mut max,
+        );
         max.to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut max = 0usize;
+        let start = self.position_start();
+        let target = self.position_end();
+        bt_search(
+            &self.maze,
+            &target,
+            &valid_directions_pt2,
+            start,
+            &mut HashSet::new(),
+            0,
+            &mut max,
+        );
+        max.to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2023/Day 23: A Long Walk".to_string()
     }
 }
 
+fn valid_directions_pt1(ch: char) -> Vec<Direction> {
+    match ch {
+        MAP_PATH => vec![
+            Direction::Up,
+            Direction::Down,
+            Direction::Left,
+            Direction::Right,
+        ],
+        MAP_SLOPE_UP => vec![Direction::Up],
+        MAP_SLOPE_DOWN => vec![Direction::Down],
+        MAP_SLOPE_LEFT => vec![Direction::Left],
+        MAP_SLOPE_RIGHT => vec![Direction::Right],
+        _ => vec![],
+    }
+}
+
+fn valid_directions_pt2(ch: char) -> Vec<Direction> {
+    match ch {
+        MAP_FOREST => vec![],
+        _ => vec![
+            Direction::Up,
+            Direction::Down,
+            Direction::Left,
+            Direction::Right,
+        ],
+    }
+}
+
 fn bt_search(
     map: &[Vec<char>],
     target: &Position,
+    valid_dir: &dyn Fn(char) -> Vec<Direction>,
     pos: Position,
     seen: &mut HashSet<Position>,
     acc: usize,
@@ -76,6 +126,7 @@ fn bt_search(
 ) {
     if pos == *target {
         *max = acc.max(*max);
+        // println!("Acc: {acc}, max: {}", max);
         return;
     }
     let Position(row, col) = pos;
@@ -94,19 +145,7 @@ fn bt_search(
     if col < cols - 1 {
         possible.insert(Direction::Right, Position(row, col + 1));
     }
-    let valid_directions = match map[row][col] {
-        MAP_PATH => vec![
-            Direction::Up,
-            Direction::Down,
-            Direction::Left,
-            Direction::Right,
-        ],
-        MAP_SLOPE_UP => vec![Direction::Up],
-        MAP_SLOPE_DOWN => vec![Direction::Down],
-        MAP_SLOPE_LEFT => vec![Direction::Left],
-        MAP_SLOPE_RIGHT => vec![Direction::Right],
-        _ => vec![],
-    };
+    let valid_directions = valid_dir(map[row][col]);
     for dir in valid_directions {
         let Some(next) = possible.get(&dir) else {
             continue;
@@ -115,7 +154,7 @@ fn bt_search(
             continue;
         }
         seen.insert(*next);
-        bt_search(map, target, *next, seen, acc + 1, max);
+        bt_search(map, target, valid_dir, *next, seen, acc + 1, max);
         seen.remove(next);
     }
 }
@@ -133,6 +172,15 @@ mod test {
 
     #[test]
     fn aoc2023_23_ex1() {
+        assert_eq!(puzzle().part_one(), "94");
+    }
+
+    #[test]
+    fn aoc2023_23_ex2() {
+        assert_eq!(puzzle().part_two(), "154");
+    }
+
+    fn puzzle() -> AoC2023_23 {
         let input = [
             "#.#####################",
             "#.......#########...###",
@@ -161,15 +209,14 @@ mod test {
         .iter()
         .map(|s| s.to_string())
         .collect::<Vec<_>>();
-        let puzzle = AoC2023_23::with_lines(&input);
-        assert_eq!(puzzle.part_one(), "94");
+        AoC2023_23::with_lines(&input)
     }
 
     #[test]
     fn aoc2023_23_correctness() -> io::Result<()> {
         let sol = AoC2023_23::new()?;
         assert_eq!(sol.part_one(), "2442");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "6898");
         Ok(())
     }
 }
