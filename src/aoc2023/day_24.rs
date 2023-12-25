@@ -102,12 +102,6 @@ impl AoC2023_24 {
                 }
                 let Vector3d { x, y, .. } = item2.position(t2);
                 if x > min && x < max && y > min && y < max {
-                    if false {
-                        println!("A: {item1}");
-                        println!("B: {item2}");
-                        println!("intersection x:{x:.3} y:{x:.3}, t1 = {t1:.3}, t2 = {t2:.3}");
-                        println!();
-                    }
                     count += 1;
                 }
             }
@@ -118,7 +112,6 @@ impl AoC2023_24 {
 
 impl Solution for AoC2023_24 {
     fn part_one(&self) -> String {
-        // 25521 h
         self.path_cross_count(200000000000000.0, 400000000000000.0)
             .to_string()
     }
@@ -198,7 +191,7 @@ mod test {
     fn aoc2023_24_correctness() -> io::Result<()> {
         let sol = AoC2023_24::new()?;
         assert_eq!(sol.part_one(), "25433");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "885093461440405");
         Ok(())
     }
 }

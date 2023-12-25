@@ -39,15 +39,77 @@ impl AoC2023_25 {
 }
 
 impl Solution for AoC2023_25 {
-    // fn part_one(&self) -> String {
-    // }
+    fn part_one(&self) -> String {
+        let mut timer = 0;
+        let mut time_in = HashMap::new();
+        let mut time_back = HashMap::new();
+
+        for vertex in self.graph.keys() {
+            if time_in.contains_key(vertex) {
+                continue;
+            }
+            dfs(
+                &self.graph,
+                vertex,
+                None,
+                &mut timer,
+                &mut time_in,
+                &mut time_back,
+            );
+        }
+        todo!()
+    }
 
     fn part_two(&self) -> String {
+        // read here
+        // https://blog.thomasjungblut.com/graph/mincut/mincut/
         "".to_string()
     }
 
     fn description(&self) -> String {
         "AoC 2023/Day 25: Snowverload".to_string()
+    }
+}
+
+type TimeMap = HashMap<String, usize>;
+
+fn dfs(
+    graph: &Graph,
+    vertex: &str,
+    parent: Option<&str>,
+    timer: &mut usize,
+    time_in: &mut TimeMap,
+    time_back: &mut TimeMap,
+) {
+    *timer += 1;
+    time_in.insert(vertex.to_string(), *timer);
+    time_back.insert(vertex.to_string(), *timer);
+    let Some(adjacent) = graph.get(vertex) else {
+        panic!("Not expected case");
+    };
+    for next in adjacent {
+        if parent
+            .and_then(|p| if p == next { Some(p) } else { None })
+            .is_some()
+        {
+            continue;
+        }
+        if let Some(next_in) = time_in.get(next) {
+            let v_back = time_back.get(vertex).expect("Vertex should be visited (3)");
+            time_back.insert(vertex.to_string(), *v_back.min(next_in));
+        } else {
+            dfs(graph, next, Some(vertex), timer, time_in, time_back);
+
+            let next_back = time_back.get(next).expect("Next should be visited");
+            let v_in = time_in.get(vertex).expect("Vertex should be visited (2)");
+            if next_back > v_in {
+                println!("Bridge {vertex} - {next}");
+            } else {
+                println!("{vertex} {next_back} - {next} {v_in}");
+            }
+            let v_back = time_back.get(vertex).expect("Vertex should be visited (1)");
+            time_back.insert(vertex.to_string(), *v_back.min(next_back));
+        }
     }
 }
 
@@ -58,7 +120,11 @@ mod test {
     #[test]
     fn aoc2023_25_input_load_test() -> io::Result<()> {
         let sol = AoC2023_25::new()?;
-        assert!(!sol.graph.is_empty());
+        let graph = sol.graph;
+        assert!(!graph.is_empty());
+        for (_, adj) in graph {
+            assert!(!adj.is_empty());
+        }
         Ok(())
     }
 
@@ -89,7 +155,7 @@ mod test {
     #[test]
     fn aoc2023_25_correctness() -> io::Result<()> {
         let sol = AoC2023_25::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "562772");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
