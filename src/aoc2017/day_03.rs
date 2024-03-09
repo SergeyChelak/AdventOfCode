@@ -102,7 +102,7 @@ fn spiral_sum(num: u32) -> u32 {
     }
 }
 
-fn adj_sum(matrix: &Vec<Vec<u32>>, x: usize, y: usize) -> u32 {
+fn adj_sum(matrix: &[Vec<u32>], x: usize, y: usize) -> u32 {
     let mut sum = 0;
     let dim = matrix.len();
     let x_inc = x < dim - 1;

@@ -1,4 +1,5 @@
 use std::io;
+use std::ops::Deref;
 use std::time::Instant;
 mod solution;
 mod utils;
@@ -27,13 +28,14 @@ fn main() -> io::Result<()> {
                 execute(
                     solutions
                         .get(day - 1)
-                        .expect("Day number should be between 1 and 25"),
+                        .expect("Day number should be between 1 and 25")
+                        .deref(),
                 );
             }
         }
         _ => {
             if let Ok(day) = &aoc2023::last_day() {
-                execute(day);
+                execute(day.deref());
             }
         }
     }
@@ -52,12 +54,12 @@ fn collection(year: &str) -> io::Result<Vec<Box<dyn Solution>>> {
 }
 
 fn run_collection(days: io::Result<Vec<Box<dyn Solution>>>) {
-    days.expect("Data isn't valid").iter().for_each(execute);
+    days.expect("Data isn't valid")
+        .iter()
+        .for_each(|x| execute(x.deref()));
 }
 
-// TODO: rewrite
-#[allow(clippy::borrowed_box)]
-fn execute(solution: &Box<dyn Solution>) {
+fn execute(solution: &dyn Solution) {
     println!();
     println!("{}", solution.description());
     let measure = |part: u8, proc: &dyn Fn() -> String| {

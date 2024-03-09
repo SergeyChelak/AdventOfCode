@@ -145,7 +145,7 @@ impl Solution for AoC2016_08 {
 }
 
 #[allow(clippy::needless_range_loop)]
-fn print(inp: &Vec<Vec<bool>>) {
+fn print(inp: &[Vec<bool>]) {
     for i in 0..inp.len() {
         for ch in &inp[i] {
             print!("{}", if *ch { '#' } else { ' ' });
@@ -178,30 +178,30 @@ mod test {
         let mut display = Display::new(7, 3);
         {
             display.execute(&Operation::Rect(3, 2));
-            let pixels = convert(&vec!["###....", "###....", "......."]);
+            let pixels = convert(&["###....", "###....", "......."]);
             assert!(is_equal(&pixels, &display.pixels));
         }
         {
             // rotate column x=1 by 1
             display.execute(&Operation::RotateCol(1, 1));
-            let pixels = convert(&vec!["#.#....", "###....", ".#....."]);
+            let pixels = convert(&["#.#....", "###....", ".#....."]);
             assert!(is_equal(&pixels, &display.pixels));
         }
         {
             // rotate row y=0 by 4
             display.execute(&Operation::RotateRow(0, 4));
-            let pixels = convert(&vec!["....#.#", "###....", ".#....."]);
+            let pixels = convert(&["....#.#", "###....", ".#....."]);
             assert!(is_equal(&pixels, &display.pixels));
         }
         {
             // rotate column x=1 by 1
             display.execute(&Operation::RotateCol(1, 1));
-            let pixels = convert(&vec![".#..#.#", "#.#....", ".#....."]);
+            let pixels = convert(&[".#..#.#", "#.#....", ".#....."]);
             assert!(is_equal(&pixels, &display.pixels));
         }
     }
 
-    fn is_equal(a: &Vec<Vec<bool>>, b: &Vec<Vec<bool>>) -> bool {
+    fn is_equal(a: &[Vec<bool>], b: &[Vec<bool>]) -> bool {
         if a.len() != b.len() {
             return false;
         }
@@ -218,7 +218,7 @@ mod test {
         true
     }
 
-    fn convert(inp: &Vec<&str>) -> Vec<Vec<bool>> {
+    fn convert(inp: &[&str]) -> Vec<Vec<bool>> {
         let mut result = vec![];
         for i in 0..inp.len() {
             result.push(vec![]);

@@ -57,7 +57,7 @@ impl Solution for AoC2023_14 {
     }
 }
 
-fn slide(direction: Direction, platform: &mut Vec<Vec<char>>) {
+fn slide(direction: Direction, platform: &mut [Vec<char>]) {
     let rows = platform.len();
     for row in 0..rows {
         let cols = platform[row].len();

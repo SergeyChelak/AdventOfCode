@@ -52,7 +52,7 @@ impl AoC2015_09 {
         Distance(cities[0].to_string(), cities[1].to_string(), weight)
     }
 
-    fn calc_distance(&self, nums: &Vec<usize>) -> Option<usize> {
+    fn calc_distance(&self, nums: &[usize]) -> Option<usize> {
         let mut sum = 0usize;
         for i in 0..nums.len() - 1 {
             if let Some(dist) = self.graph.get(&(nums[i], nums[i + 1])) {

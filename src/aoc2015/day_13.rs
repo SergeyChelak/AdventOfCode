@@ -28,7 +28,7 @@ impl Helper {
         }
     }
 
-    fn fit(&self, order: &Vec<usize>) -> Option<i32> {
+    fn fit(&self, order: &[usize]) -> Option<i32> {
         let mut sum = 0i32;
         let n = order.len();
         for i in 0..n {
