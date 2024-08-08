@@ -222,16 +222,13 @@ impl Battlefield {
             Elem::Empty | Elem::Wall => false,
             Elem::Unit(unit_type, _) => pos_type != *unit_type,
         });
-        let Some(min) = adj
+        let min = adj
             .iter()
             .map(|p| match self.get(p) {
                 Elem::Unit(_, hp) => hp,
                 _ => panic!("Unexpected element type for attack"),
             })
-            .min()
-        else {
-            return None;
-        };
+            .min()?;
         adj.into_iter().find(|p| {
             let Elem::Unit(_, hp) = self.get(p) else {
                 return false;

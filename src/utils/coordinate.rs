@@ -74,18 +74,10 @@ impl<T: Ord + Copy + AddAssign + SubAssign> Bounds<T> {
 
 /// Returns top left and bottom right points
 pub fn bounds<T: Ord + Copy>(points: &[Point2d<T>]) -> Option<Bounds<T>> {
-    let Some(min_x) = points.iter().map(|p| p.x).min() else {
-        return None;
-    };
-    let Some(min_y) = points.iter().map(|p| p.y).min() else {
-        return None;
-    };
-    let Some(max_x) = points.iter().map(|p| p.x).max() else {
-        return None;
-    };
-    let Some(max_y) = points.iter().map(|p| p.y).max() else {
-        return None;
-    };
+    let min_x = points.iter().map(|p| p.x).min()?;
+    let min_y = points.iter().map(|p| p.y).min()?;
+    let max_x = points.iter().map(|p| p.x).max()?;
+    let max_y = points.iter().map(|p| p.y).max()?;
     Some(Bounds {
         low: Point2d { x: min_x, y: min_y },
         high: Point2d { x: max_x, y: max_y },

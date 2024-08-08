@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use crate::solution::Solution;
 use crate::utils::*;
 
