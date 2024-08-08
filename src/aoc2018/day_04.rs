@@ -7,7 +7,7 @@ use std::io;
 use chrono::{NaiveDateTime, Timelike};
 
 enum Event {
-    Begin(NaiveDateTime, usize),
+    Begin(usize),
     WakeUp(NaiveDateTime),
     Asleep(NaiveDateTime),
 }
@@ -26,7 +26,7 @@ impl Event {
                 let id = tokens[1][1..]
                     .parse::<usize>()
                     .expect("Failed to parse guard id");
-                Self::Begin(date, id)
+                Self::Begin(id)
             }
             _ => panic!("Unexpected token {}", tokens[0]),
         }
@@ -66,7 +66,7 @@ impl AoC2018_04 {
                         *x += 1;
                     }
                 }
-                Event::Begin(_, id) => guard_id = *id,
+                Event::Begin(id) => guard_id = *id,
             };
         }
         timeline

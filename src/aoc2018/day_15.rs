@@ -20,7 +20,7 @@ enum Elem {
 enum AttackOutcome {
     None,
     Died(UnitType),
-    Loss(UnitType),
+    Loss,
 }
 
 impl AttackOutcome {
@@ -119,7 +119,7 @@ impl Battlefield {
         };
         let new_hp = hp - self.get_attack_power(pos);
         let updated_item = if new_hp > 0 {
-            outcome = AttackOutcome::Loss(elem_type);
+            outcome = AttackOutcome::Loss;
             Elem::Unit(elem_type, new_hp)
         } else {
             outcome = AttackOutcome::Died(elem_type);
