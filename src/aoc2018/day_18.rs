@@ -37,9 +37,30 @@ impl AoC2018_18 {
     }
 
     fn compute(&self, minutes: usize) -> usize {
+        let mut hashes = HashMap::<u64, usize>::new();
         let mut state = self.input.clone();
-        (0..minutes).for_each(|_| state = update(&state));
-        resource_value(&state)
+        let mut values = Vec::new();
+        let mut offset: Option<usize> = None;
+        let mut period: Option<usize> = None;
+        for step in 0..=minutes {
+            let hash = hash(&state);
+            if let Some(prev) = hashes.get(&hash) {
+                period = Some(step - prev);
+                offset = Some(*prev);
+                break;
+            }
+            let value = resource_value(&state);
+            values.push(value);
+            hashes.insert(hash, step);
+            state = update(&state);
+        }
+
+        if let (Some(offset), Some(period)) = (offset, period) {
+            let pos = (minutes - offset) % period;
+            values[pos + offset]
+        } else {
+            *values.last().unwrap()
+        }
     }
 }
 
@@ -49,27 +70,7 @@ impl Solution for AoC2018_18 {
     }
 
     fn part_two(&self) -> String {
-        let mut hashes = HashMap::<u64, usize>::new();
-        let minutes = 1_000_000_000;
-        let mut state = self.input.clone();
-        let mut values = Vec::new();
-        let mut offset = 0;
-        let mut period = 0;
-        for step in 0..minutes {
-            let hash = hash(&state);
-            if let Some(prev) = hashes.get(&hash) {
-                println!("found a loop at {}, prev step {}", step, prev);
-                period = step - prev;
-                offset = *prev;
-                break;
-            }
-            let value = resource_value(&state);
-            values.push(value);
-            hashes.insert(hash, step);
-            state = update(&state);
-        }
-        let pos = (minutes - offset) % period;
-        values[pos + offset].to_string()
+        self.compute(1_000_000_000).to_string()
     }
 
     fn description(&self) -> String {
@@ -258,19 +259,5 @@ mod test {
             "||||#|||||",
             "||||||||||",
         ])
-    }
-
-    fn dump(input: &Area) {
-        input.iter().for_each(|arr| {
-            arr.iter().for_each(|x| {
-                let ch = match *x {
-                    Acre::Lumberyard => "#",
-                    Acre::Trees => "|",
-                    Acre::OpenGround => ".",
-                };
-                print!("{ch}");
-            });
-            println!();
-        })
     }
 }
