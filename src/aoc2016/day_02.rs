@@ -35,7 +35,7 @@ impl Solution for AoC2016_02 {
 
     fn part_two(&self) -> String {
         let x = '\0';
-        let keypad = vec![
+        let keypad = [
             vec![x, x, '1', x, x],
             vec![x, '2', '3', '4', x],
             vec!['5', '6', '7', '8', '9'],

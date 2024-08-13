@@ -129,7 +129,7 @@ impl AoC2018_17 {
                         })
                     } else {
                         merged.iter().for_each(|coord| {
-                            if map.get(coord).is_none() && !flow.contains(coord) {
+                            if !map.contains_key(coord) && !flow.contains(coord) {
                                 flow.push(*coord);
                             }
                             map.insert(*coord, Scan::FlowingWater);

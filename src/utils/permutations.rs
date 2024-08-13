@@ -9,9 +9,9 @@ pub struct PermutationIterator<T> {
 }
 
 impl<T: Copy> PermutationIterator<T> {
-    pub fn from_array(array: &Vec<T>) -> Self {
+    pub fn from_array(array: &[T]) -> Self {
         Self {
-            a: array.clone(),
+            a: array.to_owned(),
             c: vec![0; array.len()],
             i: 0,
         }

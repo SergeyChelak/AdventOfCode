@@ -175,7 +175,7 @@ impl Solution for AoC2023_20 {
         loop {
             cycle += 1;
             let mut callback = |sender: &str, current: &str, pulse: &Pulse| {
-                if current == target && matches!(pulse, Pulse::High) && seen.get(sender).is_none() {
+                if current == target && matches!(pulse, Pulse::High) && !seen.contains_key(sender) {
                     seen.insert(sender.to_string(), cycle);
                 }
             };

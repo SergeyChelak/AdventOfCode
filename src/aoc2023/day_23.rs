@@ -36,9 +36,7 @@ impl AoC2023_23 {
     }
 
     fn path_position(&self, row: usize) -> Option<Position> {
-        let Some(col) = self.maze[row].iter().position(|x| *x == MAP_PATH) else {
-            return None;
-        };
+        let col = self.maze[row].iter().position(|x| *x == MAP_PATH)?;
         Some(Position(row, col))
     }
 
@@ -171,9 +169,7 @@ fn bfs(
     if pos == target {
         return Some(0);
     }
-    let Some(linked) = graph.get(&pos) else {
-        return None;
-    };
+    let linked = graph.get(&pos)?;
     let mut res = None;
     seen.insert(pos);
     for (next, steps) in linked {

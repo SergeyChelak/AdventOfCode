@@ -205,7 +205,7 @@ impl Battlefield {
         }
         let mut enemy_pos = enemy?;
         while let Some(p) = path.get(&enemy_pos) {
-            if path.get(p).is_some() {
+            if path.contains_key(p) {
                 enemy_pos = *p;
             } else {
                 break;
