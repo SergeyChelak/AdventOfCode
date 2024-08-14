@@ -3,9 +3,12 @@ use crate::utils::*;
 
 use std::io;
 
+use super::machine::{Instruction, Machine, Operation};
+
+#[derive(Clone)]
 struct InputData {
     program: Vec<Instruction>,
-    ip_bind_reg: usize,
+    bind_reg: usize,
 }
 
 impl TryFrom<Vec<String>> for InputData {
@@ -18,7 +21,7 @@ impl TryFrom<Vec<String>> for InputData {
             if s.starts_with("#ip") {
                 ip_bind_reg = parse_ip_bound(&s);
             } else {
-                let instr = Instruction::try_from(s.as_str())?;
+                let instr = instruction_from(s.as_str())?;
                 program.push(instr);
             }
         }
@@ -27,7 +30,7 @@ impl TryFrom<Vec<String>> for InputData {
         };
         Ok(InputData {
             program,
-            ip_bind_reg,
+            bind_reg: ip_bind_reg,
         })
     }
 }
@@ -51,8 +54,26 @@ impl AoC2018_19 {
 }
 
 impl Solution for AoC2018_19 {
-    // fn part_one(&self) -> String {
-    // }
+    fn part_one(&self) -> String {
+        let mut machine = Machine::default();
+        let mut ip = 0usize;
+        let bind_reg = self.input.bind_reg;
+        loop {
+            let Some(&instruction) = self.input.program.get(ip) else {
+                break;
+            };
+            machine.exec(instruction);
+            if machine.last_modified_register() == Some(bind_reg) {
+                ip = machine.reg(bind_reg) as usize;
+            }
+            ip += 1;
+            if ip >= self.input.program.len() {
+                break;
+            }
+            machine.set_reg(bind_reg, ip as i32);
+        }
+        machine.reg(0).to_string()
+    }
 
     // fn part_two(&self) -> String {
     // }
@@ -65,106 +86,25 @@ impl Solution for AoC2018_19 {
 #[derive(Debug)]
 enum SolutionError {
     UnexpectedInstructionFormat,
-    UnknownInstruction(String),
-    NonIntegerArgumentValue(String),
+    UnknownInstruction,
+    NonIntegerArgumentValue,
     IpNotBound,
 }
 
-type Registers = [i32; 6];
-type Arguments = [i32; 4];
-
-enum InstructionId {
-    Addr,
-    Addi,
-    Mulr,
-    Muli,
-    Banr,
-    Bani,
-    Borr,
-    Bori,
-    Setr,
-    Seti,
-    Gtir,
-    Gtri,
-    Gtrr,
-    Eqir,
-    Eqri,
-    Eqrr,
-}
-
-impl TryFrom<&str> for InstructionId {
-    type Error = SolutionError;
-
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
-        use InstructionId::*;
-        match value {
-            "addr" => Ok(Addr),
-            "addi" => Ok(Addi),
-            "mulr" => Ok(Mulr),
-            "muli" => Ok(Muli),
-            "banr" => Ok(Banr),
-            "bani" => Ok(Bani),
-            "borr" => Ok(Borr),
-            "bori" => Ok(Bori),
-            "setr" => Ok(Setr),
-            "seti" => Ok(Seti),
-            "gtir" => Ok(Gtir),
-            "gtri" => Ok(Gtri),
-            "gtrr" => Ok(Gtrr),
-            "eqir" => Ok(Eqir),
-            "eqri" => Ok(Eqri),
-            "eqrr" => Ok(Eqrr),
-            _ => Err(SolutionError::UnknownInstruction(value.to_owned())),
-        }
+fn instruction_from(value: &str) -> Result<Instruction, SolutionError> {
+    let tokens = value.split(' ').collect::<Vec<&str>>();
+    if tokens.len() != 4 {
+        return Err(SolutionError::UnexpectedInstructionFormat);
     }
-}
-
-struct Instruction {
-    id: InstructionId,
-    args: Arguments,
-}
-
-impl TryFrom<&str> for Instruction {
-    type Error = SolutionError;
-
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
-        let tokens = value.split(' ').collect::<Vec<&str>>();
-        if tokens.len() != 4 {
-            return Err(SolutionError::UnexpectedInstructionFormat);
-        }
-        let id = InstructionId::try_from(tokens[0])?;
-        let mut args = [0; 4];
-        for (i, val) in tokens[1..].iter().enumerate() {
-            args[i] = val
-                .parse::<i32>()
-                .map_err(|x| SolutionError::NonIntegerArgumentValue(x.to_string()))?
-        }
-        Ok(Instruction { id, args })
+    let mut result = [0; 4];
+    for (i, val) in tokens[1..].iter().enumerate() {
+        result[i + 1] = val
+            .parse::<i32>()
+            .map_err(|_| SolutionError::NonIntegerArgumentValue)?
     }
-}
-
-struct Machine {
-    ip: i32,
-    registers: Registers,
-    program: Vec<Instruction>,
-}
-
-impl Machine {
-    fn new(ip_bind_reg: usize, program: Vec<Instruction>) -> Self {
-        Self {
-            ip: 0,
-            registers: Default::default(),
-            program: Default::default(),
-        }
-    }
-
-    fn run(&mut self) {
-        loop {
-            if self.ip < 0 && self.ip as usize >= self.program.len() {
-                break;
-            }
-        }
-    }
+    let id = Operation::try_from(tokens[0]).map_err(|_| SolutionError::UnknownInstruction)? as i32;
+    result[0] = id;
+    Ok(result)
 }
 
 #[cfg(test)]
@@ -179,9 +119,29 @@ mod test {
     }
 
     #[test]
+    fn aoc2018_19_case_1() {
+        let program = [
+            "#ip 0",
+            "seti 5 0 1",
+            "seti 6 0 2",
+            "addi 0 1 0",
+            "addr 1 2 3",
+            "setr 1 0 0",
+            "seti 8 0 4",
+            "seti 9 0 5",
+        ]
+        .iter()
+        .map(|x| x.to_string())
+        .collect::<Vec<String>>();
+        let input = InputData::try_from(program).ok().unwrap();
+        let sol = AoC2018_19 { input };
+        assert_eq!("6", sol.part_one())
+    }
+
+    #[test]
     fn aoc2018_19_correctness() -> io::Result<()> {
         let sol = AoC2018_19::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "2640");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }

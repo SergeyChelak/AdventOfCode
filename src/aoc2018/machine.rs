@@ -11,6 +11,15 @@ pub struct Machine {
     args: Instruction,
     instruction: Vec<&'static MachineInstruction>,
     mapping: HashMap<i32, usize>,
+    last_modified_register: Option<usize>,
+}
+
+impl Default for Machine {
+    fn default() -> Self {
+        let mut machine = Self::new();
+        machine.set_default_mapping();
+        machine
+    }
 }
 
 impl Machine {
@@ -38,7 +47,14 @@ impl Machine {
             args: Instruction::default(),
             instruction,
             mapping: HashMap::new(),
+            last_modified_register: None,
         }
+    }
+
+    fn set_default_mapping(&mut self) {
+        (0..self.instruction.len()).for_each(|i| {
+            self.mapping.insert(i as i32, i);
+        });
     }
 
     fn addr(&mut self) {
@@ -231,8 +247,17 @@ impl Machine {
         self.reg[index]
     }
 
-    fn set_reg(&mut self, index: usize, value: i32) {
+    pub fn regs(&self) -> &Registers {
+        &self.reg
+    }
+
+    pub fn set_reg(&mut self, index: usize, value: i32) {
         self.reg[index] = value;
+        self.last_modified_register = Some(index);
+    }
+
+    pub fn last_modified_register(&self) -> Option<usize> {
+        self.last_modified_register
     }
 }
 
@@ -241,4 +266,52 @@ pub struct TraceData {
     pub before: Registers,
     pub instr: Instruction,
     pub after: Registers,
+}
+
+#[derive(Clone)]
+#[repr(C)]
+pub enum Operation {
+    Addr,
+    Addi,
+    Mulr,
+    Muli,
+    Banr,
+    Bani,
+    Borr,
+    Bori,
+    Setr,
+    Seti,
+    Gtir,
+    Gtri,
+    Gtrr,
+    Eqir,
+    Eqri,
+    Eqrr,
+}
+
+impl TryFrom<&str> for Operation {
+    type Error = String;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        use Operation::*;
+        match value {
+            "addr" => Ok(Addr),
+            "addi" => Ok(Addi),
+            "mulr" => Ok(Mulr),
+            "muli" => Ok(Muli),
+            "banr" => Ok(Banr),
+            "bani" => Ok(Bani),
+            "borr" => Ok(Borr),
+            "bori" => Ok(Bori),
+            "setr" => Ok(Setr),
+            "seti" => Ok(Seti),
+            "gtir" => Ok(Gtir),
+            "gtri" => Ok(Gtri),
+            "gtrr" => Ok(Gtrr),
+            "eqir" => Ok(Eqir),
+            "eqri" => Ok(Eqri),
+            "eqrr" => Ok(Eqrr),
+            _ => Err(format!("Unknown operation {}", value)),
+        }
+    }
 }
