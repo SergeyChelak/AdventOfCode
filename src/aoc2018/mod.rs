@@ -1,5 +1,7 @@
 use super::solution::Solution;
 
+mod machine;
+
 mod day_01;
 use day_01::*;
 

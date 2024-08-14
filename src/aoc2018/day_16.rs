@@ -1,208 +1,9 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::collections::{HashMap, HashSet};
 use std::io;
 
-type MachineInstruction = dyn Fn(&mut Machine);
-
-struct Machine {
-    reg: Registers,
-    args: Instruction,
-    instruction: Vec<&'static MachineInstruction>,
-    mapping: HashMap<i32, usize>,
-}
-
-impl Machine {
-    fn new() -> Self {
-        let instruction: Vec<&'static MachineInstruction> = vec![
-            &Self::addr,
-            &Self::addi,
-            &Self::mulr,
-            &Self::muli,
-            &Self::banr,
-            &Self::bani,
-            &Self::borr,
-            &Self::bori,
-            &Self::setr,
-            &Self::seti,
-            &Self::gtir,
-            &Self::gtri,
-            &Self::gtrr,
-            &Self::eqir,
-            &Self::eqri,
-            &Self::eqrr,
-        ];
-        Self {
-            reg: Registers::default(),
-            args: Instruction::default(),
-            instruction,
-            mapping: HashMap::new(),
-        }
-    }
-
-    fn addr(&mut self) {
-        // addr (add register) stores into register C the result of adding register A and register B.
-        self.reg[self.idx_c()] = self.reg[self.idx_a()] + self.reg[self.idx_b()];
-    }
-
-    fn addi(&mut self) {
-        // addi (add immediate) stores into register C the result of adding register A and value B.
-        self.reg[self.idx_c()] = self.reg[self.idx_a()] + self.val_b();
-    }
-
-    fn mulr(&mut self) {
-        // mulr (multiply register) stores into register C the result of multiplying register A and register B.
-        self.reg[self.idx_c()] = self.reg[self.idx_a()] * self.reg[self.idx_b()];
-    }
-
-    fn muli(&mut self) {
-        // muli (multiply immediate) stores into register C the result of multiplying register A and value B.
-        self.reg[self.idx_c()] = self.reg[self.idx_a()] * self.val_b();
-    }
-
-    fn banr(&mut self) {
-        // banr (bitwise AND register) stores into register C the result of the bitwise AND of register A and register B.
-        self.reg[self.idx_c()] = self.reg[self.idx_a()] & self.reg[self.idx_b()];
-    }
-
-    fn bani(&mut self) {
-        // bani (bitwise AND immediate) stores into register C the result of the bitwise AND of register A and value B.
-        self.reg[self.idx_c()] = self.reg[self.idx_a()] & self.val_b();
-    }
-
-    fn borr(&mut self) {
-        // borr (bitwise OR register) stores into register C the result of the bitwise OR of register A and register B.
-        self.reg[self.idx_c()] = self.reg[self.idx_a()] | self.reg[self.idx_b()];
-    }
-
-    fn bori(&mut self) {
-        // bori (bitwise OR immediate) stores into register C the result of the bitwise OR of register A and value B.
-        self.reg[self.idx_c()] = self.reg[self.idx_a()] | self.val_b();
-    }
-
-    fn setr(&mut self) {
-        // setr (set register) copies the contents of register A into register C. (Input B is ignored.)
-        self.reg[self.idx_c()] = self.reg[self.idx_a()]
-    }
-
-    fn seti(&mut self) {
-        // seti (set immediate) stores value A into register C. (Input B is ignored.)
-        self.reg[self.idx_c()] = self.val_a();
-    }
-
-    fn gtir(&mut self) {
-        // gtir (greater-than immediate/register) sets register C to 1 if value A is greater than register B. Otherwise, register C is set to 0.
-        self.reg[self.idx_c()] = (self.val_a() > self.reg[self.idx_b()]) as i32
-    }
-
-    fn gtri(&mut self) {
-        // gtri (greater-than register/immediate) sets register C to 1 if register A is greater than value B. Otherwise, register C is set to 0.
-        self.reg[self.idx_c()] = (self.reg[self.idx_a()] > self.val_b()) as i32
-    }
-
-    fn gtrr(&mut self) {
-        // gtrr (greater-than register/register) sets register C to 1 if register A is greater than register B. Otherwise, register C is set to 0.
-        self.reg[self.idx_c()] = (self.reg[self.idx_a()] > self.reg[self.idx_b()]) as i32
-    }
-
-    fn eqir(&mut self) {
-        // eqir (equal immediate/register) sets register C to 1 if value A is equal to register B. Otherwise, register C is set to 0.
-        self.reg[self.idx_c()] = (self.val_a() == self.reg[self.idx_b()]) as i32
-    }
-
-    fn eqri(&mut self) {
-        // eqri (equal register/immediate) sets register C to 1 if register A is equal to value B. Otherwise, register C is set to 0.
-        self.reg[self.idx_c()] = (self.reg[self.idx_a()] == self.val_b()) as i32
-    }
-
-    fn eqrr(&mut self) {
-        // eqrr (equal register/register) sets register C to 1 if register A is equal to register B. Otherwise, register C is set to 0.
-        self.reg[self.idx_c()] = (self.reg[self.idx_a()] == self.reg[self.idx_b()]) as i32
-    }
-
-    // Accessors
-    fn idx_a(&self) -> usize {
-        self.args[1] as usize
-    }
-
-    fn idx_b(&self) -> usize {
-        self.args[2] as usize
-    }
-
-    fn idx_c(&self) -> usize {
-        self.args[3] as usize
-    }
-
-    fn val_a(&self) -> i32 {
-        self.args[1]
-    }
-
-    fn val_b(&self) -> i32 {
-        self.args[2]
-    }
-
-    // -------
-    fn ambiguous_count(&mut self, data: &TraceData) -> usize {
-        let mut count = 0usize;
-        for f in self.instruction.clone() {
-            self.reg = data.before;
-            self.args = data.instr;
-            f(self);
-            if self.reg == data.after {
-                count += 1;
-            }
-        }
-        count
-    }
-
-    // -------
-    fn try_remap(&mut self, data: &TraceData) {
-        let opcode = data.instr[0];
-        if self.mapping.contains_key(&opcode) {
-            return;
-        }
-        let mapped = self.mapping.values().cloned().collect::<HashSet<usize>>();
-        let mut count = 0usize;
-        let mut idx = 0usize;
-        for (i, f) in self.instruction.clone().iter().enumerate() {
-            if mapped.contains(&i) {
-                continue;
-            }
-            self.reg = data.before;
-            self.args = data.instr;
-            f(self);
-            if self.reg == data.after {
-                count += 1;
-                idx = i;
-            }
-        }
-        if count == 1 {
-            self.mapping.insert(opcode, idx);
-        }
-    }
-
-    fn reset(&mut self) {
-        self.reg.iter_mut().for_each(|x| *x = 0);
-    }
-
-    fn exec(&mut self, args: Instruction) {
-        let opcode = args[0];
-        self.args = args;
-        let Some(idx) = self.mapping.get(&opcode) else {
-            panic!("Instruction {opcode} not mapped!")
-        };
-        self.instruction[*idx](self)
-    }
-
-    fn instructions_count(&self) -> usize {
-        self.instruction.len()
-    }
-
-    fn remap_count(&self) -> usize {
-        self.mapping.len()
-    }
-}
+use super::machine::{Instruction, Machine, Registers, TraceData, REGISTERS_COUNT};
 
 #[derive(Clone, Copy, Debug)]
 enum ParserState {
@@ -210,16 +11,6 @@ enum ParserState {
     Separator(usize),
     Log(TraceData),
     Instruction,
-}
-
-type Registers = [i32; 4];
-type Instruction = [i32; 4];
-
-#[derive(Default, Clone, Copy, Debug)]
-struct TraceData {
-    before: Registers,
-    instr: Instruction,
-    after: Registers,
 }
 
 struct Parser {
@@ -281,15 +72,18 @@ impl Parser {
 
     fn parse_reg_values(s: &str) -> Registers {
         let (_, values) = s.split_once(": ").expect("Invalid before/after state");
+        let mut registers = [0; REGISTERS_COUNT];
         remove_first_and_last(values.trim())
             .split(", ")
             .map(|c| {
                 let error = format!("Register should be int values {}", c);
                 c.parse::<i32>().expect(&error)
             })
-            .collect::<Vec<i32>>()
-            .try_into()
-            .expect("Amount for registers is incorrect")
+            .enumerate()
+            .for_each(|(i, val)| {
+                registers[i] = val;
+            });
+        registers
     }
 
     fn parse_instruction(s: &str) -> Instruction {
@@ -350,7 +144,7 @@ impl Solution for AoC2018_16 {
         );
         machine.reset();
         self.input_2.iter().for_each(|arg| machine.exec(*arg));
-        machine.reg[0].to_string()
+        machine.reg(0).to_string()
     }
 
     fn description(&self) -> String {
