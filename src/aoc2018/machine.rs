@@ -43,82 +43,106 @@ impl Machine {
 
     fn addr(&mut self) {
         // addr (add register) stores into register C the result of adding register A and register B.
-        self.reg[self.idx_c()] = self.reg[self.idx_a()] + self.reg[self.idx_b()];
+        self.set_reg(
+            self.idx_c(),
+            self.reg[self.idx_a()] + self.reg[self.idx_b()],
+        );
     }
 
     fn addi(&mut self) {
         // addi (add immediate) stores into register C the result of adding register A and value B.
-        self.reg[self.idx_c()] = self.reg[self.idx_a()] + self.val_b();
+        self.set_reg(self.idx_c(), self.reg[self.idx_a()] + self.val_b());
     }
 
     fn mulr(&mut self) {
         // mulr (multiply register) stores into register C the result of multiplying register A and register B.
-        self.reg[self.idx_c()] = self.reg[self.idx_a()] * self.reg[self.idx_b()];
+        self.set_reg(
+            self.idx_c(),
+            self.reg[self.idx_a()] * self.reg[self.idx_b()],
+        );
     }
 
     fn muli(&mut self) {
         // muli (multiply immediate) stores into register C the result of multiplying register A and value B.
-        self.reg[self.idx_c()] = self.reg[self.idx_a()] * self.val_b();
+        self.set_reg(self.idx_c(), self.reg[self.idx_a()] * self.val_b());
     }
 
     fn banr(&mut self) {
         // banr (bitwise AND register) stores into register C the result of the bitwise AND of register A and register B.
-        self.reg[self.idx_c()] = self.reg[self.idx_a()] & self.reg[self.idx_b()];
+        self.set_reg(
+            self.idx_c(),
+            self.reg[self.idx_a()] & self.reg[self.idx_b()],
+        );
     }
 
     fn bani(&mut self) {
         // bani (bitwise AND immediate) stores into register C the result of the bitwise AND of register A and value B.
-        self.reg[self.idx_c()] = self.reg[self.idx_a()] & self.val_b();
+        self.set_reg(self.idx_c(), self.reg[self.idx_a()] & self.val_b());
     }
 
     fn borr(&mut self) {
         // borr (bitwise OR register) stores into register C the result of the bitwise OR of register A and register B.
-        self.reg[self.idx_c()] = self.reg[self.idx_a()] | self.reg[self.idx_b()];
+        self.set_reg(
+            self.idx_c(),
+            self.reg[self.idx_a()] | self.reg[self.idx_b()],
+        );
     }
 
     fn bori(&mut self) {
         // bori (bitwise OR immediate) stores into register C the result of the bitwise OR of register A and value B.
-        self.reg[self.idx_c()] = self.reg[self.idx_a()] | self.val_b();
+        self.set_reg(self.idx_c(), self.reg[self.idx_a()] | self.val_b());
     }
 
     fn setr(&mut self) {
         // setr (set register) copies the contents of register A into register C. (Input B is ignored.)
-        self.reg[self.idx_c()] = self.reg[self.idx_a()]
+        self.set_reg(self.idx_c(), self.reg[self.idx_a()])
     }
 
     fn seti(&mut self) {
         // seti (set immediate) stores value A into register C. (Input B is ignored.)
-        self.reg[self.idx_c()] = self.val_a();
+        self.set_reg(self.idx_c(), self.val_a());
     }
 
     fn gtir(&mut self) {
         // gtir (greater-than immediate/register) sets register C to 1 if value A is greater than register B. Otherwise, register C is set to 0.
-        self.reg[self.idx_c()] = (self.val_a() > self.reg[self.idx_b()]) as i32
+        self.set_reg(self.idx_c(), (self.val_a() > self.reg[self.idx_b()]) as i32)
     }
 
     fn gtri(&mut self) {
         // gtri (greater-than register/immediate) sets register C to 1 if register A is greater than value B. Otherwise, register C is set to 0.
-        self.reg[self.idx_c()] = (self.reg[self.idx_a()] > self.val_b()) as i32
+        self.set_reg(self.idx_c(), (self.reg[self.idx_a()] > self.val_b()) as i32)
     }
 
     fn gtrr(&mut self) {
         // gtrr (greater-than register/register) sets register C to 1 if register A is greater than register B. Otherwise, register C is set to 0.
-        self.reg[self.idx_c()] = (self.reg[self.idx_a()] > self.reg[self.idx_b()]) as i32
+        self.set_reg(
+            self.idx_c(),
+            (self.reg[self.idx_a()] > self.reg[self.idx_b()]) as i32,
+        )
     }
 
     fn eqir(&mut self) {
         // eqir (equal immediate/register) sets register C to 1 if value A is equal to register B. Otherwise, register C is set to 0.
-        self.reg[self.idx_c()] = (self.val_a() == self.reg[self.idx_b()]) as i32
+        self.set_reg(
+            self.idx_c(),
+            (self.val_a() == self.reg[self.idx_b()]) as i32,
+        )
     }
 
     fn eqri(&mut self) {
         // eqri (equal register/immediate) sets register C to 1 if register A is equal to value B. Otherwise, register C is set to 0.
-        self.reg[self.idx_c()] = (self.reg[self.idx_a()] == self.val_b()) as i32
+        self.set_reg(
+            self.idx_c(),
+            (self.reg[self.idx_a()] == self.val_b()) as i32,
+        )
     }
 
     fn eqrr(&mut self) {
         // eqrr (equal register/register) sets register C to 1 if register A is equal to register B. Otherwise, register C is set to 0.
-        self.reg[self.idx_c()] = (self.reg[self.idx_a()] == self.reg[self.idx_b()]) as i32
+        self.set_reg(
+            self.idx_c(),
+            (self.reg[self.idx_a()] == self.reg[self.idx_b()]) as i32,
+        )
     }
 
     // Accessors
@@ -207,7 +231,7 @@ impl Machine {
         self.reg[index]
     }
 
-    pub fn write_reg(&mut self, index: usize, value: i32) {
+    fn set_reg(&mut self, index: usize, value: i32) {
         self.reg[index] = value;
     }
 }
