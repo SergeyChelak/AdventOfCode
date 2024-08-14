@@ -18,20 +18,20 @@ fn main() -> io::Result<()> {
     let values = (args.get(1), args.get(2));
     match values {
         (Some(year), None) => {
-            let solutions = collection(year);
+            let solutions = collection(year)?;
             run_collection(solutions);
         }
         (Some(year), Some(day)) => {
-            let solutions = collection(year);
-            let day = day.parse::<usize>();
-            if let (Ok(solutions), Ok(day)) = (&solutions, day) {
-                execute(
-                    solutions
-                        .get(day - 1)
-                        .expect("Day number should be between 1 and 25")
-                        .deref(),
-                );
-            }
+            let solutions = collection(year)?;
+            let day = day
+                .parse::<usize>()
+                .map_err(|x| io::Error::new(io::ErrorKind::Other, x))?;
+            execute(
+                solutions
+                    .get(day - 1)
+                    .expect("Day number should be between 1 and 25")
+                    .deref(),
+            );
         }
         _ => {
             if let Ok(day) = &aoc2023::last_day() {
@@ -53,10 +53,8 @@ fn collection(year: &str) -> io::Result<Vec<Box<dyn Solution>>> {
     }
 }
 
-fn run_collection(days: io::Result<Vec<Box<dyn Solution>>>) {
-    days.expect("Data isn't valid")
-        .iter()
-        .for_each(|x| execute(x.deref()));
+fn run_collection(days: Vec<Box<dyn Solution>>) {
+    days.iter().for_each(|x| execute(x.deref()));
 }
 
 fn execute(solution: &dyn Solution) {
