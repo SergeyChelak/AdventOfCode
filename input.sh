@@ -3,7 +3,7 @@
 AOC_SESSION=$(cat etc/session)
 
 if [ "$#" -ne 2 ]; then
-    echo "Year and day are required argments"
+    echo "Year and day are required arguments"
     exit 1
 fi
 
