@@ -3,7 +3,7 @@ use crate::utils::*;
 
 use std::io;
 
-use super::machine::{Instruction, Machine, Registers, TraceData, REGISTERS_COUNT};
+use super::machine::{Instruction, Machine, MachineInt, Registers, TraceData, REGISTERS_COUNT};
 
 #[derive(Clone, Copy, Debug)]
 enum ParserState {
@@ -77,7 +77,7 @@ impl Parser {
             .split(", ")
             .map(|c| {
                 let error = format!("Register should be int values {}", c);
-                c.parse::<i32>().expect(&error)
+                c.parse::<MachineInt>().expect(&error)
             })
             .enumerate()
             .for_each(|(i, val)| {
@@ -89,10 +89,10 @@ impl Parser {
     fn parse_instruction(s: &str) -> Instruction {
         s.split(' ')
             .map(|x| {
-                x.parse::<i32>()
+                x.parse::<MachineInt>()
                     .expect("Instruction values should be integers")
             })
-            .collect::<Vec<i32>>()
+            .collect::<Vec<MachineInt>>()
             .try_into()
             .expect("Amount of instruction parameters is invalid")
     }

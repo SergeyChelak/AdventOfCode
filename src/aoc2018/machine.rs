@@ -1,8 +1,9 @@
 use std::collections::{HashMap, HashSet};
 
 pub const REGISTERS_COUNT: usize = 6;
-pub type Registers = [i32; REGISTERS_COUNT];
-pub type Instruction = [i32; 4];
+pub type MachineInt = isize;
+pub type Registers = [MachineInt; REGISTERS_COUNT];
+pub type Instruction = [MachineInt; 4];
 
 type MachineInstruction = dyn Fn(&mut Machine);
 
@@ -10,8 +11,9 @@ pub struct Machine {
     reg: Registers,
     args: Instruction,
     instruction: Vec<&'static MachineInstruction>,
-    mapping: HashMap<i32, usize>,
+    mapping: HashMap<MachineInt, usize>,
     last_modified_register: Option<usize>,
+    debug: bool,
 }
 
 impl Default for Machine {
@@ -48,16 +50,74 @@ impl Machine {
             instruction,
             mapping: HashMap::new(),
             last_modified_register: None,
+            debug: false,
         }
     }
 
     fn set_default_mapping(&mut self) {
         (0..self.instruction.len()).for_each(|i| {
-            self.mapping.insert(i as i32, i);
+            self.mapping.insert(i as MachineInt, i);
         });
     }
 
+    pub fn set_debug(&mut self, is_enabled: bool) {
+        self.debug = is_enabled;
+    }
+
+    fn debug(&self, name: &str) {
+        if !self.debug {
+            return;
+        }
+        let transl = match name {
+            "seti" => {
+                // seti (set immediate) stores value A into register C. (Input B is ignored.)
+                format!("R{} = {}", self.idx_c(), self.val_a())
+            }
+            "addr" => {
+                // addr (add register) stores into register C the result of adding register A and register B.
+                format!("R{} = R{} + R{}", self.idx_c(), self.idx_a(), self.idx_b())
+            }
+            "addi" => {
+                // addi (add immediate) stores into register C the result of adding register A and value B.
+                format!("R{} = R{} + {}", self.idx_c(), self.idx_a(), self.val_b())
+            }
+            "mulr" => {
+                format!("R{} = R{} * R{}", self.idx_c(), self.idx_a(), self.idx_b())
+            }
+            "gtrr" => {
+                // gtrr (greater-than register/register) sets register C to 1 if register A is greater than register B. Otherwise, register C is set to 0.
+                format!(
+                    "R{} = R{} > R{} ? 1 : 0",
+                    self.idx_c(),
+                    self.idx_a(),
+                    self.idx_b()
+                )
+            }
+            "eqrr" => {
+                format!(
+                    "R{} = R{} == R{} ? 1 : 0",
+                    self.idx_c(),
+                    self.idx_a(),
+                    self.idx_b(),
+                )
+            }
+            "muli" => {
+                // muli (multiply immediate) stores into register C the result of multiplying register A and value B.
+                format!("R{} = R{} * {}", self.idx_c(), self.idx_a(), self.val_b())
+            }
+            _ => {
+                format!("")
+            }
+        };
+        print!(
+            "{name} {} {} {}\t{transl:25}",
+            self.args[1], self.args[2], self.args[3]
+        );
+        println!("\t{:?}", self.reg);
+    }
+
     fn addr(&mut self) {
+        self.debug("addr");
         // addr (add register) stores into register C the result of adding register A and register B.
         self.set_reg(
             self.idx_c(),
@@ -66,11 +126,13 @@ impl Machine {
     }
 
     fn addi(&mut self) {
+        self.debug("addi");
         // addi (add immediate) stores into register C the result of adding register A and value B.
         self.set_reg(self.idx_c(), self.reg[self.idx_a()] + self.val_b());
     }
 
     fn mulr(&mut self) {
+        self.debug("mulr");
         // mulr (multiply register) stores into register C the result of multiplying register A and register B.
         self.set_reg(
             self.idx_c(),
@@ -79,11 +141,13 @@ impl Machine {
     }
 
     fn muli(&mut self) {
+        self.debug("muli");
         // muli (multiply immediate) stores into register C the result of multiplying register A and value B.
         self.set_reg(self.idx_c(), self.reg[self.idx_a()] * self.val_b());
     }
 
     fn banr(&mut self) {
+        self.debug("banr");
         // banr (bitwise AND register) stores into register C the result of the bitwise AND of register A and register B.
         self.set_reg(
             self.idx_c(),
@@ -92,11 +156,13 @@ impl Machine {
     }
 
     fn bani(&mut self) {
+        self.debug("bani");
         // bani (bitwise AND immediate) stores into register C the result of the bitwise AND of register A and value B.
         self.set_reg(self.idx_c(), self.reg[self.idx_a()] & self.val_b());
     }
 
     fn borr(&mut self) {
+        self.debug("borr");
         // borr (bitwise OR register) stores into register C the result of the bitwise OR of register A and register B.
         self.set_reg(
             self.idx_c(),
@@ -105,60 +171,75 @@ impl Machine {
     }
 
     fn bori(&mut self) {
+        self.debug("bori");
         // bori (bitwise OR immediate) stores into register C the result of the bitwise OR of register A and value B.
         self.set_reg(self.idx_c(), self.reg[self.idx_a()] | self.val_b());
     }
 
     fn setr(&mut self) {
+        self.debug("setr");
         // setr (set register) copies the contents of register A into register C. (Input B is ignored.)
-        self.set_reg(self.idx_c(), self.reg[self.idx_a()])
+        self.set_reg(self.idx_c(), self.reg[self.idx_a()]);
     }
 
     fn seti(&mut self) {
+        self.debug("seti");
         // seti (set immediate) stores value A into register C. (Input B is ignored.)
         self.set_reg(self.idx_c(), self.val_a());
     }
 
     fn gtir(&mut self) {
+        self.debug("gtir");
         // gtir (greater-than immediate/register) sets register C to 1 if value A is greater than register B. Otherwise, register C is set to 0.
-        self.set_reg(self.idx_c(), (self.val_a() > self.reg[self.idx_b()]) as i32)
+        self.set_reg(
+            self.idx_c(),
+            (self.val_a() > self.reg[self.idx_b()]) as MachineInt,
+        );
     }
 
     fn gtri(&mut self) {
+        self.debug("gtri");
         // gtri (greater-than register/immediate) sets register C to 1 if register A is greater than value B. Otherwise, register C is set to 0.
-        self.set_reg(self.idx_c(), (self.reg[self.idx_a()] > self.val_b()) as i32)
+        self.set_reg(
+            self.idx_c(),
+            (self.reg[self.idx_a()] > self.val_b()) as MachineInt,
+        );
     }
 
     fn gtrr(&mut self) {
+        self.debug("gtrr");
         // gtrr (greater-than register/register) sets register C to 1 if register A is greater than register B. Otherwise, register C is set to 0.
         self.set_reg(
             self.idx_c(),
-            (self.reg[self.idx_a()] > self.reg[self.idx_b()]) as i32,
-        )
+            (self.reg[self.idx_a()] > self.reg[self.idx_b()]) as MachineInt,
+        );
     }
 
     fn eqir(&mut self) {
+        self.debug("eqir");
         // eqir (equal immediate/register) sets register C to 1 if value A is equal to register B. Otherwise, register C is set to 0.
         self.set_reg(
             self.idx_c(),
-            (self.val_a() == self.reg[self.idx_b()]) as i32,
-        )
+            (self.val_a() == self.reg[self.idx_b()]) as MachineInt,
+        );
     }
 
     fn eqri(&mut self) {
+        self.debug("eqri");
         // eqri (equal register/immediate) sets register C to 1 if register A is equal to value B. Otherwise, register C is set to 0.
         self.set_reg(
             self.idx_c(),
-            (self.reg[self.idx_a()] == self.val_b()) as i32,
-        )
+            (self.reg[self.idx_a()] == self.val_b()) as MachineInt,
+        );
     }
 
     fn eqrr(&mut self) {
+        self.debug("eqrr");
         // eqrr (equal register/register) sets register C to 1 if register A is equal to register B. Otherwise, register C is set to 0.
         self.set_reg(
             self.idx_c(),
-            (self.reg[self.idx_a()] == self.reg[self.idx_b()]) as i32,
-        )
+            (self.reg[self.idx_a()] == self.reg[self.idx_b()]) as MachineInt,
+        );
     }
 
     // Accessors
@@ -174,11 +255,11 @@ impl Machine {
         self.args[3] as usize
     }
 
-    fn val_a(&self) -> i32 {
+    fn val_a(&self) -> MachineInt {
         self.args[1]
     }
 
-    fn val_b(&self) -> i32 {
+    fn val_b(&self) -> MachineInt {
         self.args[2]
     }
 
@@ -243,7 +324,7 @@ impl Machine {
         self.mapping.len()
     }
 
-    pub fn reg(&self, index: usize) -> i32 {
+    pub fn reg(&self, index: usize) -> MachineInt {
         self.reg[index]
     }
 
@@ -251,7 +332,7 @@ impl Machine {
         &self.reg
     }
 
-    pub fn set_reg(&mut self, index: usize, value: i32) {
+    pub fn set_reg(&mut self, index: usize, value: MachineInt) {
         self.reg[index] = value;
         self.last_modified_register = Some(index);
     }

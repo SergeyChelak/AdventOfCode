@@ -1,5 +1,5 @@
-use crate::solution::Solution;
 use crate::utils::*;
+use crate::{aoc2018::machine::MachineInt, solution::Solution};
 
 use std::io;
 
@@ -51,14 +51,14 @@ impl AoC2018_19 {
             .map_err(|err| io::Error::new(io::ErrorKind::Other, format!("{:?}", err)))?;
         Ok(Self { input })
     }
-}
 
-impl Solution for AoC2018_19 {
-    fn part_one(&self) -> String {
-        let mut machine = Machine::default();
+    fn exec(&self, machine: &mut Machine, breakpoint: Option<usize>) {
         let mut ip = 0usize;
         let bind_reg = self.input.bind_reg;
         loop {
+            if Some(ip) == breakpoint {
+                break;
+            }
             let Some(&instruction) = self.input.program.get(ip) else {
                 break;
             };
@@ -70,17 +70,45 @@ impl Solution for AoC2018_19 {
             if ip >= self.input.program.len() {
                 break;
             }
-            machine.set_reg(bind_reg, ip as i32);
+            machine.set_reg(bind_reg, ip as MachineInt);
         }
+    }
+}
+
+impl Solution for AoC2018_19 {
+    fn part_one(&self) -> String {
+        let mut machine = Machine::default();
+        self.exec(&mut machine, None);
         machine.reg(0).to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut machine = Machine::default();
+        machine.set_reg(0, 1);
+        self.exec(&mut machine, Some(1));
+        reversed_func_improved(machine.reg(2)).to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2018/Day 19: Go With The Flow".to_string()
     }
+}
+
+fn reversed_func_improved(r2: MachineInt) -> MachineInt {
+    let mut r0 = 0;
+    for r3 in 1..=r2 {
+        for r1 in 1..=r2 {
+            let val = r3 * r1;
+            if val > r2 {
+                break;
+            }
+            if val == r2 {
+                r0 += r3;
+                break;
+            }
+        }
+    }
+    r0
 }
 
 #[derive(Debug)]
@@ -99,10 +127,11 @@ fn instruction_from(value: &str) -> Result<Instruction, SolutionError> {
     let mut result = [0; 4];
     for (i, val) in tokens[1..].iter().enumerate() {
         result[i + 1] = val
-            .parse::<i32>()
+            .parse::<MachineInt>()
             .map_err(|_| SolutionError::NonIntegerArgumentValue)?
     }
-    let id = Operation::try_from(tokens[0]).map_err(|_| SolutionError::UnknownInstruction)? as i32;
+    let id = Operation::try_from(tokens[0]).map_err(|_| SolutionError::UnknownInstruction)?
+        as MachineInt;
     result[0] = id;
     Ok(result)
 }
@@ -142,7 +171,7 @@ mod test {
     fn aoc2018_19_correctness() -> io::Result<()> {
         let sol = AoC2018_19::new()?;
         assert_eq!(sol.part_one(), "2640");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "27024480");
         Ok(())
     }
 }
