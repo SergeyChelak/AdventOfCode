@@ -60,7 +60,7 @@ impl Machine {
         });
     }
 
-    pub fn set_debug(&mut self, is_enabled: bool) {
+    pub fn _set_debug(&mut self, is_enabled: bool) {
         self.debug = is_enabled;
     }
 
@@ -106,7 +106,7 @@ impl Machine {
                 format!("R{} = R{} * {}", self.idx_c(), self.idx_a(), self.val_b())
             }
             _ => {
-                format!("")
+                format!("! {} ? ? ?", name)
             }
         };
         print!(
@@ -328,7 +328,7 @@ impl Machine {
         self.reg[index]
     }
 
-    pub fn regs(&self) -> &Registers {
+    pub fn _regs(&self) -> &Registers {
         &self.reg
     }
 

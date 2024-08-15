@@ -111,7 +111,7 @@ impl<T> PlainInterval<T>
 where
     T: Copy + Ord,
 {
-    pub fn with_disordered(begin: T, end: T) -> Self {
+    pub fn _with_disordered(begin: T, end: T) -> Self {
         Self {
             begin: begin.min(end),
             end: end.max(begin),
