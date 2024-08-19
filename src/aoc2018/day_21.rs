@@ -2,7 +2,7 @@ use crate::aoc2018::machine::Machine;
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::io;
+use std::{collections::HashSet, io, isize};
 
 use super::machine::MachineProgram;
 
@@ -23,8 +23,6 @@ impl Solution for AoC2018_21 {
     fn part_one(&self) -> String {
         let mut value: Option<isize> = None;
         let mut machine = Machine::with_program(&self.input);
-        // machine.set_debug(true);
-        // machine.debug_disasm();
         while machine.exec_cycle() {
             if machine.ip() == 28 {
                 value = Some(machine.reg(4));
@@ -34,8 +32,25 @@ impl Solution for AoC2018_21 {
         value.map(|x| x.to_string()).unwrap_or_default()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut set = HashSet::new();
+        let mut value: Option<isize> = None;
+        let mut machine = Machine::with_program(&self.input);
+        loop {
+            if machine.ip() == 28 {
+                let reg = machine.reg(4);
+                if set.contains(&reg) {
+                    break;
+                }
+                set.insert(reg);
+                value = Some(reg);
+            }
+            if !machine.exec_cycle() {
+                break;
+            }
+        }
+        value.map(|x| x.to_string()).unwrap_or_default()
+    }
 
     fn description(&self) -> String {
         "AoC 2018/Day 21: Chronal Conversion".to_string()
@@ -57,7 +72,7 @@ mod test {
     fn aoc2018_21_correctness() -> io::Result<()> {
         let sol = AoC2018_21::new()?;
         assert_eq!(sol.part_one(), "7129803");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "12284643");
         Ok(())
     }
 }

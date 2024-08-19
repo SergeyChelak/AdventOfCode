@@ -376,6 +376,7 @@ impl Machine {
 
     pub fn reset(&mut self) {
         self.reg.iter_mut().for_each(|x| *x = 0);
+        self.ip = 0;
     }
 
     pub fn exec_instruction(&mut self, args: Instruction) {
