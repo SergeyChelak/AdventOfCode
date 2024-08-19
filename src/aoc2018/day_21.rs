@@ -2,7 +2,7 @@ use crate::aoc2018::machine::Machine;
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::{collections::HashSet, io, isize};
+use std::{collections::HashSet, io};
 
 use super::machine::MachineProgram;
 

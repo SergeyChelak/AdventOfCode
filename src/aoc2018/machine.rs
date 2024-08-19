@@ -80,11 +80,11 @@ impl Machine {
         });
     }
 
-    pub fn set_debug(&mut self, is_enabled: bool) {
+    pub fn _set_debug(&mut self, is_enabled: bool) {
         self.debug = is_enabled;
     }
 
-    pub fn debug_disasm(&mut self) {
+    pub fn _debug_disasm(&mut self) {
         for (ip, instr) in self.program.clone().iter().enumerate() {
             print!("{ip:4} ");
             self.exec_instruction(*instr)
