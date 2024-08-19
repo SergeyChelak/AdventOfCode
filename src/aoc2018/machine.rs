@@ -80,18 +80,39 @@ impl Machine {
         });
     }
 
-    pub fn _set_debug(&mut self, is_enabled: bool) {
+    pub fn set_debug(&mut self, is_enabled: bool) {
         self.debug = is_enabled;
+    }
+
+    pub fn debug_disasm(&mut self) {
+        for (ip, instr) in self.program.clone().iter().enumerate() {
+            print!("{ip:4} ");
+            self.exec_instruction(*instr)
+        }
     }
 
     fn debug(&self, name: &str) {
         if !self.debug {
             return;
         }
-        let transl = match name {
+        let formatted = self.debug_format_instruction(name);
+        let translated = self.debug_translate_instruction(name);
+        println!("{formatted:25} {translated:25} {:?}", self.reg);
+    }
+
+    fn debug_format_instruction(&self, name: &str) -> String {
+        format!("{name} {} {} {}", self.args[1], self.args[2], self.args[3])
+    }
+
+    fn debug_translate_instruction(&self, name: &str) -> String {
+        match name {
             "seti" => {
                 // seti (set immediate) stores value A into register C. (Input B is ignored.)
                 format!("R{} = {}", self.idx_c(), self.val_a())
+            }
+            "setr" => {
+                // setr (set register) copies the contents of register A into register C. (Input B is ignored.)
+                format!("R{} = R{}", self.idx_c(), self.idx_a())
             }
             "addr" => {
                 // addr (add register) stores into register C the result of adding register A and register B.
@@ -125,15 +146,36 @@ impl Machine {
                 // muli (multiply immediate) stores into register C the result of multiplying register A and value B.
                 format!("R{} = R{} * {}", self.idx_c(), self.idx_a(), self.val_b())
             }
+            "bani" => {
+                // bani (bitwise AND immediate) stores into register C the result of the bitwise AND of register A and value B.
+                format!("R{} = R{} & {}", self.idx_c(), self.idx_a(), self.val_b())
+            }
+            "eqri" => {
+                // eqri (equal register/immediate) sets register C to 1 if register A is equal to value B. Otherwise, register C is set to 0.
+                format!(
+                    "R{} = R{} == {} ? 1 : 0",
+                    self.idx_c(),
+                    self.idx_a(),
+                    self.val_b(),
+                )
+            }
+            "gtir" => {
+                // gtir (greater-than immediate/register) sets register C to 1 if value A is greater than register B. Otherwise, register C is set to 0.
+                format!(
+                    "R{} = {} > R{} ? 1 : 0",
+                    self.idx_c(),
+                    self.val_a(),
+                    self.idx_b(),
+                )
+            }
+            "bori" => {
+                // bori (bitwise OR immediate) stores into register C the result of the bitwise OR of register A and value B.
+                format!("R{} = R{} | {}", self.idx_c(), self.idx_a(), self.val_b(),)
+            }
             _ => {
                 format!("! {} ? ? ?", name)
             }
-        };
-        print!(
-            "{name} {} {} {}\t{transl:25}",
-            self.args[1], self.args[2], self.args[3]
-        );
-        println!("\t{:?}", self.reg);
+        }
     }
 
     fn addr(&mut self) {
