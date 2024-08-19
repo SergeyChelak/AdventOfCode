@@ -12,21 +12,22 @@ impl AoC2015_01 {
         let input = read_file_as_chars("input/aoc2015_01")?;
         Ok(Self { input })
     }
+
+    fn input_iter(&self) -> impl Iterator<Item = i32> + '_ {
+        self.input.iter().map(|ch| if *ch == '(' { 1 } else { -1 })
+    }
 }
 
 impl Solution for AoC2015_01 {
     fn part_one(&self) -> String {
-        self.input
-            .iter()
-            .fold(0isize, |acc, val| acc + if *val == '(' { 1 } else { -1 })
-            .to_string()
+        self.input_iter().sum::<i32>().to_string()
     }
 
     fn part_two(&self) -> String {
-        let mut level = 0isize;
+        let mut level = 0;
         let mut index: Option<usize> = None;
-        for i in 0..self.input.len() {
-            level += if self.input[i] == '(' { 1 } else { -1 };
+        for (i, val) in self.input_iter().enumerate() {
+            level += val;
             if level == -1 {
                 index = Some(1 + i);
                 break;
