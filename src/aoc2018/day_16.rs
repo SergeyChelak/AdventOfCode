@@ -143,7 +143,9 @@ impl Solution for AoC2018_16 {
             "Failed to remap instructions"
         );
         machine.reset();
-        self.input_2.iter().for_each(|arg| machine.exec(*arg));
+        self.input_2
+            .iter()
+            .for_each(|arg| machine.exec_instruction(*arg));
         machine.reg(0).to_string()
     }
 

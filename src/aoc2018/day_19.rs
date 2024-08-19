@@ -3,52 +3,41 @@ use crate::{aoc2018::machine::MachineInt, solution::Solution};
 
 use std::io;
 
-use super::machine::{InputData, Machine};
+use super::machine::{Machine, MachineProgram};
 
 pub struct AoC2018_19 {
-    input: InputData,
+    input: MachineProgram,
 }
 
 impl AoC2018_19 {
     pub fn new() -> io::Result<Self> {
         let lines = read_file_as_lines("input/aoc2018_19")?;
-        let input = InputData::try_from(lines)
+        let input = MachineProgram::try_from(lines)
             .map_err(|err| io::Error::new(io::ErrorKind::Other, format!("{:?}", err)))?;
         Ok(Self { input })
     }
 
     fn exec(&self, machine: &mut Machine, breakpoint: Option<usize>) {
-        let mut ip = 0usize;
-        let bind_reg = self.input.bind_reg;
         loop {
-            if Some(ip) == breakpoint {
+            if Some(machine.ip()) == breakpoint {
                 break;
             }
-            let Some(&instruction) = self.input.program.get(ip) else {
-                break;
-            };
-            machine.exec(instruction);
-            if machine.last_modified_register() == Some(bind_reg) {
-                ip = machine.reg(bind_reg) as usize;
-            }
-            ip += 1;
-            if ip >= self.input.program.len() {
+            if !machine.exec_cycle() {
                 break;
             }
-            machine.set_reg(bind_reg, ip as MachineInt);
         }
     }
 }
 
 impl Solution for AoC2018_19 {
     fn part_one(&self) -> String {
-        let mut machine = Machine::default();
+        let mut machine = Machine::with_program(&self.input);
         self.exec(&mut machine, None);
         machine.reg(0).to_string()
     }
 
     fn part_two(&self) -> String {
-        let mut machine = Machine::default();
+        let mut machine = Machine::with_program(&self.input);
         machine.set_reg(0, 1);
         self.exec(&mut machine, Some(1));
         reversed_func_improved(machine.reg(2)).to_string()
@@ -102,7 +91,7 @@ mod test {
         .iter()
         .map(|x| x.to_string())
         .collect::<Vec<String>>();
-        let input = InputData::try_from(program).ok().unwrap();
+        let input = MachineProgram::try_from(program).ok().unwrap();
         let sol = AoC2018_19 { input };
         assert_eq!("6", sol.part_one())
     }

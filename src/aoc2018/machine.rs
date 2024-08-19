@@ -16,6 +16,9 @@ pub enum MachineError {
 }
 
 pub struct Machine {
+    ip: usize,
+    program: Vec<Instruction>,
+    bind_reg: Option<usize>,
     reg: Registers,
     args: Instruction,
     instruction: Vec<&'static MachineInstruction>,
@@ -33,6 +36,12 @@ impl Default for Machine {
 }
 
 impl Machine {
+    pub fn with_program(program: &MachineProgram) -> Self {
+        let mut machine = Self::default();
+        machine.set_program(program);
+        machine
+    }
+
     pub fn new() -> Self {
         let instruction: Vec<&'static MachineInstruction> = vec![
             &Self::addr,
@@ -53,6 +62,9 @@ impl Machine {
             &Self::eqrr,
         ];
         Self {
+            ip: 0,
+            program: Vec::default(),
+            bind_reg: None,
             reg: Registers::default(),
             args: Instruction::default(),
             instruction,
@@ -271,6 +283,15 @@ impl Machine {
         self.args[2]
     }
 
+    pub fn ip(&self) -> usize {
+        self.ip
+    }
+
+    fn set_program(&mut self, mp: &MachineProgram) {
+        self.program = mp.program.clone();
+        self.bind_reg = Some(mp.bind_reg);
+    }
+
     // -------
     pub fn ambiguous_count(&mut self, data: &TraceData) -> usize {
         let mut count = 0usize;
@@ -315,13 +336,33 @@ impl Machine {
         self.reg.iter_mut().for_each(|x| *x = 0);
     }
 
-    pub fn exec(&mut self, args: Instruction) {
+    pub fn exec_instruction(&mut self, args: Instruction) {
         let opcode = args[0];
         self.args = args;
         let Some(idx) = self.mapping.get(&opcode) else {
             panic!("Instruction {opcode} not mapped!")
         };
         self.instruction[*idx](self)
+    }
+
+    pub fn exec_cycle(&mut self) -> bool {
+        let Some(&instruction) = self.program.get(self.ip) else {
+            return false;
+        };
+        self.exec_instruction(instruction);
+        let Some(bind_reg) = self.bind_reg else {
+            self.ip += 1;
+            return true;
+        };
+        if self.last_modified_register() == Some(bind_reg) {
+            self.ip = self.reg(bind_reg) as usize;
+        }
+        self.ip += 1;
+        if self.ip >= self.program.len() {
+            return false;
+        }
+        self.set_reg(bind_reg, self.ip as MachineInt);
+        true
     }
 
     pub fn instructions_count(&self) -> usize {
@@ -406,12 +447,12 @@ impl TryFrom<&str> for Operation {
 }
 
 #[derive(Clone)]
-pub struct InputData {
+pub struct MachineProgram {
     pub program: Vec<Instruction>,
     pub bind_reg: usize,
 }
 
-impl TryFrom<Vec<String>> for InputData {
+impl TryFrom<Vec<String>> for MachineProgram {
     type Error = MachineError;
 
     fn try_from(value: Vec<String>) -> Result<Self, Self::Error> {
@@ -428,7 +469,7 @@ impl TryFrom<Vec<String>> for InputData {
         let Some(ip_bind_reg) = ip_bind_reg else {
             return Err(MachineError::IpNotBound);
         };
-        Ok(InputData {
+        Ok(MachineProgram {
             program,
             bind_reg: ip_bind_reg,
         })
