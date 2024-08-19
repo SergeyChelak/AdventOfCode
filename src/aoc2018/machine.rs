@@ -7,6 +7,14 @@ pub type Instruction = [MachineInt; 4];
 
 type MachineInstruction = dyn Fn(&mut Machine);
 
+#[derive(Debug)]
+pub enum MachineError {
+    UnexpectedInstructionFormat,
+    UnknownInstruction,
+    NonIntegerArgumentValue,
+    IpNotBound,
+}
+
 pub struct Machine {
     reg: Registers,
     args: Instruction,
@@ -395,4 +403,56 @@ impl TryFrom<&str> for Operation {
             _ => Err(format!("Unknown operation {}", value)),
         }
     }
+}
+
+#[derive(Clone)]
+pub struct InputData {
+    pub program: Vec<Instruction>,
+    pub bind_reg: usize,
+}
+
+impl TryFrom<Vec<String>> for InputData {
+    type Error = MachineError;
+
+    fn try_from(value: Vec<String>) -> Result<Self, Self::Error> {
+        let mut ip_bind_reg: Option<usize> = None;
+        let mut program = Vec::<Instruction>::new();
+        for s in value {
+            if s.starts_with("#ip") {
+                ip_bind_reg = parse_ip_bound(&s);
+            } else {
+                let instr = instruction_from(s.as_str())?;
+                program.push(instr);
+            }
+        }
+        let Some(ip_bind_reg) = ip_bind_reg else {
+            return Err(MachineError::IpNotBound);
+        };
+        Ok(InputData {
+            program,
+            bind_reg: ip_bind_reg,
+        })
+    }
+}
+
+fn parse_ip_bound(val: &str) -> Option<usize> {
+    let (_, reg_idx) = val.split_once(' ')?;
+    reg_idx.parse::<usize>().ok()
+}
+
+fn instruction_from(value: &str) -> Result<Instruction, MachineError> {
+    let tokens = value.split(' ').collect::<Vec<&str>>();
+    if tokens.len() != 4 {
+        return Err(MachineError::UnexpectedInstructionFormat);
+    }
+    let mut result = [0; 4];
+    for (i, val) in tokens[1..].iter().enumerate() {
+        result[i + 1] = val
+            .parse::<MachineInt>()
+            .map_err(|_| MachineError::NonIntegerArgumentValue)?
+    }
+    let id =
+        Operation::try_from(tokens[0]).map_err(|_| MachineError::UnknownInstruction)? as MachineInt;
+    result[0] = id;
+    Ok(result)
 }

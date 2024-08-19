@@ -3,42 +3,7 @@ use crate::{aoc2018::machine::MachineInt, solution::Solution};
 
 use std::io;
 
-use super::machine::{Instruction, Machine, Operation};
-
-#[derive(Clone)]
-struct InputData {
-    program: Vec<Instruction>,
-    bind_reg: usize,
-}
-
-impl TryFrom<Vec<String>> for InputData {
-    type Error = SolutionError;
-
-    fn try_from(value: Vec<String>) -> Result<Self, Self::Error> {
-        let mut ip_bind_reg: Option<usize> = None;
-        let mut program = Vec::<Instruction>::new();
-        for s in value {
-            if s.starts_with("#ip") {
-                ip_bind_reg = parse_ip_bound(&s);
-            } else {
-                let instr = instruction_from(s.as_str())?;
-                program.push(instr);
-            }
-        }
-        let Some(ip_bind_reg) = ip_bind_reg else {
-            return Err(SolutionError::IpNotBound);
-        };
-        Ok(InputData {
-            program,
-            bind_reg: ip_bind_reg,
-        })
-    }
-}
-
-fn parse_ip_bound(val: &str) -> Option<usize> {
-    let (_, reg_idx) = val.split_once(' ')?;
-    reg_idx.parse::<usize>().ok()
-}
+use super::machine::{InputData, Machine};
 
 pub struct AoC2018_19 {
     input: InputData,
@@ -109,31 +74,6 @@ fn reversed_func_improved(r2: MachineInt) -> MachineInt {
         }
     }
     r0
-}
-
-#[derive(Debug)]
-enum SolutionError {
-    UnexpectedInstructionFormat,
-    UnknownInstruction,
-    NonIntegerArgumentValue,
-    IpNotBound,
-}
-
-fn instruction_from(value: &str) -> Result<Instruction, SolutionError> {
-    let tokens = value.split(' ').collect::<Vec<&str>>();
-    if tokens.len() != 4 {
-        return Err(SolutionError::UnexpectedInstructionFormat);
-    }
-    let mut result = [0; 4];
-    for (i, val) in tokens[1..].iter().enumerate() {
-        result[i + 1] = val
-            .parse::<MachineInt>()
-            .map_err(|_| SolutionError::NonIntegerArgumentValue)?
-    }
-    let id = Operation::try_from(tokens[0]).map_err(|_| SolutionError::UnknownInstruction)?
-        as MachineInt;
-    result[0] = id;
-    Ok(result)
 }
 
 #[cfg(test)]
