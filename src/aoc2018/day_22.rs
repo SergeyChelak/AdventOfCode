@@ -5,7 +5,15 @@ use std::io;
 
 type UInt = usize;
 type Coordinate = Point2d<UInt>;
-type CaveRegions = Vec<Vec<UInt>>;
+type GeologicMap = Vec<Vec<UInt>>;
+type ErosionMap = Vec<Vec<RegionErosion>>;
+
+#[derive(Copy, Clone)]
+enum RegionErosion {
+    Rocky,
+    Wet,
+    Narrow,
+}
 
 pub struct AoC2018_22 {
     depth: usize,
@@ -24,10 +32,10 @@ impl AoC2018_22 {
         }
     }
 
-    fn geologic_map(&self) -> CaveRegions {
+    fn geologic_map(&self) -> GeologicMap {
         let (cols, rows) = (self.target.x + 1, self.target.y + 1);
         let (x, y) = (self.target.x, self.target.y);
-        let mut regions = CaveRegions::with_capacity(rows);
+        let mut regions = GeologicMap::with_capacity(rows);
         for row in 0..rows {
             let mut arr = Vec::with_capacity(cols);
             for col in 0..cols {
@@ -58,7 +66,7 @@ impl AoC2018_22 {
         (val + self.depth) % 20183
     }
 
-    fn risk(&self, regions: &CaveRegions) -> UInt {
+    fn risk(&self, regions: &GeologicMap) -> UInt {
         let mut result = 0;
         for row in regions.iter() {
             for val in row {
@@ -68,6 +76,23 @@ impl AoC2018_22 {
         }
         result
     }
+
+    fn erosion_map(&self, geologic_map: &GeologicMap) -> ErosionMap {
+        geologic_map
+            .iter()
+            .map(|row| {
+                row.iter()
+                    .map(|x| self.erosion_level(*x) % 3)
+                    .map(|val| match val {
+                        0 => RegionErosion::Rocky,
+                        1 => RegionErosion::Wet,
+                        2 => RegionErosion::Narrow,
+                        _ => panic!("Unexpected value {val}"),
+                    })
+                    .collect::<Vec<RegionErosion>>()
+            })
+            .collect()
+    }
 }
 
 impl Solution for AoC2018_22 {
@@ -76,12 +101,21 @@ impl Solution for AoC2018_22 {
         self.risk(&map).to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let geologic_map = self.geologic_map();
+        let erosion_map = self.erosion_map(&geologic_map);
+        find_min_duration(&erosion_map, self.target)
+            .map(|x| x.to_string())
+            .unwrap_or("Not found".to_string())
+    }
 
     fn description(&self) -> String {
         "AoC 2018/Day 22: Mode Maze".to_string()
     }
+}
+
+fn find_min_duration(erosion_map: &ErosionMap, target: Coordinate) -> Option<usize> {
+    None
 }
 
 #[cfg(test)]
@@ -92,6 +126,12 @@ mod test {
     fn aoc2018_22_example1() {
         let sol = AoC2018_22::with_parameters(510, 10, 10);
         assert_eq!(sol.part_one(), "114")
+    }
+
+    #[test]
+    fn aoc2018_22_example2() {
+        let sol = AoC2018_22::with_parameters(510, 10, 10);
+        assert_eq!(sol.part_two(), "45")
     }
 
     #[test]
