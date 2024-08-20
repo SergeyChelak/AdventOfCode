@@ -67,14 +67,11 @@ impl AoC2018_22 {
     }
 
     fn risk(&self, regions: &GeologicMap) -> UInt {
-        let mut result = 0;
-        for row in regions.iter() {
-            for val in row {
-                let level = self.erosion_level(*val);
-                result += level % 3;
-            }
-        }
-        result
+        regions
+            .iter()
+            .flat_map(|arr| arr)
+            .map(|val| self.erosion_level(*val) % 3)
+            .sum()
     }
 
     fn erosion_map(&self, geologic_map: &GeologicMap) -> ErosionMap {
