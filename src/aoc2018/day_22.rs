@@ -1,14 +1,15 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::io;
+use std::collections::HashMap;
+use std::{io, usize};
 
 type UInt = usize;
 type Coordinate = Point2d<UInt>;
 type GeologicMap = Vec<Vec<UInt>>;
 type ErosionMap = Vec<Vec<RegionErosion>>;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 enum RegionErosion {
     Rocky,
     Wet,
@@ -31,77 +32,30 @@ impl AoC2018_22 {
             target: Coordinate::new(x, y),
         }
     }
-
-    fn geologic_map(&self) -> GeologicMap {
-        let (cols, rows) = (self.target.x + 1, self.target.y + 1);
-        let (x, y) = (self.target.x, self.target.y);
-        let mut regions = GeologicMap::with_capacity(rows);
-        for row in 0..rows {
-            let mut arr = Vec::with_capacity(cols);
-            for col in 0..cols {
-                if (col, row) == (0, 0) || (col, row) == (x, y) {
-                    arr.push(0);
-                    continue;
-                }
-                // If the region's Y coordinate is 0, the geologic index is its X coordinate times 16807.
-                if row == 0 {
-                    arr.push(col * 16807);
-                    continue;
-                }
-                // If the region's X coordinate is 0, the geologic index is its Y coordinate times 48271.
-                if col == 0 {
-                    arr.push(row * 48271);
-                    continue;
-                }
-                let gi_1 = self.erosion_level(arr[col - 1]);
-                let gi_2 = self.erosion_level(regions.last().unwrap()[col]);
-                arr.push(gi_1 * gi_2);
-            }
-            regions.push(arr);
-        }
-        regions
-    }
-
-    fn erosion_level(&self, val: UInt) -> UInt {
-        (val + self.depth) % 20183
-    }
-
-    fn risk(&self, regions: &GeologicMap) -> UInt {
-        regions
-            .iter()
-            .flat_map(|arr| arr)
-            .map(|val| self.erosion_level(*val) % 3)
-            .sum()
-    }
-
-    fn erosion_map(&self, geologic_map: &GeologicMap) -> ErosionMap {
-        geologic_map
-            .iter()
-            .map(|row| {
-                row.iter()
-                    .map(|x| self.erosion_level(*x) % 3)
-                    .map(|val| match val {
-                        0 => RegionErosion::Rocky,
-                        1 => RegionErosion::Wet,
-                        2 => RegionErosion::Narrow,
-                        _ => panic!("Unexpected value {val}"),
-                    })
-                    .collect::<Vec<RegionErosion>>()
-            })
-            .collect()
-    }
 }
 
 impl Solution for AoC2018_22 {
     fn part_one(&self) -> String {
-        let map = self.geologic_map();
-        self.risk(&map).to_string()
+        let map = geologic_map(
+            self.target.y + 1,
+            self.target.x + 1,
+            self.depth,
+            self.target,
+        );
+        risk(&map, self.depth).to_string()
     }
 
     fn part_two(&self) -> String {
-        let geologic_map = self.geologic_map();
-        let erosion_map = self.erosion_map(&geologic_map);
-        find_min_duration(&erosion_map, self.target)
+        let rate = 2;
+        let geologic_map = geologic_map(
+            1 + rate * self.target.y,
+            1 + rate * self.target.x,
+            self.depth,
+            self.target,
+        );
+        let erosion_map = erosion_map(&geologic_map, self.depth);
+        // dump(&erosion_map);
+        find(&erosion_map, self.target)
             .map(|x| x.to_string())
             .unwrap_or("Not found".to_string())
     }
@@ -111,8 +65,192 @@ impl Solution for AoC2018_22 {
     }
 }
 
-fn find_min_duration(erosion_map: &ErosionMap, target: Coordinate) -> Option<usize> {
-    None
+fn geologic_map(rows: usize, cols: usize, depth: UInt, target: Coordinate) -> GeologicMap {
+    let (x, y) = (target.x, target.y);
+    let mut regions = GeologicMap::with_capacity(rows);
+    for row in 0..rows {
+        let mut arr = Vec::with_capacity(cols);
+        for col in 0..cols {
+            if (col, row) == (0, 0) || (col, row) == (x, y) {
+                arr.push(0);
+                continue;
+            }
+            // If the region's Y coordinate is 0, the geologic index is its X coordinate times 16807.
+            if row == 0 {
+                arr.push(col * 16807);
+                continue;
+            }
+            // If the region's X coordinate is 0, the geologic index is its Y coordinate times 48271.
+            if col == 0 {
+                arr.push(row * 48271);
+                continue;
+            }
+            let gi_1 = erosion_level(arr[col - 1], depth);
+            let gi_2 = erosion_level(regions.last().unwrap()[col], depth);
+            arr.push(gi_1 * gi_2);
+        }
+        regions.push(arr);
+    }
+    regions
+}
+
+fn risk(regions: &GeologicMap, depth: UInt) -> UInt {
+    regions
+        .iter()
+        .flat_map(|arr| arr)
+        .map(|val| erosion_level(*val, depth) % 3)
+        .sum()
+}
+
+fn erosion_map(geologic_map: &GeologicMap, depth: UInt) -> ErosionMap {
+    geologic_map
+        .iter()
+        .map(|row| {
+            row.iter()
+                .map(|x| erosion_level(*x, depth) % 3)
+                .map(|val| match val {
+                    0 => RegionErosion::Rocky,
+                    1 => RegionErosion::Wet,
+                    2 => RegionErosion::Narrow,
+                    _ => panic!("Unexpected value {val}"),
+                })
+                .collect::<Vec<RegionErosion>>()
+        })
+        .collect()
+}
+
+fn erosion_level(val: UInt, depth: UInt) -> UInt {
+    (val + depth) % 20183
+}
+
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+enum Equipment {
+    Neither,
+    Torch,
+    Gear,
+}
+
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+struct State {
+    coordinate: Coordinate,
+    equipment: Equipment,
+}
+
+fn find(erosion_map: &ErosionMap, target: Coordinate) -> Option<usize> {
+    let mut dp = HashMap::<State, usize>::new();
+    let start = State {
+        coordinate: Coordinate::new(0, 0),
+        equipment: Equipment::Torch,
+    };
+    dp.insert(start, 0);
+
+    // ---- here should be functions but I'm too lazy to forward context
+    let rows = erosion_map.len();
+    let cols = erosion_map[rows - 1].len();
+    let get_adjacent = |coord: Coordinate| {
+        let mut arr = Vec::new();
+        if coord.x > 0 {
+            arr.push(modified_coordinate(coord, Some(Modification::Dec), None));
+        }
+        if coord.x < cols - 1 {
+            arr.push(modified_coordinate(coord, Some(Modification::Inc), None));
+        }
+        if coord.y > 0 {
+            arr.push(modified_coordinate(coord, None, Some(Modification::Dec)));
+        }
+        if coord.y < rows - 1 {
+            arr.push(modified_coordinate(coord, None, Some(Modification::Inc)));
+        }
+        arr
+    };
+
+    let toggle_equipment = |cur: Equipment, coordinate: Coordinate| -> Equipment {
+        let region = erosion_map[coordinate.y][coordinate.x];
+        use Equipment::*;
+        use RegionErosion::*;
+        match (region, cur) {
+            (Rocky, Torch) => Gear,
+            (Rocky, Gear) => Torch,
+            (Narrow, Torch) => Neither,
+            (Narrow, Neither) => Torch,
+            (Wet, Gear) => Neither,
+            (Wet, Neither) => Gear,
+            _ => panic!("invalid state"),
+        }
+    };
+
+    let is_applicable = |equipment: Equipment, coordinate: Coordinate| -> bool {
+        if coordinate == target {
+            return equipment == Equipment::Torch;
+        }
+        let region = erosion_map[coordinate.y][coordinate.x];
+        use Equipment::*;
+        use RegionErosion::*;
+        match region {
+            Rocky => matches!(equipment, Gear | Torch),
+            Narrow => matches!(equipment, Torch | Neither),
+            Wet => matches!(equipment, Gear | Neither),
+        }
+    };
+    // ----
+
+    let mut stack = vec![start];
+    while let Some(state) = stack.pop() {
+        let state_time = *dp
+            .get(&state)
+            .expect("that should be unreachable of something wrong with implementation");
+
+        let adjacent = get_adjacent(state.coordinate);
+        let mut equip = state.equipment;
+        for region in adjacent {
+            for step_time in [1, 8] {
+                if is_applicable(equip, region) {
+                    let adj_state = State {
+                        coordinate: region,
+                        equipment: equip,
+                    };
+
+                    let adj_old_time = dp.get(&adj_state).map(|x| *x).unwrap_or(usize::MAX);
+                    let adj_new_time = state_time + step_time;
+                    if adj_new_time < adj_old_time {
+                        dp.insert(adj_state, adj_new_time);
+                        stack.push(adj_state);
+                    }
+                }
+                equip = toggle_equipment(equip, state.coordinate);
+            }
+        }
+    }
+
+    let end = State {
+        coordinate: target,
+        equipment: Equipment::Torch,
+    };
+    dp.get(&end).copied()
+}
+
+enum Modification {
+    Inc,
+    Dec,
+}
+
+fn modified_coordinate(
+    coordinate: Coordinate,
+    x_mod: Option<Modification>,
+    y_mod: Option<Modification>,
+) -> Coordinate {
+    let mut new = coordinate;
+    let calc = |val: UInt, modification: Modification| match modification {
+        Modification::Dec => val - 1,
+        Modification::Inc => val + 1,
+    };
+    if let Some(m) = x_mod {
+        new.x = calc(new.x, m);
+    }
+    if let Some(m) = y_mod {
+        new.y = calc(new.y, m);
+    }
+    new
 }
 
 #[cfg(test)]
