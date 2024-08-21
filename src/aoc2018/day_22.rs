@@ -137,12 +137,12 @@ struct State {
 }
 
 fn find(erosion_map: &ErosionMap, target: Coordinate) -> Option<usize> {
-    let mut dp = HashMap::<State, usize>::new();
+    let mut weights = HashMap::<State, usize>::new();
     let start = State {
         coordinate: Coordinate::new(0, 0),
         equipment: Equipment::Torch,
     };
-    dp.insert(start, 0);
+    weights.insert(start, 0);
 
     // ---- here should be functions but I'm too lazy to forward context
     let rows = erosion_map.len();
@@ -196,7 +196,7 @@ fn find(erosion_map: &ErosionMap, target: Coordinate) -> Option<usize> {
 
     let mut stack = vec![start];
     while let Some(state) = stack.pop() {
-        let state_time = *dp
+        let state_time = *weights
             .get(&state)
             .expect("that should be unreachable of something wrong with implementation");
 
@@ -210,10 +210,10 @@ fn find(erosion_map: &ErosionMap, target: Coordinate) -> Option<usize> {
                         equipment: equip,
                     };
 
-                    let adj_old_time = dp.get(&adj_state).map(|x| *x).unwrap_or(usize::MAX);
+                    let adj_old_time = weights.get(&adj_state).map(|x| *x).unwrap_or(usize::MAX);
                     let adj_new_time = state_time + step_time;
                     if adj_new_time < adj_old_time {
-                        dp.insert(adj_state, adj_new_time);
+                        weights.insert(adj_state, adj_new_time);
                         stack.push(adj_state);
                     }
                 }
@@ -226,7 +226,7 @@ fn find(erosion_map: &ErosionMap, target: Coordinate) -> Option<usize> {
         coordinate: target,
         equipment: Equipment::Torch,
     };
-    dp.get(&end).copied()
+    weights.get(&end).copied()
 }
 
 enum Modification {
