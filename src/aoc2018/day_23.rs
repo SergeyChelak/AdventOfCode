@@ -3,7 +3,6 @@ use regex::Regex;
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::collections::HashSet;
 use std::io;
 
 type Int = isize;
@@ -66,6 +65,10 @@ impl AoC2018_23 {
         let bots = lines.iter().map(|s| parser.parse(s.as_str())).collect();
         Ok(Self { bots })
     }
+
+    fn reached_bots(&self, bot: &Nanobot) -> usize {
+        self.bots.iter().filter(|x| bot.is_reachable(x)).count()
+    }
 }
 
 impl Solution for AoC2018_23 {
@@ -76,15 +79,12 @@ impl Solution for AoC2018_23 {
             .max_by(|a, b| a.radius.cmp(&b.radius))
             .unwrap();
 
-        self.bots
-            .iter()
-            .filter(|bot| strongest.is_reachable(bot))
-            .count()
-            .to_string()
+        self.reached_bots(strongest).to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        todo!()
+    }
 
     fn description(&self) -> String {
         "AoC 2018/Day 23: Experimental Emergency Teleportation".to_string()
@@ -104,8 +104,7 @@ mod test {
 
     #[test]
     fn aoc2018_23_ex_1() {
-        let parser = Parser::new().unwrap();
-        let input = [
+        let puzzle = puzzle_factory(&[
             "pos=<0,0,0>, r=4",
             "pos=<1,0,0>, r=1",
             "pos=<4,0,0>, r=3",
@@ -115,12 +114,27 @@ mod test {
             "pos=<1,1,1>, r=1",
             "pos=<1,1,2>, r=1",
             "pos=<1,3,1>, r=1",
-        ]
-        .iter()
-        .map(|s| parser.parse(s))
-        .collect();
-        let puzzle = AoC2018_23 { bots: input };
+        ]);
         assert_eq!(puzzle.part_one(), "7")
+    }
+
+    #[test]
+    fn aoc2018_23_ex_2() {
+        let puzzle = puzzle_factory(&[
+            "pos=<10,12,12>, r=2",
+            "pos=<12,14,12>, r=2",
+            "pos=<16,12,12>, r=4",
+            "pos=<14,14,14>, r=6",
+            "pos=<50,50,50>, r=200",
+            "pos=<10,10,10>, r=5",
+        ]);
+        assert_eq!(puzzle.part_two(), "36")
+    }
+
+    fn puzzle_factory(input: &[&str]) -> AoC2018_23 {
+        let parser = Parser::new().unwrap();
+        let bots = input.iter().map(|s| parser.parse(s)).collect();
+        AoC2018_23 { bots }
     }
 
     #[test]
