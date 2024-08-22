@@ -3,14 +3,26 @@ use regex::Regex;
 use crate::solution::Solution;
 use crate::utils::*;
 
+use std::collections::HashSet;
 use std::io;
 
 type Int = isize;
+#[derive(Debug, Clone, Copy)]
 struct Nanobot {
     x: Int,
     y: Int,
     z: Int,
     radius: Int,
+}
+
+impl Nanobot {
+    fn dist(&self, other: &Nanobot) -> Int {
+        (self.x.abs_diff(other.x) + self.y.abs_diff(other.y) + self.z.abs_diff(other.z)) as Int
+    }
+
+    fn is_reachable(&self, other: &Nanobot) -> bool {
+        self.radius >= self.dist(other)
+    }
 }
 
 struct Parser {
@@ -19,7 +31,7 @@ struct Parser {
 
 impl Parser {
     fn new() -> Option<Self> {
-        let Ok(regex) = Regex::new(r"\d+") else {
+        let Ok(regex) = Regex::new(r"-?\d+") else {
             return None;
         };
         Some(Self { regex })
@@ -57,8 +69,19 @@ impl AoC2018_23 {
 }
 
 impl Solution for AoC2018_23 {
-    // fn part_one(&self) -> String {
-    // }
+    fn part_one(&self) -> String {
+        let strongest = self
+            .bots
+            .iter()
+            .max_by(|a, b| a.radius.cmp(&b.radius))
+            .unwrap();
+
+        self.bots
+            .iter()
+            .filter(|bot| strongest.is_reachable(bot))
+            .count()
+            .to_string()
+    }
 
     // fn part_two(&self) -> String {
     // }
@@ -80,6 +103,27 @@ mod test {
     }
 
     #[test]
+    fn aoc2018_23_ex_1() {
+        let parser = Parser::new().unwrap();
+        let input = [
+            "pos=<0,0,0>, r=4",
+            "pos=<1,0,0>, r=1",
+            "pos=<4,0,0>, r=3",
+            "pos=<0,2,0>, r=1",
+            "pos=<0,5,0>, r=3",
+            "pos=<0,0,3>, r=1",
+            "pos=<1,1,1>, r=1",
+            "pos=<1,1,2>, r=1",
+            "pos=<1,3,1>, r=1",
+        ]
+        .iter()
+        .map(|s| parser.parse(s))
+        .collect();
+        let puzzle = AoC2018_23 { bots: input };
+        assert_eq!(puzzle.part_one(), "7")
+    }
+
+    #[test]
     fn aoc2018_23_parser_nanobot() -> Result<(), String> {
         let inp = "pos=<123,234,345>, r=456";
         let parser = Parser::new().unwrap();
@@ -92,9 +136,21 @@ mod test {
     }
 
     #[test]
+    fn aoc2018_23_parser_nanobot_negative_coordinates() -> Result<(), String> {
+        let inp = "pos=<-123,234,-345>, r=456";
+        let parser = Parser::new().unwrap();
+        let nanobot = parser.parse(inp);
+        assert_eq!(nanobot.x, -123);
+        assert_eq!(nanobot.y, 234);
+        assert_eq!(nanobot.z, -345);
+        assert_eq!(nanobot.radius, 456);
+        Ok(())
+    }
+
+    #[test]
     fn aoc2018_23_correctness() -> io::Result<()> {
         let sol = AoC2018_23::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "164");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
