@@ -62,7 +62,7 @@ mod tests {
 
     #[test]
     fn utils_permutations_case1() {
-        let mut iter = PermutationIterator::from_array(&vec![1]);
+        let mut iter = PermutationIterator::from_array(&[1]);
         let val = iter.next();
         assert!(val.is_some());
         let val = val.unwrap();
@@ -74,7 +74,7 @@ mod tests {
 
     #[test]
     fn utils_permutations_case2() {
-        let iter = PermutationIterator::from_array(&vec![1, 2]);
+        let iter = PermutationIterator::from_array(&[1, 2]);
         let set: HashSet<Vec<usize>> = vec![vec![1, 2], vec![2, 1]].into_iter().collect();
         for v in iter {
             assert!(set.contains(&v));
@@ -83,7 +83,7 @@ mod tests {
 
     #[test]
     fn utils_permutations_case3() {
-        let iter = PermutationIterator::from_array(&vec![1, 2, 3]);
+        let iter = PermutationIterator::from_array(&[1, 2, 3]);
         let set: HashSet<Vec<usize>> = vec![
             vec![1, 2, 3],
             vec![1, 3, 2],

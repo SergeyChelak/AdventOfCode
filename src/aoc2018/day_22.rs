@@ -3,7 +3,7 @@ use crate::utils::*;
 
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap};
-use std::{io, usize};
+use std::io;
 
 type UInt = usize;
 type Coordinate = Point2d<UInt>;
@@ -98,7 +98,7 @@ fn geologic_map(rows: usize, cols: usize, depth: UInt, target: Coordinate) -> Ge
 fn risk(regions: &GeologicMap, depth: UInt) -> UInt {
     regions
         .iter()
-        .flat_map(|arr| arr)
+        .flatten()
         .map(|val| erosion_level(*val, depth) % 3)
         .sum()
 }
@@ -238,7 +238,7 @@ fn find(erosion_map: &ErosionMap, target: Coordinate) -> Option<usize> {
                         coordinate: region,
                         equipment: equip,
                     };
-                    let adj_old_time = weights.get(&adj_state).map(|x| *x).unwrap_or(usize::MAX);
+                    let adj_old_time = weights.get(&adj_state).copied().unwrap_or(usize::MAX);
                     let adj_new_time = state_time + step_time;
                     if adj_new_time < adj_old_time {
                         weights.insert(adj_state, adj_new_time);
@@ -299,7 +299,7 @@ mod test {
     fn aoc2018_22_correctness() -> io::Result<()> {
         let sol = AoC2018_22::new()?;
         assert_eq!(sol.part_one(), "5786");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "986");
         Ok(())
     }
 }

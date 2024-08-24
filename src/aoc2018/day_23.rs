@@ -120,15 +120,9 @@ impl Solution for AoC2018_23 {
 }
 
 fn find_distance(bots: &[Nanobot]) -> Option<isize> {
-    let Some((mut x_min, mut x_max)) = range(bots, |b| b.point.x) else {
-        return None;
-    };
-    let Some((mut y_min, mut y_max)) = range(bots, |b| b.point.y) else {
-        return None;
-    };
-    let Some((mut z_min, mut z_max)) = range(bots, |b| b.point.z) else {
-        return None;
-    };
+    let (mut x_min, mut x_max) = range(bots, |b| b.point.x)?;
+    let (mut y_min, mut y_max) = range(bots, |b| b.point.y)?;
+    let (mut z_min, mut z_max) = range(bots, |b| b.point.z)?;
 
     let largest_range = x_max
         .abs_diff(x_min)
@@ -176,12 +170,8 @@ fn find_distance(bots: &[Nanobot]) -> Option<isize> {
 }
 
 fn range(bots: &[Nanobot], predicate: impl Fn(&Nanobot) -> Int) -> Option<(Int, Int)> {
-    let Some(min) = bots.iter().map(|bot| predicate(bot)).min() else {
-        return None;
-    };
-    let Some(max) = bots.iter().map(|bot| predicate(bot)).max() else {
-        return None;
-    };
+    let min = bots.iter().map(&predicate).min()?;
+    let max = bots.iter().map(&predicate).max()?;
     Some((min, max))
 }
 
