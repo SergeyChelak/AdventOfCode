@@ -25,16 +25,37 @@ struct Group {
     initiative: usize,
 }
 
+struct Army {
+    groups: Vec<Group>,
+}
+
+impl Army {
+    fn new() -> Self {
+        Self {
+            groups: Default::default(),
+        }
+    }
+
+    fn push(&mut self, group: Group) {
+        self.groups.push(group)
+    }
+
+    fn total_units(&self) -> usize {
+        self.groups.iter().map(|x| x.units).sum()
+    }
+}
+
 pub struct AoC2018_24 {
-    armies: Armies,
+    immune: Army,
+    infection: Army,
 }
 
 impl AoC2018_24 {
     pub fn new() -> io::Result<Self> {
         let lines = read_file_as_lines("input/aoc2018_24")?;
         let parser = Parser::new().expect("Failed to create parser");
-        let armies = parser.parse(&lines);
-        Ok(Self { armies })
+        let (immune, infection) = parser.parse(&lines);
+        Ok(Self { immune, infection })
     }
 }
 
@@ -48,11 +69,6 @@ impl Solution for AoC2018_24 {
     fn description(&self) -> String {
         "AoC 2018/Day 24: Immune System Simulator 20XX".to_string()
     }
-}
-
-struct Armies {
-    immune_army: Vec<Group>,
-    infection_army: Vec<Group>,
 }
 
 struct Parser {
@@ -69,9 +85,9 @@ impl Parser {
         Some(Self { regex })
     }
 
-    fn parse(&self, lines: &[String]) -> Armies {
-        let mut immune_army = Vec::<Group>::new();
-        let mut infection_army = Vec::<Group>::new();
+    fn parse(&self, lines: &[String]) -> (Army, Army) {
+        let mut immune_army = Army::new();
+        let mut infection_army = Army::new();
         let mut arr = &mut immune_army;
         for line in lines {
             if line.is_empty() {
@@ -88,10 +104,7 @@ impl Parser {
             let item = self.parse_group(line).expect("Failed to parse group");
             arr.push(item);
         }
-        Armies {
-            immune_army,
-            infection_army,
-        }
+        (immune_army, infection_army)
     }
 
     fn parse_group(&self, inp: &str) -> Option<Group> {
@@ -166,8 +179,8 @@ mod test {
     #[test]
     fn aoc2018_24_input_load_test() -> io::Result<()> {
         let sol = AoC2018_24::new()?;
-        assert!(!sol.armies.immune_army.is_empty());
-        assert!(!sol.armies.infection_army.is_empty());
+        assert!(!sol.immune.groups.is_empty());
+        assert!(!sol.infection.groups.is_empty());
         Ok(())
     }
 
