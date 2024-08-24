@@ -7,16 +7,43 @@ use std::io;
 
 type Int = isize;
 #[derive(Debug, Clone, Copy)]
+struct Point3d<T> {
+    x: T,
+    y: T,
+    z: T,
+}
+
+impl<T> Point3d<T> {
+    fn new(x: T, y: T, z: T) -> Self {
+        Self { x, y, z }
+    }
+}
+
+type Coordinate3d = Point3d<Int>;
+
+impl Coordinate3d {
+    fn zero() -> Self {
+        Self { x: 0, y: 0, z: 0 }
+    }
+
+    fn distance(&self, other: &Self) -> Int {
+        (self.x - other.x).abs() + (self.y - other.y).abs() + (self.z - other.z).abs()
+    }
+
+    fn length(&self) -> Int {
+        self.distance(&Self::zero())
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
 struct Nanobot {
-    x: Int,
-    y: Int,
-    z: Int,
+    point: Point3d<Int>,
     radius: Int,
 }
 
 impl Nanobot {
     fn dist(&self, other: &Nanobot) -> Int {
-        (self.x.abs_diff(other.x) + self.y.abs_diff(other.y) + self.z.abs_diff(other.z)) as Int
+        self.point.distance(&other.point)
     }
 
     fn is_reachable(&self, other: &Nanobot) -> bool {
@@ -45,10 +72,9 @@ impl Parser {
         if values.len() != 4 {
             panic!("Invalid input: {value}");
         }
+        let point = Point3d::new(values[0], values[1], values[2]);
         Nanobot {
-            x: values[0],
-            y: values[1],
-            z: values[2],
+            point,
             radius: values[3],
         }
     }
@@ -83,12 +109,80 @@ impl Solution for AoC2018_23 {
     }
 
     fn part_two(&self) -> String {
-        todo!()
+        find_distance(&self.bots)
+            .expect("Input shouldn't be empty")
+            .to_string()
     }
 
     fn description(&self) -> String {
         "AoC 2018/Day 23: Experimental Emergency Teleportation".to_string()
     }
+}
+
+fn find_distance(bots: &[Nanobot]) -> Option<isize> {
+    let Some((mut x_min, mut x_max)) = range(bots, |b| b.point.x) else {
+        return None;
+    };
+    let Some((mut y_min, mut y_max)) = range(bots, |b| b.point.y) else {
+        return None;
+    };
+    let Some((mut z_min, mut z_max)) = range(bots, |b| b.point.z) else {
+        return None;
+    };
+
+    let largest_range = x_max
+        .abs_diff(x_min)
+        .max(y_max.abs_diff(y_min))
+        .max(z_max.abs_diff(z_min));
+    let mut step = 1;
+    while step < largest_range {
+        step <<= 1;
+    }
+    let shift_range = |value: Int, step: usize| -> (Int, Int) {
+        let step = step as Int;
+        (value - step, value + step)
+    };
+    let mut result = Coordinate3d::zero();
+    while step > 1 {
+        let mut best = Coordinate3d::zero();
+        let mut max_count = 0;
+        for x in (x_min..=x_max).step_by(step) {
+            for y in (y_min..=y_max).step_by(step) {
+                for z in (z_min..=z_max).step_by(step) {
+                    let coordinate = Coordinate3d::new(x, y, z);
+                    let count = bots
+                        .iter()
+                        .filter(|bot| {
+                            (bot.point.distance(&coordinate) - bot.radius) / step as Int <= 0
+                        })
+                        .count();
+                    if count > max_count {
+                        best = coordinate;
+                        max_count = count;
+                    }
+                    if count == max_count && coordinate.length() < best.length() {
+                        best = coordinate;
+                    }
+                }
+            }
+        }
+        (x_min, x_max) = shift_range(best.x, step);
+        (y_min, y_max) = shift_range(best.y, step);
+        (z_min, z_max) = shift_range(best.z, step);
+        step >>= 1;
+        result = best;
+    }
+    Some(result.length())
+}
+
+fn range(bots: &[Nanobot], predicate: impl Fn(&Nanobot) -> Int) -> Option<(Int, Int)> {
+    let Some(min) = bots.iter().map(|bot| predicate(bot)).min() else {
+        return None;
+    };
+    let Some(max) = bots.iter().map(|bot| predicate(bot)).max() else {
+        return None;
+    };
+    Some((min, max))
 }
 
 #[cfg(test)]
@@ -142,9 +236,9 @@ mod test {
         let inp = "pos=<123,234,345>, r=456";
         let parser = Parser::new().unwrap();
         let nanobot = parser.parse(inp);
-        assert_eq!(nanobot.x, 123);
-        assert_eq!(nanobot.y, 234);
-        assert_eq!(nanobot.z, 345);
+        assert_eq!(nanobot.point.x, 123);
+        assert_eq!(nanobot.point.y, 234);
+        assert_eq!(nanobot.point.z, 345);
         assert_eq!(nanobot.radius, 456);
         Ok(())
     }
@@ -154,9 +248,9 @@ mod test {
         let inp = "pos=<-123,234,-345>, r=456";
         let parser = Parser::new().unwrap();
         let nanobot = parser.parse(inp);
-        assert_eq!(nanobot.x, -123);
-        assert_eq!(nanobot.y, 234);
-        assert_eq!(nanobot.z, -345);
+        assert_eq!(nanobot.point.x, -123);
+        assert_eq!(nanobot.point.y, 234);
+        assert_eq!(nanobot.point.z, -345);
         assert_eq!(nanobot.radius, 456);
         Ok(())
     }
@@ -165,7 +259,7 @@ mod test {
     fn aoc2018_23_correctness() -> io::Result<()> {
         let sol = AoC2018_23::new()?;
         assert_eq!(sol.part_one(), "164");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "122951778");
         Ok(())
     }
 }
