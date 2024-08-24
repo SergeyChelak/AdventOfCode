@@ -146,9 +146,7 @@ fn find_distance(bots: &[Nanobot]) -> Option<isize> {
                     let coordinate = Coordinate3d::new(x, y, z);
                     let count = bots
                         .iter()
-                        .filter(|bot| {
-                            (bot.point.distance(&coordinate) - bot.radius) / step as Int <= 0
-                        })
+                        .filter(|bot| bot.point.distance(&coordinate) <= bot.radius)
                         .count();
                     if count > max_count {
                         best = coordinate;
