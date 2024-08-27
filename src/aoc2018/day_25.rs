@@ -24,14 +24,44 @@ impl AoC2018_25 {
 }
 
 impl Solution for AoC2018_25 {
-    // fn part_one(&self) -> String {
-    // }
+    fn part_one(&self) -> String {
+        constellations(&self.points).to_string()
+    }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        "".to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2018/Day 25: Four-Dimensional Adventure".to_string()
+    }
+}
+
+fn constellations(points: &[Coordinate]) -> usize {
+    let mut count = 0;
+    let mut seen = vec![false; points.len()];
+    for (i, _) in points.iter().enumerate() {
+        if seen[i] {
+            continue;
+        }
+        let mut len = 0;
+        dfs(points, &mut seen, i, &mut len);
+        count += 1;
+    }
+    count
+}
+
+fn dfs(points: &[Coordinate], seen: &mut Vec<bool>, pos: usize, len: &mut usize) {
+    *len += 1;
+    let from = &points[pos];
+    seen[pos] = true;
+    for (i, to) in points.iter().enumerate() {
+        if seen[i] {
+            continue;
+        }
+        if distance(from, to) <= 3 {
+            dfs(points, seen, i, len)
+        }
     }
 }
 
@@ -132,7 +162,7 @@ mod test {
     #[test]
     fn aoc2018_25_correctness() -> io::Result<()> {
         let sol = AoC2018_25::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "305");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
