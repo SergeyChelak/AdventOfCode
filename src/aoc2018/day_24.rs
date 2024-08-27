@@ -15,6 +15,12 @@ const ATTACK_TYPE_BLUDGEONING: AttackTypeMask = 1 << 3;
 const ATTACK_TYPE_SLASHING: AttackTypeMask = 1 << 4;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Army {
+    Immune,
+    Infection,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct Group {
     units: usize,
     hp: usize,
@@ -23,45 +29,143 @@ struct Group {
     attack_type: AttackType,
     damage: usize,
     initiative: usize,
+    army: Army,
 }
 
-struct Army {
-    groups: Vec<Group>,
+impl Group {
+    fn effective_power(&self) -> usize {
+        self.units * self.damage
+    }
+
+    fn damage_value_for(&self, other: &Self) -> usize {
+        if other.units == 0 {
+            return 0;
+        }
+        if other.army == self.army {
+            return 0;
+        }
+        if other.immunities & self.attack_type > 0 {
+            return 0;
+        }
+        let mut damage = self.effective_power();
+        if other.weaknesses & self.attack_type > 0 {
+            damage *= 2;
+        }
+        damage
+    }
+
+    fn killed_units_by(&self, other: &Self) -> usize {
+        let received_damage = other.damage_value_for(self);
+        received_damage / self.hp
+    }
+
+    fn defend(&mut self, other: &Self) {
+        let killed = self.killed_units_by(other);
+        self.units = self.units.saturating_sub(killed);
+    }
 }
 
-impl Army {
-    fn new() -> Self {
-        Self {
-            groups: Default::default(),
+fn combat(groups: &mut [Group]) -> usize {
+    loop {
+        let immune_units = total_units(groups, |g| g.army == Army::Immune);
+        let infection_units = total_units(groups, |g| g.army == Army::Infection);
+        if immune_units * infection_units == 0 {
+            break immune_units.max(infection_units);
+        }
+        combat_round(groups);
+    }
+}
+
+fn total_units(groups: &[Group], f: impl Fn(&Group) -> bool) -> usize {
+    groups.iter().filter(|g| f(g)).map(|g| g.units).sum()
+}
+
+fn combat_round(groups: &mut [Group]) {
+    let targets = target_selection(groups);
+    let order = attack_order(groups);
+    for idx in order {
+        let Some(defend_idx) = targets[idx] else {
+            continue;
+        };
+        let attack_group = groups[idx];
+        let defend_group = groups.get_mut(defend_idx).unwrap();
+        defend_group.defend(&attack_group);
+    }
+}
+
+fn target_selection(groups: &[Group]) -> Vec<Option<usize>> {
+    let mut selection = vec![None; groups.len()];
+    let mut chosen = vec![false; groups.len()];
+    let order = effective_power_order(groups);
+    for idx in order {
+        let group = groups[idx];
+        let target = groups
+            .iter()
+            .enumerate()
+            .filter(|(i, g)| !chosen[*i] && g.units > 0)
+            .map(|(i, g)| {
+                (
+                    i,
+                    group.damage_value_for(g),
+                    g.effective_power(),
+                    g.initiative,
+                )
+            })
+            .filter(|(_, dmg, _, _)| *dmg > 0)
+            .max_by(|a, b| {
+                let (_, a_dmg, a_ep, a_initiative) = a;
+                let (_, b_dmg, b_ep, b_initiative) = b;
+                a_dmg
+                    .cmp(&b_dmg)
+                    .then(a_ep.cmp(&b_ep))
+                    .then(a_initiative.cmp(&b_initiative))
+            })
+            .map(|(idx, _, _, _)| idx);
+        selection[idx] = target;
+        if let Some(target_idx) = target {
+            chosen[target_idx] = true
         }
     }
+    selection
+}
 
-    fn push(&mut self, group: Group) {
-        self.groups.push(group)
-    }
+fn effective_power_order(groups: &[Group]) -> Vec<usize> {
+    let mut arr = groups.iter().enumerate().collect::<Vec<(usize, &Group)>>();
+    arr.sort_by(|a, b| {
+        b.1.effective_power()
+            .cmp(&a.1.effective_power())
+            .then(b.1.initiative.cmp(&a.1.initiative))
+    });
+    arr.iter().map(|x| x.0).collect()
+}
 
-    fn total_units(&self) -> usize {
-        self.groups.iter().map(|x| x.units).sum()
-    }
+fn attack_order(groups: &[Group]) -> Vec<usize> {
+    let mut arr = groups.iter().enumerate().collect::<Vec<(usize, &Group)>>();
+    arr.sort_by(|a, b| b.1.initiative.cmp(&a.1.initiative));
+    arr.iter().map(|x| x.0).collect()
 }
 
 pub struct AoC2018_24 {
-    immune: Army,
-    infection: Army,
+    groups: Vec<Group>,
 }
 
 impl AoC2018_24 {
     pub fn new() -> io::Result<Self> {
         let lines = read_file_as_lines("input/aoc2018_24")?;
+        Ok(Self::with_lines(&lines))
+    }
+
+    fn with_lines(lines: &[String]) -> Self {
         let parser = Parser::new().expect("Failed to create parser");
-        let (immune, infection) = parser.parse(&lines);
-        Ok(Self { immune, infection })
+        let groups = parser.parse(lines);
+        Self { groups }
     }
 }
 
 impl Solution for AoC2018_24 {
-    // fn part_one(&self) -> String {
-    // }
+    fn part_one(&self) -> String {
+        combat(&mut self.groups.clone()).to_string()
+    }
 
     // fn part_two(&self) -> String {
     // }
@@ -85,29 +189,30 @@ impl Parser {
         Some(Self { regex })
     }
 
-    fn parse(&self, lines: &[String]) -> (Army, Army) {
-        let mut immune_army = Army::new();
-        let mut infection_army = Army::new();
-        let mut arr = &mut immune_army;
+    fn parse(&self, lines: &[String]) -> Vec<Group> {
+        let mut current_army = Army::Immune;
+        let mut result = Vec::new();
         for line in lines {
             if line.is_empty() {
                 continue;
             }
             if line == "Immune System:" {
-                arr = &mut immune_army;
+                current_army = Army::Immune;
                 continue;
             }
             if line == "Infection:" {
-                arr = &mut infection_army;
+                current_army = Army::Infection;
                 continue;
             }
-            let item = self.parse_group(line).expect("Failed to parse group");
-            arr.push(item);
+            let item = self
+                .parse_group(line, current_army)
+                .expect("Failed to parse group");
+            result.push(item);
         }
-        (immune_army, infection_army)
+        result
     }
 
-    fn parse_group(&self, inp: &str) -> Option<Group> {
+    fn parse_group(&self, inp: &str, army: Army) -> Option<Group> {
         let captures = self.regex.captures(inp)?;
         if captures.len() != 7 {
             return None;
@@ -131,6 +236,7 @@ impl Parser {
             damage,
             attack_type,
             initiative,
+            army,
         };
         Some(group)
     }
@@ -156,7 +262,7 @@ impl Parser {
     fn parse_attack_tokens(tokens: &str) -> AttackTypeMask {
         tokens
             .split(", ")
-            .map(|s| Self::parse_attack_type(s))
+            .map(Self::parse_attack_type)
             .fold(0, |acc, x| acc | x)
     }
 
@@ -179,8 +285,7 @@ mod test {
     #[test]
     fn aoc2018_24_input_load_test() -> io::Result<()> {
         let sol = AoC2018_24::new()?;
-        assert!(!sol.immune.groups.is_empty());
-        assert!(!sol.infection.groups.is_empty());
+        assert!(!sol.groups.is_empty());
         Ok(())
     }
 
@@ -188,7 +293,7 @@ mod test {
     fn aoc2018_24_parser_long_input() {
         let parser = Parser::new().unwrap();
         let s = "2016 units each with 10188 hit points (weak to slashing, radiation; immune to cold, bludgeoning) with an attack that does 47 bludgeoning damage at initiative 14";
-        let group = parser.parse_group(s).unwrap();
+        let group = parser.parse_group(s, Army::Immune).unwrap();
         let test = Group {
             units: 2016,
             hp: 10188,
@@ -197,6 +302,7 @@ mod test {
             damage: 47,
             attack_type: ATTACK_TYPE_BLUDGEONING,
             initiative: 14,
+            army: Army::Immune,
         };
         assert_eq!(test, group)
     }
@@ -205,7 +311,7 @@ mod test {
     fn aoc2018_24_parser_short_input() {
         let parser = Parser::new().unwrap();
         let s = "4154 units each with 3839 hit points with an attack that does 9 slashing damage at initiative 7";
-        let group = parser.parse_group(s).unwrap();
+        let group = parser.parse_group(s, Army::Immune).unwrap();
         let test = Group {
             units: 4154,
             hp: 3839,
@@ -214,14 +320,121 @@ mod test {
             damage: 9,
             attack_type: ATTACK_TYPE_SLASHING,
             initiative: 7,
+            army: Army::Immune,
         };
         assert_eq!(test, group)
     }
 
     #[test]
+    fn aoc2018_24_parser_ex_1_im_1() {
+        let s = "17 units each with 5390 hit points (weak to radiation, bludgeoning) with an attack that does 4507 fire damage at initiative 2";
+        let parser = Parser::new().unwrap();
+        let group = parser.parse_group(s, Army::Immune).unwrap();
+        let test = Group {
+            units: 17,
+            hp: 5390,
+            weaknesses: ATTACK_TYPE_RADIATION | ATTACK_TYPE_BLUDGEONING,
+            immunities: 0,
+            damage: 4507,
+            attack_type: ATTACK_TYPE_FIRE,
+            initiative: 2,
+            army: Army::Immune,
+        };
+        assert_eq!(test, group)
+    }
+
+    #[test]
+    fn aoc2018_24_parser_ex_1_im_2() {
+        let s = "989 units each with 1274 hit points (immune to fire; weak to bludgeoning, slashing) with an attack that does 25 slashing damage at initiative 3";
+        let parser = Parser::new().unwrap();
+        let group = parser.parse_group(s, Army::Immune).unwrap();
+        let test = Group {
+            units: 989,
+            hp: 1274,
+            weaknesses: ATTACK_TYPE_BLUDGEONING | ATTACK_TYPE_SLASHING,
+            immunities: ATTACK_TYPE_FIRE,
+            damage: 25,
+            attack_type: ATTACK_TYPE_SLASHING,
+            initiative: 3,
+            army: Army::Immune,
+        };
+        assert_eq!(test, group)
+    }
+
+    #[test]
+    fn aoc2018_24_parser_ex_1_inf_1() {
+        let s = "801 units each with 4706 hit points (weak to radiation) with an attack that does 116 bludgeoning damage at initiative 1";
+        let parser = Parser::new().unwrap();
+        let group = parser.parse_group(s, Army::Infection).unwrap();
+        let test = Group {
+            units: 801,
+            hp: 4706,
+            weaknesses: ATTACK_TYPE_RADIATION,
+            immunities: 0,
+            damage: 116,
+            attack_type: ATTACK_TYPE_BLUDGEONING,
+            initiative: 1,
+            army: Army::Infection,
+        };
+        assert_eq!(test, group)
+    }
+
+    #[test]
+    fn aoc2018_24_parser_ex_1_inf_2() {
+        let s = "4485 units each with 2961 hit points (immune to radiation; weak to fire, cold) with an attack that does 12 slashing damage at initiative 4";
+        let parser = Parser::new().unwrap();
+        let group = parser.parse_group(s, Army::Infection).unwrap();
+        let test = Group {
+            units: 4485,
+            hp: 2961,
+            weaknesses: ATTACK_TYPE_FIRE | ATTACK_TYPE_COLD,
+            immunities: ATTACK_TYPE_RADIATION,
+            damage: 12,
+            attack_type: ATTACK_TYPE_SLASHING,
+            initiative: 4,
+            army: Army::Infection,
+        };
+        assert_eq!(test, group)
+    }
+
+    #[test]
+    fn aoc2018_24_damage_im2_inf2() {
+        let parser = Parser::new().unwrap();
+
+        let imm = {
+            let s = "989 units each with 1274 hit points (immune to fire; weak to bludgeoning, slashing) with an attack that does 25 slashing damage at initiative 3";
+            parser.parse_group(s, Army::Immune).unwrap()
+        };
+
+        let inf = {
+            let s = "4485 units each with 2961 hit points (immune to radiation; weak to fire, cold) with an attack that does 12 slashing damage at initiative 4";
+            parser.parse_group(s, Army::Infection).unwrap()
+        };
+
+        assert_eq!(inf.damage_value_for(&imm), 107640);
+    }
+
+    #[test]
+    fn aoc2018_24_ex1() {
+        let inp = [
+            "Immune System:",
+            "17 units each with 5390 hit points (weak to radiation, bludgeoning) with an attack that does 4507 fire damage at initiative 2",
+            "989 units each with 1274 hit points (immune to fire; weak to bludgeoning, slashing) with an attack that does 25 slashing damage at initiative 3",
+            "",
+            "Infection:",
+            "801 units each with 4706 hit points (weak to radiation) with an attack that does 116 bludgeoning damage at initiative 1",
+            "4485 units each with 2961 hit points (immune to radiation; weak to fire, cold) with an attack that does 12 slashing damage at initiative 4",
+        ].iter()
+        .map(|x| x.to_string())
+        .collect::<Vec<String>>();
+        let puzzle = AoC2018_24::with_lines(&inp);
+        assert_eq!(puzzle.part_one(), "5216")
+    }
+
+    #[test]
     fn aoc2018_24_correctness() -> io::Result<()> {
         let sol = AoC2018_24::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "24009");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
