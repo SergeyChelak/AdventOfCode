@@ -54,14 +54,9 @@ impl Group {
         damage
     }
 
-    fn killed_units_by(&self, other: &Self) -> usize {
-        let received_damage = other.damage_value_for(self);
-        received_damage / self.hp
-    }
-
     fn defend(&mut self, other: &Self) {
-        let killed = self.killed_units_by(other);
-        self.units = self.units.saturating_sub(killed);
+        let received_damage = other.damage_value_for(self);
+        self.units = self.units.saturating_sub(received_damage / self.hp);
     }
 }
 
@@ -116,9 +111,9 @@ fn target_selection(groups: &[Group]) -> Vec<Option<usize>> {
                 let (_, a_dmg, a_ep, a_initiative) = a;
                 let (_, b_dmg, b_ep, b_initiative) = b;
                 a_dmg
-                    .cmp(&b_dmg)
-                    .then(a_ep.cmp(&b_ep))
-                    .then(a_initiative.cmp(&b_initiative))
+                    .cmp(b_dmg)
+                    .then(a_ep.cmp(b_ep))
+                    .then(a_initiative.cmp(b_initiative))
             })
             .map(|(idx, _, _, _)| idx);
         selection[idx] = target;
@@ -143,6 +138,17 @@ fn attack_order(groups: &[Group]) -> Vec<usize> {
     let mut arr = groups.iter().enumerate().collect::<Vec<(usize, &Group)>>();
     arr.sort_by(|a, b| b.1.initiative.cmp(&a.1.initiative));
     arr.iter().map(|x| x.0).collect()
+}
+
+fn boosted(groups: &Vec<Group>, value: usize) -> Vec<Group> {
+    let mut result = groups.clone();
+    result.iter_mut().for_each(|g| {
+        if g.army != Army::Immune {
+            return;
+        }
+        g.damage += value;
+    });
+    result
 }
 
 pub struct AoC2018_24 {
@@ -416,6 +422,17 @@ mod test {
 
     #[test]
     fn aoc2018_24_ex1() {
+        let puzzle = example_puzzle();
+        assert_eq!(puzzle.part_one(), "5216")
+    }
+
+    #[test]
+    fn aoc2018_24_ex2() {
+        let puzzle = example_puzzle();
+        assert_eq!(puzzle.part_two(), "51")
+    }
+
+    fn example_puzzle() -> AoC2018_24 {
         let inp = [
             "Immune System:",
             "17 units each with 5390 hit points (weak to radiation, bludgeoning) with an attack that does 4507 fire damage at initiative 2",
@@ -427,8 +444,7 @@ mod test {
         ].iter()
         .map(|x| x.to_string())
         .collect::<Vec<String>>();
-        let puzzle = AoC2018_24::with_lines(&inp);
-        assert_eq!(puzzle.part_one(), "5216")
+        AoC2018_24::with_lines(&inp)
     }
 
     #[test]
