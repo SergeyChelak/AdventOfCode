@@ -59,6 +59,77 @@ mod test {
     }
 
     #[test]
+    fn aoc2018_25_ex1() {
+        let inp = " 0,0,0,0
+            3,0,0,0
+            0,3,0,0
+            0,0,3,0
+            0,0,0,3
+            0,0,0,6
+            9,0,0,0
+            12,0,0,0";
+        let puzzle = from_str(inp);
+        assert_eq!(puzzle.part_one(), "2")
+    }
+
+    #[test]
+    fn aoc2018_25_ex2() {
+        let inp = "-1,2,2,0
+            0,0,2,-2
+            0,0,0,-2
+            -1,2,0,0
+            -2,-2,-2,2
+            3,0,2,-1
+            -1,3,2,2
+            -1,0,-1,0
+            0,2,1,-2
+            3,0,0,0";
+        let puzzle = from_str(inp);
+        assert_eq!(puzzle.part_one(), "4")
+    }
+
+    #[test]
+    fn aoc2018_25_ex3() {
+        let inp = "1,-1,0,1
+            2,0,-1,0
+            3,2,-1,0
+            0,0,3,1
+            0,0,-1,-1
+            2,3,-2,0
+            -2,2,0,0
+            2,-2,0,-1
+            1,-1,0,-1
+            3,2,0,2";
+        let puzzle = from_str(inp);
+        assert_eq!(puzzle.part_one(), "3")
+    }
+
+    #[test]
+    fn aoc2018_25_ex4() {
+        let inp = "1,-1,-1,-2
+            -2,-2,0,1
+            0,2,1,3
+            -2,3,-2,1
+            0,2,3,-2
+            -1,-1,1,-2
+            0,-2,-1,0
+            -2,2,3,-1
+            1,2,2,0
+            -1,-2,0,-2";
+        let puzzle = from_str(inp);
+        assert_eq!(puzzle.part_one(), "8")
+    }
+
+    fn from_str(s: &str) -> AoC2018_25 {
+        let lines = s
+            .split('\n')
+            .map(|x| x.trim())
+            .map(|s| s.to_string())
+            .collect::<Vec<String>>();
+        AoC2018_25::with_lines(&lines)
+    }
+
+    #[test]
     fn aoc2018_25_correctness() -> io::Result<()> {
         let sol = AoC2018_25::new()?;
         assert_eq!(sol.part_one(), "");
