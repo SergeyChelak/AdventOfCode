@@ -60,14 +60,27 @@ impl Group {
     }
 }
 
-fn combat(groups: &mut [Group]) -> usize {
+fn combat(groups: &mut [Group]) -> Option<(Army, usize)> {
+    let (mut immune_prev, mut infection_prev) = (0, 0);
     loop {
         let immune_units = total_units(groups, |g| g.army == Army::Immune);
         let infection_units = total_units(groups, |g| g.army == Army::Infection);
+        if (immune_prev, infection_prev) == (immune_units, infection_units) {
+            // stuck
+            break None;
+        }
         if immune_units * infection_units == 0 {
-            break immune_units.max(infection_units);
+            if immune_units > 0 {
+                break Some((Army::Immune, immune_units));
+            }
+            if infection_units > 0 {
+                break Some((Army::Infection, infection_units));
+            }
+            break None;
         }
         combat_round(groups);
+        immune_prev = immune_units;
+        infection_prev = infection_units;
     }
 }
 
@@ -140,8 +153,8 @@ fn attack_order(groups: &[Group]) -> Vec<usize> {
     arr.iter().map(|x| x.0).collect()
 }
 
-fn boosted(groups: &Vec<Group>, value: usize) -> Vec<Group> {
-    let mut result = groups.clone();
+fn boosted(groups: &[Group], value: usize) -> Vec<Group> {
+    let mut result = groups.to_owned();
     result.iter_mut().for_each(|g| {
         if g.army != Army::Immune {
             return;
@@ -170,11 +183,34 @@ impl AoC2018_24 {
 
 impl Solution for AoC2018_24 {
     fn part_one(&self) -> String {
-        combat(&mut self.groups.clone()).to_string()
+        let Some((_, units)) = combat(&mut self.groups.clone()) else {
+            return "Stuck/Mutual destruction".to_string();
+        };
+        units.to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let (mut left, mut right) = (0, 10_000);
+        let mut result: Option<usize> = None;
+        while left <= right {
+            let mid = (left + right) >> 1;
+            let mut groups = boosted(&self.groups, mid);
+            let Some((army, units)) = combat(&mut groups) else {
+                left = mid + 1;
+                continue;
+            };
+            match army {
+                Army::Immune => {
+                    result = Some(units);
+                    right = mid - 1;
+                }
+                Army::Infection => {
+                    left = mid + 1;
+                }
+            }
+        }
+        result.unwrap().to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2018/Day 24: Immune System Simulator 20XX".to_string()
@@ -451,7 +487,7 @@ mod test {
     fn aoc2018_24_correctness() -> io::Result<()> {
         let sol = AoC2018_24::new()?;
         assert_eq!(sol.part_one(), "24009");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "379");
         Ok(())
     }
 }
