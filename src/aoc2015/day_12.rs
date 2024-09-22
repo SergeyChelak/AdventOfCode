@@ -31,7 +31,7 @@ pub struct AoC2015_12 {
 impl AoC2015_12 {
     pub fn new() -> io::Result<Self> {
         let json_str = read_to_string("input/aoc2015_12")?;
-        let json: Json = serde_json::from_str(&json_str)?;
+        let json: Json = from_str(&json_str)?;
         Ok(Self { json })
     }
 }
