@@ -50,6 +50,7 @@ fn collection(year: &str) -> io::Result<Vec<Box<dyn Solution>>> {
         "2017" => aoc2017::all_days(),
         "2018" => aoc2018::all_days(),
         "2023" => aoc2023::all_days(),
+        "2024" => aoc2024::all_days(),
         _ => Ok(vec![]),
     }
 }

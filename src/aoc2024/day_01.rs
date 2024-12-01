@@ -1,6 +1,7 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
+use std::collections::HashMap;
 use std::io;
 
 type Int = i32;
@@ -48,8 +49,19 @@ impl Solution for AoC2024_01 {
             .to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut times = HashMap::<Int, usize>::new();
+        for x in &self.list_b {
+            let entry = times.entry(*x).or_insert(0);
+            *entry += 1;
+        }
+        let mut sum = 0;
+        for x in &self.list_a {
+            let rate = *times.get(x).unwrap_or(&0);
+            sum += *x * rate as Int
+        }
+        sum.to_string()
+    }
 
     fn description(&self) -> String {
         "2024/Day 1: Historian Hysteria".to_string()
@@ -73,12 +85,23 @@ mod test {
     fn aoc2024_01_correctness() -> io::Result<()> {
         let sol = AoC2024_01::new()?;
         assert_eq!(sol.part_one(), "1590491");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "22588371");
         Ok(())
     }
 
     #[test]
     fn aoc2024_01_case_01() {
+        let puzzle = create_puzzle();
+        assert_eq!(puzzle.part_one(), "11")
+    }
+
+    #[test]
+    fn aoc2024_01_case_02() {
+        let puzzle = create_puzzle();
+        assert_eq!(puzzle.part_two(), "31")
+    }
+
+    fn create_puzzle() -> AoC2024_01 {
         #[rustfmt::skip]
         let input = [
             "3   4",
@@ -88,7 +111,6 @@ mod test {
             "3   9",
             "3   3",
         ].iter().map(|x| x.to_string()).collect::<Vec<String>>();
-        let puzzle = AoC2024_01::new_with(&input);
-        assert_eq!(puzzle.part_one(), "11")
+        AoC2024_01::new_with(&input)
     }
 }
