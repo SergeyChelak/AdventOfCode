@@ -1,4 +1,4 @@
-use super::solution::Solution;
+use super::solution::{PuzzleFactory, PuzzleFactoryMethod};
 
 mod knot_hash;
 mod vm_utils;
@@ -78,32 +78,33 @@ use day_24::*;
 mod day_25;
 use day_25::*;
 
-pub fn all_days() -> std::io::Result<Vec<Box<dyn Solution>>> {
-    Ok(vec![
-        Box::new(AoC2017_01::new()?),
-        Box::new(AoC2017_02::new()?),
-        Box::new(AoC2017_03::new()?),
-        Box::new(AoC2017_04::new()?),
-        Box::new(AoC2017_05::new()?),
-        Box::new(AoC2017_06::new()?),
-        Box::new(AoC2017_07::new()?),
-        Box::new(AoC2017_08::new()?),
-        Box::new(AoC2017_09::new()?),
-        Box::new(AoC2017_10::new()?),
-        Box::new(AoC2017_11::new()?),
-        Box::new(AoC2017_12::new()?),
-        Box::new(AoC2017_13::new()?),
-        Box::new(AoC2017_14::new()?),
-        Box::new(AoC2017_15::new()?),
-        Box::new(AoC2017_16::new()?),
-        Box::new(AoC2017_17::new()?),
-        Box::new(AoC2017_18::new()?),
-        Box::new(AoC2017_19::new()?),
-        Box::new(AoC2017_20::new()?),
-        Box::new(AoC2017_21::new()?),
-        Box::new(AoC2017_22::new()?),
-        Box::new(AoC2017_23::new()?),
-        Box::new(AoC2017_24::new()?),
-        Box::new(AoC2017_25::new()?),
-    ])
+pub fn puzzle_factory_2017() -> PuzzleFactory {
+    let producers: Vec<&'static PuzzleFactoryMethod> = vec![
+        &|| Ok(Box::new(AoC2017_01::new()?)),
+        &|| Ok(Box::new(AoC2017_02::new()?)),
+        &|| Ok(Box::new(AoC2017_03::new()?)),
+        &|| Ok(Box::new(AoC2017_04::new()?)),
+        &|| Ok(Box::new(AoC2017_05::new()?)),
+        &|| Ok(Box::new(AoC2017_06::new()?)),
+        &|| Ok(Box::new(AoC2017_07::new()?)),
+        &|| Ok(Box::new(AoC2017_08::new()?)),
+        &|| Ok(Box::new(AoC2017_09::new()?)),
+        &|| Ok(Box::new(AoC2017_10::new()?)),
+        &|| Ok(Box::new(AoC2017_11::new()?)),
+        &|| Ok(Box::new(AoC2017_12::new()?)),
+        &|| Ok(Box::new(AoC2017_13::new()?)),
+        &|| Ok(Box::new(AoC2017_14::new()?)),
+        &|| Ok(Box::new(AoC2017_15::new()?)),
+        &|| Ok(Box::new(AoC2017_16::new()?)),
+        &|| Ok(Box::new(AoC2017_17::new()?)),
+        &|| Ok(Box::new(AoC2017_18::new()?)),
+        &|| Ok(Box::new(AoC2017_19::new()?)),
+        &|| Ok(Box::new(AoC2017_20::new()?)),
+        &|| Ok(Box::new(AoC2017_21::new()?)),
+        &|| Ok(Box::new(AoC2017_22::new()?)),
+        &|| Ok(Box::new(AoC2017_23::new()?)),
+        &|| Ok(Box::new(AoC2017_24::new()?)),
+        &|| Ok(Box::new(AoC2017_25::new()?)),
+    ];
+    PuzzleFactory::new(2017, producers)
 }

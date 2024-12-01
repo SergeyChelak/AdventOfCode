@@ -1,4 +1,5 @@
 use std::io;
+use std::num::ParseIntError;
 use std::ops::Deref;
 use std::time::Instant;
 mod solution;
@@ -10,53 +11,101 @@ mod aoc2017;
 mod aoc2018;
 mod aoc2023;
 mod aoc2024;
+use crate::aoc2015::puzzle_factory_2015;
+use crate::aoc2016::puzzle_factory_2016;
+use crate::aoc2017::puzzle_factory_2017;
+use crate::aoc2018::puzzle_factory_2018;
+use crate::aoc2023::puzzle_factory_2023;
+use crate::aoc2024::puzzle_factory_2024;
+use crate::solution::AggregatedFactory;
 use solution::Solution;
+
+#[derive(Debug)]
+enum ExecuteMode {
+    Single { year: usize, day: usize },
+    Year { year: usize },
+    Last,
+}
+
+impl ExecuteMode {
+    fn year(year: &str) -> Result<Self, ParseIntError> {
+        let year = year.parse::<usize>()?;
+        Ok(Self::Year { year })
+    }
+
+    fn single(year: &str, day: &str) -> Result<Self, ParseIntError> {
+        let year = year.parse::<usize>()?;
+        let day = day.parse::<usize>()?;
+        Ok(Self::Single { year, day })
+    }
+}
 
 fn main() -> io::Result<()> {
     println!("Advent of Code");
-    let args: Vec<String> = std::env::args().collect();
-
-    let values = (args.get(1), args.get(2));
-    match values {
-        (Some(year), None) => {
-            let solutions = collection(year)?;
-            run_collection(solutions);
+    let Ok(mode) = get_execute_mode() else {
+        println!("Incorrect parameters");
+        return Ok(());
+    };
+    let factory = create_factory();
+    match mode {
+        ExecuteMode::Single { year, day } => {
+            execute_puzzle(&factory, year, day);
         }
-        (Some(year), Some(day)) => {
-            let solutions = collection(year)?;
-            let day = day
-                .parse::<usize>()
-                .map_err(|x| io::Error::new(io::ErrorKind::Other, x))?;
-            execute(
-                solutions
-                    .get(day - 1)
-                    .expect("Day number should be between 1 and 25")
-                    .deref(),
-            );
+        ExecuteMode::Year { year } => {
+            execute_year_puzzles(&factory, year);
         }
-        _ => {
-            if let Ok(day) = &aoc2024::last_day() {
-                execute(day.deref());
-            }
+        ExecuteMode::Last => {
+            execute_puzzle(&factory, 2024, 1);
         }
     }
     Ok(())
 }
 
-fn collection(year: &str) -> io::Result<Vec<Box<dyn Solution>>> {
-    match year {
-        "2015" => aoc2015::all_days(),
-        "2016" => aoc2016::all_days(),
-        "2017" => aoc2017::all_days(),
-        "2018" => aoc2018::all_days(),
-        "2023" => aoc2023::all_days(),
-        "2024" => aoc2024::all_days(),
-        _ => Ok(vec![]),
+fn execute_year_puzzles(factory: &AggregatedFactory, year: usize) {
+    for day in 1..=25 {
+        let Some(puzzle) = factory.puzzle(year, day) else {
+            continue;
+        };
+        let Ok(puzzle) = puzzle else {
+            return;
+        };
+        execute(puzzle.deref());
     }
 }
 
-fn run_collection(days: Vec<Box<dyn Solution>>) {
-    days.iter().for_each(|x| execute(x.deref()));
+fn execute_puzzle(factory: &AggregatedFactory, year: usize, day: usize) {
+    let puzzle = factory.puzzle(year, day);
+    let Some(puzzle) = puzzle else {
+        println!("Puzzle {year}\\{day} not found");
+        return;
+    };
+    let Ok(puzzle) = puzzle else {
+        println!("Failed to create solution for {year}\\{day} puzzle");
+        return;
+    };
+    execute(puzzle.deref());
+}
+
+fn create_factory() -> AggregatedFactory {
+    let mut factory = AggregatedFactory::new();
+    factory.add_factory(puzzle_factory_2015());
+    factory.add_factory(puzzle_factory_2016());
+    factory.add_factory(puzzle_factory_2017());
+    factory.add_factory(puzzle_factory_2018());
+    factory.add_factory(puzzle_factory_2023());
+    factory.add_factory(puzzle_factory_2024());
+    factory
+}
+
+fn get_execute_mode() -> Result<ExecuteMode, ParseIntError> {
+    let args: Vec<String> = std::env::args().collect();
+    let values = (args.get(1), args.get(2));
+    let params = match values {
+        (Some(year), None) => ExecuteMode::year(year)?,
+        (Some(year), Some(day)) => ExecuteMode::single(year, day)?,
+        _ => ExecuteMode::Last,
+    };
+    Ok(params)
 }
 
 fn execute(solution: &dyn Solution) {

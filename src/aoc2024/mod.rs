@@ -1,12 +1,35 @@
-use super::solution::Solution;
+use super::solution::{PuzzleFactory, PuzzleFactoryMethod};
 
 mod day_01;
 use day_01::*;
 
-pub fn all_days() -> std::io::Result<Vec<Box<dyn Solution>>> {
-    Ok(vec![Box::new(AoC2024_01::new()?)])
-}
-
-pub fn last_day() -> std::io::Result<Box<dyn Solution>> {
-    Ok(Box::new(AoC2024_01::new()?))
+pub fn puzzle_factory_2024() -> PuzzleFactory {
+    let producers: Vec<&'static PuzzleFactoryMethod> = vec![
+        &|| Ok(Box::new(AoC2024_01::new()?)),
+        // &|| { Ok(Box::new(AoC2024_02::new()?)) },
+        // &|| { Ok(Box::new(AoC2024_03::new()?)) },
+        // &|| { Ok(Box::new(AoC2024_04::new()?)) },
+        // &|| { Ok(Box::new(AoC2024_05::new()?)) },
+        // &|| { Ok(Box::new(AoC2024_06::new()?)) },
+        // &|| { Ok(Box::new(AoC2024_07::new()?)) },
+        // &|| { Ok(Box::new(AoC2024_08::new()?)) },
+        // &|| { Ok(Box::new(AoC2024_09::new()?)) },
+        // &|| { Ok(Box::new(AoC2024_10::new()?)) },
+        // &|| { Ok(Box::new(AoC2024_11::new()?)) },
+        // &|| { Ok(Box::new(AoC2024_12::new()?)) },
+        // &|| { Ok(Box::new(AoC2024_13::new()?)) },
+        // &|| { Ok(Box::new(AoC2024_14::new()?)) },
+        // &|| { Ok(Box::new(AoC2024_15::new()?)) },
+        // &|| { Ok(Box::new(AoC2024_16::new()?)) },
+        // &|| { Ok(Box::new(AoC2024_17::new()?)) },
+        // &|| { Ok(Box::new(AoC2024_18::new()?)) },
+        // &|| { Ok(Box::new(AoC2024_19::new()?)) },
+        // &|| { Ok(Box::new(AoC2024_20::new()?)) },
+        // &|| { Ok(Box::new(AoC2024_21::new()?)) },
+        // &|| { Ok(Box::new(AoC2024_22::new()?)) },
+        // &|| { Ok(Box::new(AoC2024_23::new()?)) },
+        // &|| { Ok(Box::new(AoC2024_24::new()?)) },
+        // &|| { Ok(Box::new(AoC2024_25::new()?)) },
+    ];
+    PuzzleFactory::new(2024, producers)
 }
