@@ -105,6 +105,6 @@ pub fn all_days() -> std::io::Result<Vec<Box<dyn Solution>>> {
     ])
 }
 
-pub fn last_day() -> std::io::Result<Box<dyn Solution>> {
-    Ok(Box::new(AoC2023_25::new()?))
-}
+// pub fn last_day() -> std::io::Result<Box<dyn Solution>> {
+//     Ok(Box::new(AoC2023_25::new()?))
+// }

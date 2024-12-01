@@ -9,6 +9,7 @@ mod aoc2016;
 mod aoc2017;
 mod aoc2018;
 mod aoc2023;
+mod aoc2024;
 use solution::Solution;
 
 fn main() -> io::Result<()> {
@@ -34,7 +35,7 @@ fn main() -> io::Result<()> {
             );
         }
         _ => {
-            if let Ok(day) = &aoc2023::last_day() {
+            if let Ok(day) = &aoc2024::last_day() {
                 execute(day.deref());
             }
         }
