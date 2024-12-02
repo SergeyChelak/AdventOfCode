@@ -62,14 +62,20 @@ fn main() -> io::Result<()> {
 }
 
 fn execute_year_puzzles(factory: &AggregatedFactory, year: usize) {
+    let mut found = false;
     for day in 1..=25 {
         let Some(puzzle) = factory.puzzle(year, day) else {
             continue;
         };
         let Ok(puzzle) = puzzle else {
+            println!("Execution terminated because of failure of creation {year}/{day} puzzle");
             return;
         };
+        found = true;
         execute(puzzle.deref());
+    }
+    if !found {
+        println!("Nothing to execute");
     }
 }
 
@@ -110,7 +116,11 @@ fn get_execute_mode() -> Result<ExecuteMode, ParseIntError> {
 
 fn execute(solution: &dyn Solution) {
     println!();
-    println!("{}", solution.description());
+    let mut description = solution.description();
+    if description.is_empty() {
+        description = "## UNTITLED PUZZLE ##".to_string();
+    }
+    println!("{}", description);
     let measure = |part: u8, proc: &dyn Fn() -> String| {
         let now = Instant::now();
         let result = proc();
