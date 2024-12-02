@@ -1,5 +1,4 @@
 /// TODO: make these functions generic
-
 /// Greatest Common Divisor
 /// Implemented in Rust from https://www.geeksforgeeks.org/steins-algorithm-for-finding-gcd/
 pub fn gcd(a: usize, b: usize) -> usize {

@@ -92,7 +92,7 @@ impl<'a> NavigationIterator<'a> {
     }
 }
 
-impl<'a> Iterator for NavigationIterator<'a> {
+impl Iterator for NavigationIterator<'_> {
     type Item = Location;
 
     fn next(&mut self) -> Option<Self::Item> {

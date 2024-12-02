@@ -34,7 +34,7 @@ impl<'a, T: Copy> CombinationIterator<'a, T> {
     }
 }
 
-impl<'a, T: Copy> Iterator for CombinationIterator<'a, T> {
+impl<T: Copy> Iterator for CombinationIterator<'_, T> {
     type Item = Vec<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
