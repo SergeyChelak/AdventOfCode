@@ -55,7 +55,7 @@ fn main() -> io::Result<()> {
             execute_year_puzzles(&factory, year);
         }
         ExecuteMode::Last => {
-            execute_puzzle(&factory, 2024, 1);
+            execute_puzzle(&factory, 2024, 2);
         }
     }
     Ok(())

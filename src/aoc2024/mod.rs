@@ -3,10 +3,13 @@ use super::solution::{PuzzleFactory, PuzzleFactoryMethod};
 mod day_01;
 use day_01::*;
 
+mod day_02;
+use day_02::*;
+
 pub fn puzzle_factory_2024() -> PuzzleFactory {
     let producers: Vec<&'static PuzzleFactoryMethod> = vec![
         &|| Ok(Box::new(AoC2024_01::new()?)),
-        // &|| { Ok(Box::new(AoC2024_02::new()?)) },
+        &|| Ok(Box::new(AoC2024_02::new()?)),
         // &|| { Ok(Box::new(AoC2024_03::new()?)) },
         // &|| { Ok(Box::new(AoC2024_04::new()?)) },
         // &|| { Ok(Box::new(AoC2024_05::new()?)) },
