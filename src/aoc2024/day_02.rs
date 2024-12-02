@@ -50,72 +50,27 @@ fn parse_report(line: &str) -> Vec<Int> {
 }
 
 fn is_tolerate_safe(report: &[Int]) -> bool {
-    if report.is_empty() {
-        return true;
-    }
-    let mut direction = 0;
-    let count = report.len() - 1;
-    let skip_check = |index: usize| {
-        if is_safe_with_skip(report, index) {
+    let count = report.len();
+    for index in 0..count {
+        let filtered = report
+            .iter()
+            .enumerate()
+            .filter(|(i, _)| *i != index)
+            .map(|(_, val)| *val)
+            .collect::<Vec<Int>>();
+        if is_safe(&filtered) {
             return true;
-        }
-        if is_safe_with_skip(report, index + 1) {
-            return true;
-        }
-        if index > 0 && is_safe_with_skip(report, index - 1) {
-            return true;
-        }
-        false
-    };
-    for (i, value) in report.iter().take(count).enumerate() {
-        let next = report[i + 1];
-        let diff = value.abs_diff(next);
-        if !(1u32..=3).contains(&diff) {
-            return skip_check(i);
-        }
-
-        let current = if *value < next { 1 } else { -1 };
-        if direction == 0 {
-            direction = current;
-            continue;
-        }
-        if direction != current {
-            return skip_check(i);
         }
     }
-    true
-}
-
-fn is_safe_with_skip(report: &[Int], index: usize) -> bool {
-    let filtered = report
-        .iter()
-        .enumerate()
-        .filter(|(i, _)| *i != index)
-        .map(|(_, val)| *val)
-        .collect::<Vec<Int>>();
-    is_safe(&filtered)
+    false
 }
 
 fn is_safe(report: &[Int]) -> bool {
-    let mut direction = 0;
-    for (i, item) in report.iter().enumerate() {
-        let Some(next) = report.get(i + 1) else {
-            break;
-        };
-        let diff = next.abs_diff(*item);
-        if !(1u32..=3).contains(&diff) {
-            return false;
-        }
-        let current = if item < next { 1 } else { -1 };
-        if direction == 0 {
-            direction = current;
-            continue;
-        }
-        if direction != current {
-            return false;
-        }
-    }
-    true
+    let mut iter = report
+        .iter()
+        .zip(report.iter().skip(1))
+        .map(|(l, r)| *l - *r);
+    iter.clone().all(|val| (1..=3).contains(&val)) || iter.all(|val| (-3..=-1).contains(&val))
 }
 
 #[cfg(test)]
