@@ -1,7 +1,7 @@
 use std::io;
-use std::num::ParseIntError;
 use std::ops::Deref;
 use std::time::Instant;
+mod execute_mode;
 mod solution;
 mod utils;
 
@@ -18,32 +18,13 @@ use crate::aoc2018::puzzle_factory_2018;
 use crate::aoc2023::puzzle_factory_2023;
 use crate::aoc2024::puzzle_factory_2024;
 use crate::solution::AggregatedFactory;
+use execute_mode::{get_execute_mode, ExecuteMode};
 use solution::Solution;
-
-#[derive(Debug)]
-enum ExecuteMode {
-    Single { year: usize, day: usize },
-    Year { year: usize },
-    Last,
-}
-
-impl ExecuteMode {
-    fn year(year: &str) -> Result<Self, ParseIntError> {
-        let year = year.parse::<usize>()?;
-        Ok(Self::Year { year })
-    }
-
-    fn single(year: &str, day: &str) -> Result<Self, ParseIntError> {
-        let year = year.parse::<usize>()?;
-        let day = day.parse::<usize>()?;
-        Ok(Self::Single { year, day })
-    }
-}
 
 fn main() -> io::Result<()> {
     println!("Advent of Code");
     let Ok(mode) = get_execute_mode() else {
-        println!("Incorrect parameters");
+        println!("Failed to process parameters");
         return Ok(());
     };
     let factory = create_factory();
@@ -54,8 +35,8 @@ fn main() -> io::Result<()> {
         ExecuteMode::Year { year } => {
             execute_year_puzzles(&factory, year);
         }
-        ExecuteMode::Last => {
-            execute_puzzle(&factory, 2024, 3);
+        ExecuteMode::Undefined => {
+            println!("Input is missing in command line parameters or toml-file");
         }
     }
     Ok(())
@@ -101,17 +82,6 @@ fn create_factory() -> AggregatedFactory {
     factory.add_factory(puzzle_factory_2023());
     factory.add_factory(puzzle_factory_2024());
     factory
-}
-
-fn get_execute_mode() -> Result<ExecuteMode, ParseIntError> {
-    let args: Vec<String> = std::env::args().collect();
-    let values = (args.get(1), args.get(2));
-    let params = match values {
-        (Some(year), None) => ExecuteMode::year(year)?,
-        (Some(year), Some(day)) => ExecuteMode::single(year, day)?,
-        _ => ExecuteMode::Last,
-    };
-    Ok(params)
 }
 
 fn execute(solution: &dyn Solution) {
