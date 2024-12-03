@@ -18,39 +18,35 @@ impl AoC2024_03 {
 
 impl Solution for AoC2024_03 {
     fn part_one(&self) -> String {
-        let regex = Regex::new(r"mul\(\d*,\d*\)").expect("regex format should be valid");
-        let mut rest = self.input.as_str();
-        let mut sum = 0;
-        while let Some(reg_match) = regex.find(rest) {
-            let value = &rest[reg_match.start()..reg_match.end()];
-            sum += mul(value);
-            rest = &rest[reg_match.end()..];
-        }
-        sum.to_string()
+        Regex::new(r"mul\(\d*,\d*\)")
+            .expect("regex format isn't valid")
+            .find_iter(&self.input)
+            .map(|s| mul(s.as_str()))
+            .sum::<i32>()
+            .to_string()
     }
 
     fn part_two(&self) -> String {
-        let regex =
-            Regex::new(r"mul\(\d*,\d*\)|do\(\)|don't\(\)").expect("regex format should be valid");
-        let mut rest = self.input.as_str();
-        let mut sum = 0;
-        let mut doable = true;
-        while let Some(reg_match) = regex.find(rest) {
-            let value = &rest[reg_match.start()..reg_match.end()];
-            rest = &rest[reg_match.end()..];
-            if value == "don't()" {
-                doable = false;
-                continue;
-            }
-            if value == "do()" {
-                doable = true;
-                continue;
-            }
-            if doable {
-                sum += mul(value);
-            }
-        }
-        sum.to_string()
+        Regex::new(r"mul\(\d*,\d*\)|do\(\)|don't\(\)")
+            .expect("regex format isn't valid")
+            .find_iter(&self.input)
+            .map(|s| s.as_str())
+            .fold((0, true), |acc, value| {
+                let sum = acc.0;
+                let doable = acc.1;
+                if value == "don't()" {
+                    return (sum, false);
+                }
+                if value == "do()" {
+                    return (sum, true);
+                }
+                if doable {
+                    return (sum + mul(value), true);
+                }
+                acc
+            })
+            .0
+            .to_string()
     }
 
     fn description(&self) -> String {
