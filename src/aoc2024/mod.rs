@@ -9,12 +9,15 @@ use day_02::*;
 mod day_03;
 use day_03::*;
 
+mod day_04;
+use day_04::*;
+
 pub fn puzzle_factory_2024() -> PuzzleFactory {
     let producers: Vec<&'static PuzzleFactoryMethod> = vec![
         &|| Ok(Box::new(AoC2024_01::new()?)),
         &|| Ok(Box::new(AoC2024_02::new()?)),
         &|| Ok(Box::new(AoC2024_03::new()?)),
-        // &|| { Ok(Box::new(AoC2024_04::new()?)) },
+        &|| Ok(Box::new(AoC2024_04::new()?)),
         // &|| { Ok(Box::new(AoC2024_05::new()?)) },
         // &|| { Ok(Box::new(AoC2024_06::new()?)) },
         // &|| { Ok(Box::new(AoC2024_07::new()?)) },
