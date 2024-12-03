@@ -29,8 +29,29 @@ impl Solution for AoC2024_03 {
         sum.to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let regex =
+            Regex::new(r"mul\(\d*,\d*\)|do\(\)|don't\(\)").expect("regex format should be valid");
+        let mut rest = self.input.as_str();
+        let mut sum = 0;
+        let mut doable = true;
+        while let Some(reg_match) = regex.find(rest) {
+            let value = &rest[reg_match.start()..reg_match.end()];
+            rest = &rest[reg_match.end()..];
+            if value == "don't()" {
+                doable = false;
+                continue;
+            }
+            if value == "do()" {
+                doable = true;
+                continue;
+            }
+            if doable {
+                sum += mul(value);
+            }
+        }
+        sum.to_string()
+    }
 
     fn description(&self) -> String {
         "2024/Day 3: Mull It Over".to_string()
@@ -61,7 +82,7 @@ mod test {
     fn aoc2024_03_correctness() -> io::Result<()> {
         let sol = AoC2024_03::new()?;
         assert_eq!(sol.part_one(), "171183089");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "63866497");
         Ok(())
     }
 
@@ -72,5 +93,14 @@ mod test {
                 .to_string(),
         };
         assert_eq!(sol.part_one(), "161");
+    }
+
+    #[test]
+    fn aoc2024_03_case_2() {
+        let sol = AoC2024_03 {
+            input: r"xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))"
+                .to_string(),
+        };
+        assert_eq!(sol.part_two(), "48");
     }
 }
