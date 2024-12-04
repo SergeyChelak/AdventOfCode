@@ -55,8 +55,26 @@ impl Solution for AoC2024_04 {
         total.to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut total = 0;
+        for (row, arr) in self.input.iter().enumerate() {
+            if row == 0 || row == self.input.len() - 1 {
+                continue;
+            }
+            for (col, val) in arr.iter().enumerate() {
+                if col == 0 || col == arr.len() - 1 {
+                    continue;
+                }
+                if *val != 'A' {
+                    continue;
+                }
+                if is_x_pattern(&self.input, row, col) {
+                    total += 1;
+                }
+            }
+        }
+        total.to_string()
+    }
 
     fn description(&self) -> String {
         "2024/Day 4: Ceres Search".to_string()
@@ -96,6 +114,15 @@ fn collect_string(
     Some(output.iter().collect::<String>())
 }
 
+fn is_x_pattern(arr: &Vec2<char>, row: usize, col: usize) -> bool {
+    let up_left = arr[row - 1][col - 1];
+    let up_right = arr[row - 1][col + 1];
+    let down_left = arr[row + 1][col - 1];
+    let down_right = arr[row + 1][col + 1];
+    let check = |a: char, b: char| -> bool { a == 'M' && b == 'S' || b == 'M' && a == 'S' };
+    check(up_left, down_right) && check(up_right, down_left)
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -109,6 +136,17 @@ mod test {
 
     #[test]
     fn aoc2024_04_case_1() {
+        let sol = puzzle();
+        assert_eq!(sol.part_one(), "18")
+    }
+
+    #[test]
+    fn aoc2024_04_case_2() {
+        let sol = puzzle();
+        assert_eq!(sol.part_two(), "9")
+    }
+
+    fn puzzle() -> AoC2024_04 {
         let input = [
             "MMMSXXMASM",
             "MSAMXMSMSA",
@@ -124,15 +162,14 @@ mod test {
         .iter()
         .map(|s| s.to_string())
         .collect::<Vec<String>>();
-        let sol = AoC2024_04::with_strings(&input);
-        assert_eq!(sol.part_one(), "18")
+        AoC2024_04::with_strings(&input)
     }
 
     #[test]
     fn aoc2024_04_correctness() -> io::Result<()> {
         let sol = AoC2024_04::new()?;
         assert_eq!(sol.part_one(), "2534");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "1866");
         Ok(())
     }
 }
