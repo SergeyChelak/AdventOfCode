@@ -131,7 +131,6 @@ mod test {
     #[test]
     fn aoc2024_04_correctness() -> io::Result<()> {
         let sol = AoC2024_04::new()?;
-        col = c;
         assert_eq!(sol.part_one(), "2534");
         assert_eq!(sol.part_two(), "");
         Ok(())
