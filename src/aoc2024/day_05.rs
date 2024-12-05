@@ -85,15 +85,40 @@ fn is_correct(updates: &[usize], before_map: &OrderMap, after_map: &OrderMap) ->
     true
 }
 
+fn fix_order(input: &[usize], before_map: &OrderMap) -> Vec<usize> {
+    let index_map = {
+        let mut map = HashMap::<usize, usize>::new();
+        for (i, val) in input.iter().enumerate() {
+            map.insert(*val, i);
+        }
+        map
+    };
+
+    let mut priorities = input.iter().map(|value| (value, 0)).collect::<Vec<_>>();
+
+    for (index, num) in input.iter().enumerate() {
+        if let Some(next_set) = before_map.get(num) {
+            priorities[index].1 += next_set.iter().filter_map(|val| index_map.get(val)).count();
+        }
+    }
+
+    priorities.sort_by(|a, b| a.1.cmp(&b.1));
+
+    let priorities = priorities.iter().map(|x| *x.0).collect::<Vec<_>>();
+    //
+
+    priorities
+}
+
 fn make_maps(ordering_rules: &[(usize, usize)]) -> (OrderMap, OrderMap) {
     let mut before_map = OrderMap::new();
     let mut after_map = OrderMap::new();
 
     for (a, b) in ordering_rules {
-        let before_set = before_map.entry(*a).or_insert(HashSet::new());
+        let before_set = before_map.entry(*a).or_default();
         before_set.insert(*b);
 
-        let after_set = after_map.entry(*b).or_insert(HashSet::new());
+        let after_set = after_map.entry(*b).or_default();
         after_set.insert(*a);
     }
     (before_map, after_map)
@@ -113,8 +138,19 @@ impl Solution for AoC2024_05 {
             .to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let (before_map, after_map) = make_maps(&self.ordering_rules);
+        self.updates
+            .iter()
+            .filter(|arr| !is_correct(arr, &before_map, &after_map))
+            .map(|arr| fix_order(arr, &before_map))
+            .map(|arr| {
+                let middle = arr.len() / 2;
+                arr[middle]
+            })
+            .sum::<usize>()
+            .to_string()
+    }
 
     fn description(&self) -> String {
         "2024/Day 5: Print Queue".to_string()
@@ -137,6 +173,12 @@ mod test {
     fn aoc2024_05_case_1() {
         let puzzle = make_puzzle();
         assert_eq!(puzzle.part_one(), "143");
+    }
+
+    #[test]
+    fn aoc2024_05_case_2() {
+        let puzzle = make_puzzle();
+        assert_eq!(puzzle.part_two(), "123");
     }
 
     fn make_puzzle() -> AoC2024_05 {
@@ -179,7 +221,7 @@ mod test {
     fn aoc2024_05_correctness() -> io::Result<()> {
         let sol = AoC2024_05::new()?;
         assert_eq!(sol.part_one(), "5991");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "5479");
         Ok(())
     }
 }
