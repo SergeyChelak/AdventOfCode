@@ -55,99 +55,75 @@ impl AoC2024_05 {
 
 type OrderMap = HashMap<usize, HashSet<usize>>;
 
-fn is_correct(updates: &[usize], before_map: &OrderMap, after_map: &OrderMap) -> bool {
-    let mut index_map = HashMap::<usize, usize>::new();
-    for (i, val) in updates.iter().enumerate() {
-        index_map.insert(*val, i);
-    }
-
-    for (index, num) in updates.iter().enumerate() {
-        if let Some(next_set) = before_map.get(num) {
-            let is_ok = next_set
-                .iter()
-                .filter_map(|val| index_map.get(val))
-                .all(|val| *val > index);
-            if !is_ok {
-                return false;
-            }
-        }
-
-        if let Some(prev_set) = after_map.get(num) {
-            let is_ok = prev_set
-                .iter()
-                .filter_map(|val| index_map.get(val))
-                .all(|val| *val < index);
-            if !is_ok {
-                return false;
-            }
+fn is_correct(input: &[usize], order_map: &OrderMap) -> bool {
+    let index_map = make_index_map(input);
+    for (index, num) in input.iter().enumerate() {
+        let Some(next_set) = order_map.get(num) else {
+            continue;
+        };
+        let is_ok = next_set
+            .iter()
+            .filter_map(|val| index_map.get(val))
+            .all(|val| *val > index);
+        if !is_ok {
+            return false;
         }
     }
     true
 }
 
-fn fix_order(input: &[usize], before_map: &OrderMap) -> Vec<usize> {
-    let index_map = {
-        let mut map = HashMap::<usize, usize>::new();
-        for (i, val) in input.iter().enumerate() {
-            map.insert(*val, i);
-        }
-        map
-    };
-
+fn fix_order(input: &[usize], order_map: &OrderMap) -> Vec<usize> {
+    let index_map = make_index_map(input);
     let mut priorities = input.iter().map(|value| (value, 0)).collect::<Vec<_>>();
-
     for (index, num) in input.iter().enumerate() {
-        if let Some(next_set) = before_map.get(num) {
+        if let Some(next_set) = order_map.get(num) {
             priorities[index].1 += next_set.iter().filter_map(|val| index_map.get(val)).count();
         }
     }
-
     priorities.sort_by(|a, b| a.1.cmp(&b.1));
-
-    let priorities = priorities.iter().map(|x| *x.0).collect::<Vec<_>>();
-    //
-
-    priorities
+    priorities.iter().map(|x| *x.0).collect::<Vec<_>>()
 }
 
-fn make_maps(ordering_rules: &[(usize, usize)]) -> (OrderMap, OrderMap) {
-    let mut before_map = OrderMap::new();
-    let mut after_map = OrderMap::new();
-
+fn make_order_map(ordering_rules: &[(usize, usize)]) -> OrderMap {
+    let mut order_map = OrderMap::new();
     for (a, b) in ordering_rules {
-        let before_set = before_map.entry(*a).or_default();
-        before_set.insert(*b);
-
-        let after_set = after_map.entry(*b).or_default();
-        after_set.insert(*a);
+        let set = order_map.entry(*a).or_default();
+        set.insert(*b);
     }
-    (before_map, after_map)
+    order_map
+}
+
+fn make_index_map(input: &[usize]) -> HashMap<usize, usize> {
+    let mut map = HashMap::<usize, usize>::new();
+    for (i, val) in input.iter().enumerate() {
+        map.insert(*val, i);
+    }
+    map
+}
+
+fn get_middle(arr: &[usize]) -> usize {
+    let middle = arr.len() / 2;
+    arr[middle]
 }
 
 impl Solution for AoC2024_05 {
     fn part_one(&self) -> String {
-        let (before_map, after_map) = make_maps(&self.ordering_rules);
+        let order_map = make_order_map(&self.ordering_rules);
         self.updates
             .iter()
-            .filter(|arr| is_correct(arr, &before_map, &after_map))
-            .map(|arr| {
-                let middle = arr.len() / 2;
-                arr[middle]
-            })
+            .filter(|arr| is_correct(arr, &order_map))
+            .map(|arr| get_middle(arr))
             .sum::<usize>()
             .to_string()
     }
 
     fn part_two(&self) -> String {
-        let (before_map, after_map) = make_maps(&self.ordering_rules);
+        let order_map = make_order_map(&self.ordering_rules);
         self.updates
             .iter()
-            .filter(|arr| !is_correct(arr, &before_map, &after_map))
-            .map(|arr| fix_order(arr, &before_map))
-            .map(|arr| {
-                let middle = arr.len() / 2;
-                arr[middle]
-            })
+            .filter(|arr| !is_correct(arr, &order_map))
+            .map(|arr| fix_order(arr, &order_map))
+            .map(|arr| get_middle(&arr))
             .sum::<usize>()
             .to_string()
     }
