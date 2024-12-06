@@ -43,13 +43,8 @@ impl Solution for AoC2024_06 {
         let mut position = self.start_position;
         loop {
             visited.insert(position);
-            let Position { row, col } = position;
-            let next = match direction {
-                Direction::Up if row > 0 => Position::new(row - 1, col),
-                Direction::Down if row < self.input.len() - 1 => Position::new(row + 1, col),
-                Direction::Left if col > 0 => Position::new(row, col - 1),
-                Direction::Right if col < self.input[row].len() - 1 => Position::new(row, col + 1),
-                _ => break,
+            let Some(next) = next_position(&self.input, position, direction) else {
+                break;
             };
             if self.input[next.row][next.col] == '#' {
                 direction = direction.turn_right();
@@ -60,12 +55,71 @@ impl Solution for AoC2024_06 {
         visited.len().to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut total = 0;
+        let mut matrix = self.input.clone();
+        for row in 0..matrix.len() {
+            for col in 0..matrix[row].len() {
+                if matrix[row][col] != '.' {
+                    continue;
+                }
+                matrix[row][col] = '#';
+                if is_stuck(&matrix, self.start_position, Direction::Up) {
+                    total += 1;
+                }
+                matrix[row][col] = '.';
+            }
+        }
+        total.to_string()
+    }
 
     fn description(&self) -> String {
         "2024/Day 6: Guard Gallivant".to_string()
     }
+}
+
+fn is_stuck(matrix: &[Vec<char>], mut position: Position, mut direction: Direction) -> bool {
+    let mut visited = HashSet::<Visit>::new();
+    loop {
+        let visit = Visit {
+            position,
+            direction,
+        };
+        if visited.contains(&visit) {
+            return true;
+        }
+        visited.insert(visit);
+        let Some(next) = next_position(matrix, position, direction) else {
+            return false;
+        };
+        if matrix[next.row][next.col] == '#' {
+            direction = direction.turn_right();
+            continue;
+        }
+        position = next;
+    }
+}
+
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+struct Visit {
+    position: Position,
+    direction: Direction,
+}
+
+fn next_position(
+    matrix: &[Vec<char>],
+    position: Position,
+    direction: Direction,
+) -> Option<Position> {
+    let Position { row, col } = position;
+    let next = match direction {
+        Direction::Up if row > 0 => Position::new(row - 1, col),
+        Direction::Down if row < matrix.len() - 1 => Position::new(row + 1, col),
+        Direction::Left if col > 0 => Position::new(row, col - 1),
+        Direction::Right if col < matrix[row].len() - 1 => Position::new(row, col + 1),
+        _ => return None,
+    };
+    Some(next)
 }
 
 #[cfg(test)]
@@ -81,7 +135,18 @@ mod test {
 
     #[test]
     fn aoc2024_06_case_1() {
-        let puzzle = AoC2024_06::with_strings(
+        let puzzle = make_puzzle();
+        assert_eq!("41", puzzle.part_one());
+    }
+
+    #[test]
+    fn aoc2024_06_case_2() {
+        let puzzle = make_puzzle();
+        assert_eq!("6", puzzle.part_two());
+    }
+
+    fn make_puzzle() -> AoC2024_06 {
+        AoC2024_06::with_strings(
             &[
                 "....#.....",
                 ".........#",
@@ -97,15 +162,14 @@ mod test {
             .iter()
             .map(|s| s.to_string())
             .collect::<Vec<_>>(),
-        );
-        assert_eq!("41", puzzle.part_one());
+        )
     }
 
     #[test]
     fn aoc2024_06_correctness() -> io::Result<()> {
         let sol = AoC2024_06::new()?;
         assert_eq!(sol.part_one(), "5239");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "1753");
         Ok(())
     }
 }
