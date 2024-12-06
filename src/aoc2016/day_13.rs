@@ -1,9 +1,8 @@
-use crate::solution::Solution;
+use crate::{solution::Solution, utils::Point2d};
 
 use std::{collections::HashSet, io};
 
-#[derive(PartialEq, Eq, Clone, Copy, Hash)]
-struct Position(u32, u32);
+type Position = Point2d<u32>;
 
 impl Position {
     fn is_equal(&self, other: &Option<Position>) -> bool {
@@ -25,7 +24,7 @@ impl Maze {
     }
 
     fn is_open(&self, pos: &Position) -> bool {
-        let (x, y) = (pos.0, pos.1);
+        let (x, y) = (pos.x, pos.y);
         let mut val = x * x + 3 * x + 2 * x * y + y + y * y + self.fav_number;
         let mut bits = 0;
         while val > 0 {
@@ -38,7 +37,7 @@ impl Maze {
     }
 
     fn min_steps(&self, x: u32, y: u32) -> Option<u32> {
-        self.search(Some(Position(x, y)), None).map(|v| v.0)
+        self.search(Some(Position { x, y }), None).map(|v| v.0)
     }
 
     fn distinct_locations(&self, steps: u32) -> Option<u32> {
@@ -53,7 +52,7 @@ impl Maze {
         let mut positions = Vec::new();
         let mut visited = HashSet::new();
         {
-            let pos = Position(1, 1);
+            let pos = Position::new(1, 1);
             positions.push(pos);
             visited.insert(pos);
         }
@@ -70,16 +69,16 @@ impl Maze {
                 if pos.is_equal(&target_pos) {
                     return Some((steps, locations));
                 } else {
-                    let (i, j) = (pos.0, pos.1);
+                    let (i, j) = (pos.x, pos.y);
                     let mut adj = Vec::with_capacity(4);
                     if i > 0 {
-                        adj.push(Position(i - 1, j));
+                        adj.push(Position::new(i - 1, j));
                     }
                     if j > 0 {
-                        adj.push(Position(i, j - 1));
+                        adj.push(Position::new(i, j - 1));
                     }
-                    adj.push(Position(i + 1, j));
-                    adj.push(Position(i, j + 1));
+                    adj.push(Position::new(i + 1, j));
+                    adj.push(Position::new(i, j + 1));
                     for p in adj.iter() {
                         if !visited.contains(p) && self.is_open(p) {
                             visited.insert(*p);

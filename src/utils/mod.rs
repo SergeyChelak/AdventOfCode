@@ -25,10 +25,8 @@ pub use coordinate::*;
 pub mod math;
 pub use math::*;
 
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub enum Direction {
-    Up,
-    Down,
-    Left,
-    Right,
-}
+pub mod directions;
+pub use directions::*;
+
+pub mod position;
+pub use position::*;

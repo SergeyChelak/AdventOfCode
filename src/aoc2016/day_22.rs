@@ -27,11 +27,7 @@ impl StorageInfo {
     }
 }
 
-#[derive(Copy, Clone, Hash, Eq, PartialEq)]
-struct Position {
-    x: usize,
-    y: usize,
-}
+type Position = Point2d<usize>;
 
 impl Position {
     fn left(&self) -> Option<Self> {

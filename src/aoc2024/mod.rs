@@ -15,6 +15,9 @@ use day_04::*;
 mod day_05;
 use day_05::*;
 
+mod day_06;
+use day_06::*;
+
 pub fn puzzle_factory_2024() -> PuzzleFactory {
     let producers: Vec<&'static PuzzleFactoryMethod> = vec![
         &|| Ok(Box::new(AoC2024_01::new()?)),
@@ -22,8 +25,8 @@ pub fn puzzle_factory_2024() -> PuzzleFactory {
         &|| Ok(Box::new(AoC2024_03::new()?)),
         &|| Ok(Box::new(AoC2024_04::new()?)),
         &|| Ok(Box::new(AoC2024_05::new()?)),
-        // &|| { Ok(Box::new(AoC2024_06::new()?)) },
-        // &|| { Ok(Box::new(AoC2024_07::new()?)) },
+        &|| Ok(Box::new(AoC2024_06::new()?)),
+        // &|| { Ok(Box::new(AoC2024_07::new()?)) },``
         // &|| { Ok(Box::new(AoC2024_08::new()?)) },
         // &|| { Ok(Box::new(AoC2024_09::new()?)) },
         // &|| { Ok(Box::new(AoC2024_10::new()?)) },

@@ -4,42 +4,6 @@ use crate::utils::*;
 use std::collections::{HashMap, HashSet};
 use std::io;
 
-enum Direction {
-    Up,
-    Down,
-    Left,
-    Right,
-}
-
-impl Direction {
-    fn turn_left(&self) -> Self {
-        match self {
-            Self::Up => Self::Left,
-            Self::Left => Self::Down,
-            Self::Down => Self::Right,
-            Self::Right => Self::Up,
-        }
-    }
-
-    fn turn_right(&self) -> Self {
-        match self {
-            Self::Up => Self::Right,
-            Self::Right => Self::Down,
-            Self::Down => Self::Left,
-            Self::Left => Self::Up,
-        }
-    }
-
-    fn reverse(&self) -> Self {
-        match self {
-            Self::Up => Self::Down,
-            Self::Down => Self::Up,
-            Self::Right => Self::Left,
-            Self::Left => Self::Right,
-        }
-    }
-}
-
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum State {
     Clean,

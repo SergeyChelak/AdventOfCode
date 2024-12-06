@@ -4,11 +4,7 @@ use crate::utils::*;
 use std::collections::HashSet;
 use std::io;
 
-#[derive(Copy, Clone, Hash, Eq, PartialEq)]
-struct Position {
-    row: usize,
-    col: usize,
-}
+type Position = Position2<usize>;
 
 type Grid = Vec<Vec<char>>;
 
