@@ -1,6 +1,10 @@
 #!/bin/bash
 
 AOC_SESSION=$(cat etc/session)
+if [ "${#AOC_SESSION}" -eq 0 ]; then
+    echo "Missing session id"
+    exit 1
+fi
 
 if [ "$#" -ne 2 ]; then
     echo "Year and day are required arguments"
