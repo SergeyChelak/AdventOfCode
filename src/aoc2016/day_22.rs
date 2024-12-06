@@ -27,9 +27,9 @@ impl StorageInfo {
     }
 }
 
-type Position = Point2d<usize>;
+type Coordinate = Point2d<usize>;
 
-impl Position {
+impl Coordinate {
     fn left(&self) -> Option<Self> {
         if self.x > 0 {
             Some(Self {
@@ -69,11 +69,11 @@ impl Position {
 
 #[derive(Copy, Clone, Hash, Eq, PartialEq)]
 struct SearchState {
-    empty: Position,
-    target: Position,
+    empty: Coordinate,
+    target: Coordinate,
 }
 
-type Grid = HashMap<Position, StorageInfo>;
+type Grid = HashMap<Coordinate, StorageInfo>;
 
 fn make_search_state(grid: &Grid) -> SearchState {
     let target = {
@@ -83,7 +83,7 @@ fn make_search_state(grid: &Grid) -> SearchState {
             .max_by(|&a, &b| a.x.cmp(&b.x))
             .expect("Max X should be computable")
             .x;
-        Position { x: max_x, y: 0 }
+        Coordinate { x: max_x, y: 0 }
     };
 
     let empty = *grid
@@ -136,7 +136,7 @@ fn bfs_fewest_steps(grid: &Grid) -> usize {
     steps
 }
 
-fn adjacent_nodes(grid: &Grid, position: &Position) -> Vec<Position> {
+fn adjacent_nodes(grid: &Grid, position: &Coordinate) -> Vec<Coordinate> {
     vec![
         position.left(),
         position.right(),
@@ -174,7 +174,7 @@ impl AoC2016_22 {
         Self { grid }
     }
 
-    fn parse_node_info(s: &str) -> (Position, StorageInfo) {
+    fn parse_node_info(s: &str) -> (Coordinate, StorageInfo) {
         let tokens = s.split_whitespace().collect::<Vec<&str>>();
         let position = {
             let name = tokens[0].split('-').collect::<Vec<&str>>();
@@ -184,7 +184,7 @@ impl AoC2016_22 {
             let y = name[2][1..]
                 .parse::<usize>()
                 .expect("Node y value should be integer");
-            Position { x, y }
+            Coordinate { x, y }
         };
         let value_of = |index: usize| -> Result<usize, ParseIntError> {
             let len = tokens[index].len();

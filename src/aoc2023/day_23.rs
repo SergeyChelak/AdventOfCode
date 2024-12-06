@@ -4,8 +4,7 @@ use crate::utils::*;
 use std::collections::{HashMap, HashSet};
 use std::io;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-struct Position(usize, usize);
+type Position = Position2<usize>;
 
 const MAP_PATH: char = '.';
 const MAP_FOREST: char = '#';
@@ -37,7 +36,7 @@ impl AoC2023_23 {
 
     fn path_position(&self, row: usize) -> Option<Position> {
         let col = self.maze[row].iter().position(|x| *x == MAP_PATH)?;
-        Some(Position(row, col))
+        Some(Position::new(row, col))
     }
 
     fn position_start(&self) -> Position {
@@ -84,7 +83,7 @@ impl AoC2023_23 {
         let mut result = vec![self.position_start(), self.position_end()];
         for (r, row) in self.maze.iter().enumerate() {
             for (c, _) in row.iter().enumerate() {
-                let pos = Position(r, c);
+                let pos = Position::new(r, c);
                 let adj = self.adjacent(pos, provider);
                 if adj.len() > 2 {
                     result.push(pos);
@@ -95,26 +94,26 @@ impl AoC2023_23 {
     }
 
     fn adjacent(&self, pos: Position, provider: &DirectionProvider) -> Vec<Position> {
-        let Position(row, col) = pos;
+        let Position { row, col } = pos;
         let rows = self.maze.len();
         let cols = self.maze[rows - 1].len();
         let mut possible: HashMap<Direction, Position> = HashMap::new();
         if row > 0 {
-            possible.insert(Direction::Up, Position(row - 1, col));
+            possible.insert(Direction::Up, Position::new(row - 1, col));
         }
         if row < rows - 1 {
-            possible.insert(Direction::Down, Position(row + 1, col));
+            possible.insert(Direction::Down, Position::new(row + 1, col));
         }
         if col > 0 {
-            possible.insert(Direction::Left, Position(row, col - 1));
+            possible.insert(Direction::Left, Position::new(row, col - 1));
         }
         if col < cols - 1 {
-            possible.insert(Direction::Right, Position(row, col + 1));
+            possible.insert(Direction::Right, Position::new(row, col + 1));
         }
         provider(self.maze[row][col])
             .iter()
             .filter_map(|dir| possible.get(dir))
-            .filter(|Position(r, c)| self.maze[*r][*c] != MAP_FOREST)
+            .filter(|Position { row: r, col: c }| self.maze[*r][*c] != MAP_FOREST)
             .copied()
             .collect::<Vec<_>>()
     }

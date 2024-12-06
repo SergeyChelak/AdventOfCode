@@ -15,27 +15,6 @@ enum HorizontalDirection {
 }
 
 impl Coordinate {
-    fn left(&self) -> Self {
-        Self {
-            x: self.x - 1,
-            ..*self
-        }
-    }
-
-    fn right(&self) -> Self {
-        Self {
-            x: self.x + 1,
-            ..*self
-        }
-    }
-
-    fn down(&self) -> Self {
-        Self {
-            y: self.y + 1,
-            ..*self
-        }
-    }
-
     fn horizontal_move(&self, dir: HorizontalDirection) -> Self {
         match dir {
             HorizontalDirection::Left => self.left(),

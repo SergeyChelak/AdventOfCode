@@ -4,11 +4,7 @@ use crate::utils::*;
 use std::collections::{HashSet, VecDeque};
 use std::io;
 
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
-struct Position {
-    row: usize,
-    col: usize,
-}
+type Position = Position2<usize>;
 
 enum MapElement {
     Plot,

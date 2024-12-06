@@ -35,27 +35,7 @@ impl TryFrom<char> for Pipe {
 }
 
 type Int = i32;
-
-#[derive(Debug, Eq, Hash, PartialEq, Copy, Clone)]
-struct Position(Int, Int);
-
-impl Position {
-    fn left(&self) -> Self {
-        Self(self.0, self.1 - 1)
-    }
-
-    fn right(&self) -> Self {
-        Self(self.0, self.1 + 1)
-    }
-
-    fn up(&self) -> Self {
-        Self(self.0 - 1, self.1)
-    }
-
-    fn down(&self) -> Self {
-        Self(self.0 + 1, self.1)
-    }
-}
+type Position = Point2d<Int>;
 
 type Maze = HashMap<Position, Pipe>;
 
@@ -77,7 +57,7 @@ impl AoC2023_10 {
         let mut maze: Maze = HashMap::new();
         for (r, line) in lines.iter().enumerate() {
             for (c, ch) in line.chars().enumerate() {
-                let pos = Position(r as Int, c as Int);
+                let pos = Position::new(r as Int, c as Int);
                 if ch == 'S' {
                     start = Some(pos);
                 } else {
@@ -194,7 +174,7 @@ impl Solution for AoC2023_10 {
             let mut maze = self.maze.borrow_mut();
             for row in 0..self.rows {
                 for col in 0..self.cols {
-                    let pos = Position(row, col);
+                    let pos = Position::new(row, col);
                     if !path.contains(&pos) {
                         maze.insert(pos, Pipe::Ground);
                     }
@@ -207,7 +187,7 @@ impl Solution for AoC2023_10 {
             let mut is_within = false;
             let mut edge_start = EdgeStart::Nope;
             for col in 0..self.cols {
-                let pos = Position(row, col);
+                let pos = Position::new(row, col);
                 let item = *maze.get(&pos).expect("Expected item (3)");
                 match item {
                     Pipe::NorthSouth => {

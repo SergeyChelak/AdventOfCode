@@ -2,10 +2,10 @@ use crate::{solution::Solution, utils::Point2d};
 
 use std::{collections::HashSet, io};
 
-type Position = Point2d<u32>;
+type Coordinate = Point2d<u32>;
 
-impl Position {
-    fn is_equal(&self, other: &Option<Position>) -> bool {
+impl Coordinate {
+    fn is_equal(&self, other: &Option<Coordinate>) -> bool {
         if let Some(pos) = other {
             self == pos
         } else {
@@ -23,7 +23,7 @@ impl Maze {
         Self { fav_number }
     }
 
-    fn is_open(&self, pos: &Position) -> bool {
+    fn is_open(&self, pos: &Coordinate) -> bool {
         let (x, y) = (pos.x, pos.y);
         let mut val = x * x + 3 * x + 2 * x * y + y + y * y + self.fav_number;
         let mut bits = 0;
@@ -37,7 +37,7 @@ impl Maze {
     }
 
     fn min_steps(&self, x: u32, y: u32) -> Option<u32> {
-        self.search(Some(Position { x, y }), None).map(|v| v.0)
+        self.search(Some(Coordinate { x, y }), None).map(|v| v.0)
     }
 
     fn distinct_locations(&self, steps: u32) -> Option<u32> {
@@ -46,13 +46,13 @@ impl Maze {
 
     fn search(
         &self,
-        target_pos: Option<Position>,
+        target_pos: Option<Coordinate>,
         target_steps: Option<u32>,
     ) -> Option<(u32, u32)> {
         let mut positions = Vec::new();
         let mut visited = HashSet::new();
         {
-            let pos = Position::new(1, 1);
+            let pos = Coordinate::new(1, 1);
             positions.push(pos);
             visited.insert(pos);
         }
@@ -72,13 +72,13 @@ impl Maze {
                     let (i, j) = (pos.x, pos.y);
                     let mut adj = Vec::with_capacity(4);
                     if i > 0 {
-                        adj.push(Position::new(i - 1, j));
+                        adj.push(Coordinate::new(i - 1, j));
                     }
                     if j > 0 {
-                        adj.push(Position::new(i, j - 1));
+                        adj.push(Coordinate::new(i, j - 1));
                     }
-                    adj.push(Position::new(i + 1, j));
-                    adj.push(Position::new(i, j + 1));
+                    adj.push(Coordinate::new(i + 1, j));
+                    adj.push(Coordinate::new(i, j + 1));
                     for p in adj.iter() {
                         if !visited.contains(p) && self.is_open(p) {
                             visited.insert(*p);

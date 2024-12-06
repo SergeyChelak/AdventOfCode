@@ -135,3 +135,21 @@ where
         })
     }
 }
+
+impl Point2d<i32> {
+    pub fn left(&self) -> Self {
+        Self::new(self.x, self.y - 1)
+    }
+
+    pub fn right(&self) -> Self {
+        Self::new(self.x, self.y + 1)
+    }
+
+    pub fn up(&self) -> Self {
+        Self::new(self.x - 1, self.y)
+    }
+
+    pub fn down(&self) -> Self {
+        Self::new(self.x + 1, self.y)
+    }
+}
