@@ -50,29 +50,80 @@ impl AoC2024_07 {
 
 impl Solution for AoC2024_07 {
     fn part_one(&self) -> String {
-        self.equations
-            .iter()
-            .filter(|x| can_evaluate(x))
-            .map(|x| x.result)
-            .sum::<EqNumber>()
-            .to_string()
+        calibration_result(&self.equations, &part_one_operators).to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        calibration_result(&self.equations, &part_two_operators).to_string()
+    }
 
     fn description(&self) -> String {
         "2024/Day 7: Bridge Repair".to_string()
     }
 }
 
-struct StackData {
+type OpDataProvider = dyn Fn(usize, EqNumber, EqNumber) -> Vec<OpData>;
+
+fn calibration_result(equations: &[Equation], ops: &OpDataProvider) -> EqNumber {
+    equations
+        .iter()
+        .filter(|x| can_evaluate(x, ops))
+        .map(|x| x.result)
+        .sum::<EqNumber>()
+}
+
+fn part_one_operators(next_index: usize, acc: EqNumber, next_value: EqNumber) -> Vec<OpData> {
+    vec![
+        sum_operator_data(next_index, acc, next_value),
+        mul_operator_data(next_index, acc, next_value),
+    ]
+}
+
+fn part_two_operators(next_index: usize, acc: EqNumber, next_value: EqNumber) -> Vec<OpData> {
+    vec![
+        sum_operator_data(next_index, acc, next_value),
+        mul_operator_data(next_index, acc, next_value),
+        concat_operator_data(next_index, acc, next_value),
+    ]
+}
+
+fn sum_operator_data(next_index: usize, acc: EqNumber, next_value: EqNumber) -> OpData {
+    OpData {
+        index: next_index,
+        accumulator: acc + next_value,
+    }
+}
+
+fn mul_operator_data(next_index: usize, acc: EqNumber, next_value: EqNumber) -> OpData {
+    OpData {
+        index: next_index,
+        accumulator: acc * next_value,
+    }
+}
+
+fn concat_operator_data(next_index: usize, acc: EqNumber, next_value: EqNumber) -> OpData {
+    OpData {
+        index: next_index,
+        accumulator: concat(acc, next_value),
+    }
+}
+
+fn concat(mut a: EqNumber, b: EqNumber) -> EqNumber {
+    let mut tmp = b;
+    while tmp > 0 {
+        a *= 10;
+        tmp /= 10;
+    }
+    a + b
+}
+
+struct OpData {
     index: usize,
     accumulator: EqNumber,
 }
 
-fn can_evaluate(equation: &Equation) -> bool {
-    let mut stack = vec![StackData {
+fn can_evaluate(equation: &Equation, op_provider: &OpDataProvider) -> bool {
+    let mut stack = vec![OpData {
         index: 0,
         accumulator: equation.numbers[0],
     }];
@@ -89,14 +140,8 @@ fn can_evaluate(equation: &Equation) -> bool {
         if next > last_index {
             continue;
         }
-        stack.push(StackData {
-            index: next,
-            accumulator: acc + equation.numbers[next],
-        });
-        stack.push(StackData {
-            index: next,
-            accumulator: acc * equation.numbers[next],
-        });
+        let mut ops = op_provider(next, acc, equation.numbers[next]);
+        stack.append(&mut ops);
     }
     false
 }
@@ -116,6 +161,12 @@ mod test {
     fn aoc2024_07_case_1() {
         let puzzle = make_puzzle();
         assert_eq!(puzzle.part_one(), "3749")
+    }
+
+    #[test]
+    fn aoc2024_07_case_2() {
+        let puzzle = make_puzzle();
+        assert_eq!(puzzle.part_two(), "11387")
     }
 
     fn make_puzzle() -> AoC2024_07 {
@@ -140,7 +191,7 @@ mod test {
     fn aoc2024_07_correctness() -> io::Result<()> {
         let sol = AoC2024_07::new()?;
         assert_eq!(sol.part_one(), "2654749936343");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "124060392153684");
         Ok(())
     }
 }
