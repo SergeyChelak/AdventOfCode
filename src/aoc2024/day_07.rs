@@ -130,14 +130,11 @@ fn can_evaluate(equation: &Equation, op_provider: &OpDataProvider) -> bool {
     let last_index = equation.numbers.len() - 1;
     while let Some(data) = stack.pop() {
         let acc = data.accumulator;
-        if acc > equation.result {
-            continue;
-        }
         if acc == equation.result && data.index == last_index {
             return true;
         }
         let next = data.index + 1;
-        if next > last_index {
+        if acc > equation.result || next > last_index {
             continue;
         }
         let mut ops = op_provider(next, acc, equation.numbers[next]);
