@@ -110,7 +110,7 @@ mod test {
             "1   3",
             "3   9",
             "3   3",
-        ].iter().map(|x| x.to_string()).collect::<Vec<String>>();
+        ].as_strings();
         AoC2024_01::new_with(&input)
     }
 }

@@ -177,9 +177,7 @@ mod test {
             "21037: 9 7 18 13",
             "292: 11 6 16 20",
         ]
-        .iter()
-        .map(|s| s.to_string())
-        .collect::<Vec<_>>();
+        .as_strings();
         AoC2024_07::with_strings(&input)
     }
 

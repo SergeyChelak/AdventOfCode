@@ -159,9 +159,7 @@ mod test {
             "MAMMMXMMMM",
             "MXMXAXMASX",
         ]
-        .iter()
-        .map(|s| s.to_string())
-        .collect::<Vec<String>>();
+        .as_strings();
         AoC2024_04::with_strings(&input)
     }
 

@@ -151,9 +151,7 @@ mod test {
             "............",
             "............",
         ]
-        .iter()
-        .map(|s| s.to_string())
-        .collect::<Vec<_>>();
+        .as_strings();
         AoC2024_08::with_strings(&input)
     }
 
