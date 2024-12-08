@@ -12,12 +12,11 @@ struct Equation {
 
 impl Equation {
     fn from(s: &str) -> Self {
-        let (value, numbers) = s.split_once(":").expect("Invalid equation format");
+        let (value, numbers) = s.split_once(": ").expect("Invalid equation format");
         let result = value
             .parse::<EqNumber>()
             .expect("Equation result isn't int value");
         let numbers = numbers
-            .trim()
             .split(" ")
             .filter(|s| !s.is_empty())
             .map(|s| {
