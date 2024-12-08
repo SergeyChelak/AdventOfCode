@@ -48,9 +48,7 @@ impl Solution for AoC2024_08 {
                         Coordinate::new(b.row + d_row, b.col + d_col),
                     ]
                     .iter()
-                    .filter(|coord| {
-                        coord.row >= 0 && coord.row < rows && coord.col >= 0 && coord.col < cols
-                    })
+                    .filter(|coord| is_valid(coord, rows, cols))
                     .for_each(|coord| {
                         locations.insert(*coord);
                     });
@@ -63,6 +61,7 @@ impl Solution for AoC2024_08 {
     fn part_two(&self) -> String {
         let map = make_char_coordinate_map(&self.input);
         let mut locations = CoordinateSet::new();
+
         for (_, entry) in map.iter() {
             if entry.len() < 2 {
                 continue;
@@ -71,28 +70,20 @@ impl Solution for AoC2024_08 {
             let arr = entry.iter().collect::<Vec<_>>();
             for (i, a) in arr.iter().enumerate() {
                 let cols = self.input[i].len() as isize;
+                let mut append_from_line = |coord: &Coordinate, d_row: isize, d_col: isize| {
+                    for k in 0.. {
+                        let coord = Coordinate::new(coord.row - k * d_row, coord.col - k * d_col);
+                        if !is_valid(&coord, rows, cols) {
+                            break;
+                        }
+                        locations.insert(coord);
+                    }
+                };
                 for b in arr.iter().skip(i + 1) {
                     let d_row = b.row - a.row;
                     let d_col = b.col - a.col;
-                    for k in 0.. {
-                        let coord = Coordinate::new(a.row - k * d_row, a.col - k * d_col);
-                        if coord.row >= 0 && coord.row < rows && coord.col >= 0 && coord.col < cols
-                        {
-                            locations.insert(coord);
-                        } else {
-                            break;
-                        }
-                    }
-
-                    for k in 0.. {
-                        let coord = Coordinate::new(b.row + k * d_row, b.col + k * d_col);
-                        if coord.row >= 0 && coord.row < rows && coord.col >= 0 && coord.col < cols
-                        {
-                            locations.insert(coord);
-                        } else {
-                            break;
-                        }
-                    }
+                    append_from_line(a, -d_row, -d_col);
+                    append_from_line(b, d_row, d_col);
                 }
             }
         }
@@ -116,6 +107,10 @@ fn make_char_coordinate_map(input: &[Vec<char>]) -> CharCoordinateMap {
         }
     }
     map
+}
+
+fn is_valid(coord: &Coordinate, rows: isize, cols: isize) -> bool {
+    coord.row >= 0 && coord.row < rows && coord.col >= 0 && coord.col < cols
 }
 
 #[cfg(test)]
