@@ -1,3 +1,5 @@
+pub type Vec2<T> = Vec<Vec<T>>;
+
 pub trait ArraySpin {
     fn spin_left(&mut self, count: usize);
     fn spin_right(&mut self, count: usize);

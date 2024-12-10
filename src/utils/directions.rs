@@ -7,6 +7,11 @@ pub enum Direction {
 }
 
 impl Direction {
+    pub fn all() -> [Self; 4] {
+        use Direction::*;
+        [Up, Down, Left, Right]
+    }
+
     pub fn turn_left(&self) -> Self {
         match self {
             Self::Up => Self::Left,
