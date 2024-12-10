@@ -37,7 +37,7 @@ impl Solution for AoC2024_10 {
     fn part_one(&self) -> String {
         find_trailheads(&self.map)
             .iter()
-            .map(|coord| trailhead_score(&self.map, *coord))
+            .map(|coord| trailhead_value(&self.map, *coord, SearchMode::Score))
             .sum::<usize>()
             .to_string()
     }
@@ -45,7 +45,7 @@ impl Solution for AoC2024_10 {
     fn part_two(&self) -> String {
         find_trailheads(&self.map)
             .iter()
-            .map(|coord| trailhead_rate(&self.map, *coord))
+            .map(|coord| trailhead_value(&self.map, *coord, SearchMode::Rate))
             .sum::<usize>()
             .to_string()
     }
@@ -69,44 +69,36 @@ fn find_trailheads(map: &[Vec<u8>]) -> Vec<Coordinate> {
     result
 }
 
-fn trailhead_score(map: &[Vec<u8>], start: Coordinate) -> usize {
+enum SearchMode {
+    Score,
+    Rate,
+}
+
+fn trailhead_value(map: &[Vec<u8>], start: Coordinate, mode: SearchMode) -> usize {
     assert!(map[start.row][start.col] == 0);
     let mut stack = vec![start];
     let mut visited: HashSet<Coordinate> = HashSet::new();
     let mut count = 0;
     while let Some(coordinate) = stack.pop() {
-        visited.insert(coordinate);
+        if matches!(mode, SearchMode::Score) {
+            visited.insert(coordinate);
+        }
         let Coordinate { row, col } = coordinate;
         if map[row][col] == 9 {
             count += 1;
             continue;
         }
-        let mut adjacent = get_adjacent(map, coordinate)
+        get_adjacent(map, coordinate)
             .iter()
-            .filter(|c| !visited.contains(c))
-            .copied()
-            .collect::<Vec<_>>();
-        stack.append(&mut adjacent);
+            .filter(|c| match mode {
+                SearchMode::Score => !visited.contains(c),
+                SearchMode::Rate => true,
+            })
+            .for_each(|c| {
+                stack.push(*c);
+            });
     }
     count
-}
-
-fn trailhead_rate(map: &[Vec<u8>], start: Coordinate) -> usize {
-    fn search(map: &[Vec<u8>], coord: Coordinate, total: &mut usize) {
-        let Coordinate { row, col } = coord;
-        if map[row][col] == 9 {
-            *total += 1;
-            return;
-        }
-        for c in get_adjacent(map, coord) {
-            search(map, c, total);
-        }
-    }
-
-    assert!(map[start.row][start.col] == 0);
-    let mut total = 0;
-    search(map, start, &mut total);
-    total
 }
 
 fn get_adjacent(map: &[Vec<u8>], coordinate: Coordinate) -> Vec<Coordinate> {
