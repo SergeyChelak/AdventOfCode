@@ -42,8 +42,13 @@ impl Solution for AoC2024_10 {
             .to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        find_trailheads(&self.map)
+            .iter()
+            .map(|coord| trailhead_rate(&self.map, *coord))
+            .sum::<usize>()
+            .to_string()
+    }
 
     fn description(&self) -> String {
         "Day 10: Hoof It".to_string()
@@ -69,7 +74,6 @@ fn trailhead_score(map: &[Vec<u8>], start: Coordinate) -> usize {
     let mut stack = vec![start];
     let mut visited: HashSet<Coordinate> = HashSet::new();
     let mut count = 0;
-    let rows = map.len();
     while let Some(coordinate) = stack.pop() {
         visited.insert(coordinate);
         let Coordinate { row, col } = coordinate;
@@ -77,26 +81,53 @@ fn trailhead_score(map: &[Vec<u8>], start: Coordinate) -> usize {
             count += 1;
             continue;
         }
-        let cols = map[coordinate.row].len();
-        let expected_value = map[row][col] + 1;
-        let mut adjacent = Direction::all()
+        let mut adjacent = get_adjacent(map, coordinate)
             .iter()
-            .map(|dir| {
-                use Direction::*;
-                match dir {
-                    Left if col > 0 => Coordinate::new(row, col - 1),
-                    Right if col < cols - 1 => Coordinate::new(row, col + 1),
-                    Up if row > 0 => Coordinate::new(row - 1, col),
-                    Down if row < rows - 1 => Coordinate::new(row + 1, col),
-                    _ => coordinate,
-                }
-            })
             .filter(|c| !visited.contains(c))
-            .filter(|c| map[c.row][c.col] == expected_value)
+            .copied()
             .collect::<Vec<_>>();
         stack.append(&mut adjacent);
     }
     count
+}
+
+fn trailhead_rate(map: &[Vec<u8>], start: Coordinate) -> usize {
+    fn search(map: &[Vec<u8>], coord: Coordinate, total: &mut usize) {
+        let Coordinate { row, col } = coord;
+        if map[row][col] == 9 {
+            *total += 1;
+            return;
+        }
+        for c in get_adjacent(map, coord) {
+            search(map, c, total);
+        }
+    }
+
+    assert!(map[start.row][start.col] == 0);
+    let mut total = 0;
+    search(map, start, &mut total);
+    total
+}
+
+fn get_adjacent(map: &[Vec<u8>], coordinate: Coordinate) -> Vec<Coordinate> {
+    let Coordinate { row, col } = coordinate;
+    let rows = map.len();
+    let cols = map[row].len();
+    let expected_value = map[row][col] + 1;
+    Direction::all()
+        .iter()
+        .map(|dir| {
+            use Direction::*;
+            match dir {
+                Left if col > 0 => Coordinate::new(row, col - 1),
+                Right if col < cols - 1 => Coordinate::new(row, col + 1),
+                Up if row > 0 => Coordinate::new(row - 1, col),
+                Down if row < rows - 1 => Coordinate::new(row + 1, col),
+                _ => coordinate,
+            }
+        })
+        .filter(|c| map[c.row][c.col] == expected_value)
+        .collect::<Vec<_>>()
 }
 
 #[cfg(test)]
@@ -114,6 +145,12 @@ mod test {
     fn aoc2024_10_case_1() {
         let puzzle = make_puzzle();
         assert_eq!(puzzle.part_one(), "36")
+    }
+
+    #[test]
+    fn aoc2024_10_case_2() {
+        let puzzle = make_puzzle();
+        assert_eq!(puzzle.part_two(), "81")
     }
 
     fn make_puzzle() -> AoC2024_10 {
@@ -135,7 +172,7 @@ mod test {
     fn aoc2024_10_correctness() -> io::Result<()> {
         let sol = AoC2024_10::new()?;
         assert_eq!(sol.part_one(), "778");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "1925");
         Ok(())
     }
 }
