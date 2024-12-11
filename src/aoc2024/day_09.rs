@@ -90,8 +90,6 @@ fn extract_with_info(s: &str) -> (Vec<Block>, Vec<BlockInfo>) {
 
 fn compact_whole_file(blocks: &mut [Block], block_info: &mut Vec<BlockInfo>) {
     loop {
-        // dump(&blocks);
-
         let mut matched: Option<(usize, usize)> = None;
 
         for (occupy_idx, len) in block_info

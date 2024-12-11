@@ -23,9 +23,9 @@ impl AoC2024_01 {
         for line in lines {
             let mut split = line
                 .split_whitespace()
-                .map(|x| x.parse::<Int>().expect("Failed to parse ${x}"));
+                .map(|x| x.parse::<Int>().expect("Failed to parse {x}"));
             let (Some(a), Some(b)) = (split.next(), split.next()) else {
-                panic!("Failed to split ${line}");
+                panic!("Failed to split {line}");
             };
             list_a.push(a);
             list_b.push(b);
