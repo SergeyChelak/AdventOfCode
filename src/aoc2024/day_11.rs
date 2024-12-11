@@ -1,5 +1,6 @@
 use crate::solution::Solution;
 
+use std::collections::HashMap;
 use std::fs::read_to_string;
 use std::io;
 
@@ -26,73 +27,48 @@ impl AoC2024_11 {
 
 impl Solution for AoC2024_11 {
     fn part_one(&self) -> String {
-        let mut array = remap(&self.numbers);
-        // dump(&array);
-        for _ in 0..25 {
-            array = sparse_vec(&array);
-            blink(&mut array);
-            // dump(&array);
-            // break;
-        }
-        array.iter().filter(|x| x.is_some()).count().to_string()
+        simulate(&self.numbers, 25).to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        simulate(&self.numbers, 75).to_string()
+    }
 
     fn description(&self) -> String {
         "2024/Day 11: Plutonian Pebbles".to_string()
     }
 }
 
-fn dump(src: &[Option<Int>]) {
-    src.iter().filter_map(|x| *x).for_each(|x| print!("{x} "));
-    println!()
-}
-
-fn remap(src: &[Int]) -> Vec<Option<Int>> {
-    src.iter().map(|x| Some(*x)).collect()
-}
-
-fn sparse_vec(src: &[Option<Int>]) -> Vec<Option<Int>> {
-    let mut sparse = Vec::new();
-    for val in src {
-        if val.is_none() {
-            continue;
-        }
-        sparse.push(*val);
-        sparse.push(None);
+fn simulate(numbers: &[Int], times: u8) -> usize {
+    let mut memo = HashMap::new();
+    let mut total = 0;
+    for value in numbers {
+        total += count(*value, times, &mut memo);
     }
-    sparse
+    total
 }
 
-fn blink(array: &mut Vec<Option<Int>>) {
-    let mut ptr = 0;
-    while ptr < array.len() {
-        let Some(value) = array[ptr] else {
-            ptr += 1;
-            continue;
-        };
-
-        if value == 0 {
-            array[ptr] = Some(1);
-            ptr += 1;
-            continue;
-        }
-
+fn count(value: Int, times: u8, memo: &mut HashMap<(Int, u8), usize>) -> usize {
+    if times == 0 {
+        return 1;
+    }
+    let key = (value, times);
+    if let Some(result) = memo.get(&key) {
+        return *result;
+    }
+    let result = if value == 0 {
+        count(1, times - 1, memo)
+    } else {
         let digits = digits_count(value);
         if digits % 2 == 0 {
             let (a, b) = split(value, digits / 2);
-            array[ptr] = Some(a);
-            assert!(array[ptr + 1].is_none());
-            array[ptr + 1] = Some(b);
-            ptr += 2;
-            continue;
+            count(a, times - 1, memo) + count(b, times - 1, memo)
+        } else {
+            count(value * 2024, times - 1, memo)
         }
-
-        array[ptr] = Some(value * 2024);
-        ptr += 1;
-    }
+    };
+    memo.insert(key, result);
+    result
 }
 
 fn split(value: Int, at: u8) -> (Int, Int) {
@@ -141,7 +117,7 @@ mod test {
     #[test]
     fn aoc2024_11_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "218279375708592");
         Ok(())
     }
 
