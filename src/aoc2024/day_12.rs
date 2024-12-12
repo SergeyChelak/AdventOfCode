@@ -47,7 +47,7 @@ fn calculate_price(region: &[Vec<char>]) -> usize {
     let mut visited = HashSet::new();
     let mut total = 0;
     for (row, arr) in region.iter().enumerate() {
-        for (col, plot) in arr.iter().enumerate() {
+        for (col, _) in arr.iter().enumerate() {
             let position = Position::new(row, col);
             if visited.contains(&position) {
                 continue;
@@ -95,18 +95,16 @@ fn calc_plot_traits(
             })
             .collect::<Vec<_>>();
 
-        perimeter += adjacent
-            .iter()
-            .filter(|p| region[p.row][p.col] != plot_id)
-            .count();
-
-        adjacent
-            .iter()
-            .filter(|p| region[p.row][p.col] == plot_id)
-            .filter(|p| !visited.contains(p))
-            .for_each(|p| {
-                cells.push(*p);
-            });
+        for p in adjacent {
+            if region[p.row][p.col] != plot_id {
+                perimeter += 1;
+                continue;
+            }
+            if visited.contains(&p) {
+                continue;
+            }
+            cells.push(p);
+        }
     }
     PlotTraits { area, perimeter }
 }
@@ -138,6 +136,17 @@ mod test {
 
     #[test]
     fn aoc2024_12_case_1() {
+        let puzzle = make_test_solution();
+        assert_eq!(puzzle.part_one(), "1930");
+    }
+
+    #[test]
+    fn aoc2024_12_case_2() {
+        let puzzle = make_test_solution();
+        assert_eq!(puzzle.part_two(), "1206");
+    }
+
+    fn make_test_solution() -> AoC2024_12 {
         let lines = [
             "RRRRIICCFF",
             "RRRRIICCCF",
@@ -150,8 +159,7 @@ mod test {
             "MIIISIJEEE",
             "MMMISSJEEE",
         ];
-        let puzzle = AoC2024_12::with_lines(&lines);
-        assert_eq!(puzzle.part_one(), "1930");
+        AoC2024_12::with_lines(&lines)
     }
 
     fn make_solution() -> io::Result<AoC2024_12> {
