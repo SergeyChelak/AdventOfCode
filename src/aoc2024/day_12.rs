@@ -25,11 +25,22 @@ impl AoC2024_12 {
 
 impl Solution for AoC2024_12 {
     fn part_one(&self) -> String {
-        calculate_price(&self.input).to_string()
+        let price =
+            |region: &[Vec<char>], position: Position, visited: &mut HashSet<Position>| -> usize {
+                let area = find_area(region, position, visited);
+                find_perimeter(&area) * area.len()
+            };
+        calculate(&self.input, price).to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let price =
+            |region: &[Vec<char>], position: Position, visited: &mut HashSet<Position>| -> usize {
+                let area = find_area(region, position, visited);
+                find_sides(&area) * area.len()
+            };
+        calculate(&self.input, price).to_string()
+    }
 
     fn description(&self) -> String {
         "2024/Day 12: Garden Groups".to_string()
@@ -38,12 +49,10 @@ impl Solution for AoC2024_12 {
 
 type Position = Position2<usize>;
 
-struct PlotTraits {
-    area: usize,
-    perimeter: usize,
-}
-
-fn calculate_price(region: &[Vec<char>]) -> usize {
+fn calculate(
+    region: &[Vec<char>],
+    f: impl Fn(&[Vec<char>], Position, &mut HashSet<Position>) -> usize,
+) -> usize {
     let mut visited = HashSet::new();
     let mut total = 0;
     for (row, arr) in region.iter().enumerate() {
@@ -52,31 +61,85 @@ fn calculate_price(region: &[Vec<char>]) -> usize {
             if visited.contains(&position) {
                 continue;
             }
-            let PlotTraits { area, perimeter } = calc_plot_traits(region, position, &mut visited);
-            // println!("Plot {plot}: area {area} * perimeter {perimeter}");
-            total += area * perimeter;
+            total += f(region, position, &mut visited);
         }
     }
     total
 }
 
-fn calc_plot_traits(
-    region: &[Vec<char>],
-    position: Position,
-    visited: &mut HashSet<Position>,
-) -> PlotTraits {
-    let mut area = 0;
+fn find_sides(area: &HashSet<Position>) -> usize {
+    let area = area
+        .iter()
+        .map(|p| (p.row as isize * 10, p.col as isize * 10))
+        .collect::<HashSet<_>>();
+    let mut all_corners = HashSet::new();
+    let offsets = [(-5, -5), (5, -5), (5, 5), (-5, 5)];
+    for (row, col) in &area {
+        for (dr, dc) in offsets {
+            let r = row + dr;
+            let c = col + dc;
+            all_corners.insert((r, c));
+        }
+    }
+    let mut total = 0;
+    for (r, c) in &all_corners {
+        let config = offsets
+            .iter()
+            .map(|(dr, dc)| (r + dr, c + dc))
+            .map(|p| area.contains(&p))
+            .collect::<Vec<_>>();
+        let count = config.iter().filter(|x| **x).count();
+        match count {
+            1 => total += 1,
+            2 if config == vec![true, false, true, false]
+                || config == vec![false, true, false, true] =>
+            {
+                total += 2
+            }
+            3 => total += 1,
+            _ => (),
+        }
+    }
+    total
+}
+
+fn find_perimeter(area: &HashSet<Position>) -> usize {
     let mut perimeter = 0;
-    let plot_id = region[position.row][position.col];
-    let mut cells = vec![position];
+    for pos in area {
+        let Position { row, col } = *pos;
+        perimeter += 4;
+        for dir in Direction::all() {
+            let other = match dir {
+                Direction::Down => Position::new(row + 1, col),
+                Direction::Up if row > 0 => Position::new(row - 1, col),
+                Direction::Left if col > 0 => Position::new(row, col - 1),
+                Direction::Right => Position::new(row, col + 1),
+                _ => continue,
+            };
+            if area.contains(&other) {
+                perimeter -= 1;
+            }
+        }
+    }
+    perimeter
+}
+
+fn find_area(
+    region: &[Vec<char>],
+    from: Position,
+    visited: &mut HashSet<Position>,
+) -> HashSet<Position> {
+    let mut area = HashSet::new();
+    let plot_id = region[from.row][from.col];
+    let mut queue = vec![from];
     let rows = region.len();
-    while let Some(p) = cells.pop() {
-        if visited.contains(&p) {
+    while let Some(pos) = queue.pop() {
+        if visited.contains(&pos) {
             continue;
         }
-        visited.insert(p);
-        area += 1;
-        let Position { row, col } = p;
+        visited.insert(pos);
+        area.insert(pos);
+        let Position { row, col } = pos;
         let cols = region[row].len();
         for dir in Direction::all() {
             let adj = match dir {
@@ -84,22 +147,15 @@ fn calc_plot_traits(
                 Direction::Up if row > 0 => Position::new(row - 1, col),
                 Direction::Left if col > 0 => Position::new(row, col - 1),
                 Direction::Right if col < cols - 1 => Position::new(row, col + 1),
-                _ => {
-                    perimeter += 1;
-                    continue;
-                }
+                _ => continue,
             };
-            if region[adj.row][adj.col] != plot_id {
-                perimeter += 1;
+            if region[adj.row][adj.col] != plot_id || visited.contains(&adj) {
                 continue;
             }
-            if visited.contains(&adj) {
-                continue;
-            }
-            cells.push(adj);
+            queue.push(adj);
         }
     }
-    PlotTraits { area, perimeter }
+    area
 }
 
 #[cfg(test)]
