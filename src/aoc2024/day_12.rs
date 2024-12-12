@@ -74,36 +74,29 @@ fn calc_plot_traits(
         if visited.contains(&p) {
             continue;
         }
-        area += 1;
         visited.insert(p);
+        area += 1;
         let Position { row, col } = p;
         let cols = region[row].len();
-        if row == 0 || row == rows - 1 {
-            perimeter += 1;
-        }
-        if col == 0 || col == cols - 1 {
-            perimeter += 1;
-        }
-        let adjacent = Direction::all()
-            .iter()
-            .map(|dir| match dir {
+        for dir in Direction::all() {
+            let adj = match dir {
                 Direction::Down if row < rows - 1 => Position::new(row + 1, col),
                 Direction::Up if row > 0 => Position::new(row - 1, col),
                 Direction::Left if col > 0 => Position::new(row, col - 1),
                 Direction::Right if col < cols - 1 => Position::new(row, col + 1),
-                _ => p,
-            })
-            .collect::<Vec<_>>();
-
-        for p in adjacent {
-            if region[p.row][p.col] != plot_id {
+                _ => {
+                    perimeter += 1;
+                    continue;
+                }
+            };
+            if region[adj.row][adj.col] != plot_id {
                 perimeter += 1;
                 continue;
             }
-            if visited.contains(&p) {
+            if visited.contains(&adj) {
                 continue;
             }
-            cells.push(p);
+            cells.push(adj);
         }
     }
     PlotTraits { area, perimeter }
