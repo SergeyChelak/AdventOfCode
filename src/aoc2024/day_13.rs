@@ -1,7 +1,6 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::collections::HashMap;
 use std::fs::read_to_string;
 use std::io;
 
@@ -94,115 +93,27 @@ impl Solution for AoC2024_13 {
     }
 }
 
-#[derive(Clone, Copy)]
-struct Route {
-    a_taps: Int,
-    b_taps: Int,
-}
-
-impl Route {
-    fn cost(&self) -> Int {
-        self.a_taps * COST_A + self.b_taps * COST_B
-    }
-
-    fn position(&self, machine: &Machine) -> Point {
-        let x = self.a_taps * machine.step_a.x + self.b_taps * machine.step_b.x;
-        let y = self.a_taps * machine.step_a.y + self.b_taps * machine.step_b.y;
-        Point::new(x, y)
-    }
-
-    fn zero() -> Self {
-        Self {
-            a_taps: 0,
-            b_taps: 0,
-        }
-    }
-
-    fn by_a_tap(&self) -> Self {
-        Self {
-            a_taps: self.a_taps + 1,
-            b_taps: self.b_taps,
-        }
-    }
-
-    fn by_b_tap(&self) -> Self {
-        Self {
-            a_taps: self.a_taps,
-            b_taps: self.b_taps + 1,
-        }
-    }
-}
-
-fn _get_cost(machine: &Machine) -> Option<Int> {
-    let mut price_map = HashMap::new();
-    price_map.insert(Point::new(0, 0), 0);
-    let target = machine.target;
-    let mut queue = Vec::new();
-    queue.push(Route::zero());
-    while let Some(route) = queue.pop() {
-        let routes = [route.by_a_tap(), route.by_b_tap()];
-        for next in &routes {
-            let pos = next.position(machine);
-            if pos.x > target.x || pos.y > target.y {
-                continue;
-            }
-            let cost = next.cost();
-            let mut is_better = true;
-            if let Some(old_cost) = price_map.get(&pos) {
-                is_better = *old_cost > cost;
-            }
-            if is_better {
-                price_map.insert(pos, cost);
-                queue.push(*next);
-            }
-
-            if pos == machine.target {
-                return Some(cost);
-            }
-        }
-    }
-    price_map.get(&machine.target).copied()
-}
-
 fn get_cost(machine: &Machine) -> Option<Int> {
     let Point { x: tx, y: ty } = machine.target;
     let Point { x: ax, y: ay } = machine.step_a;
     let Point { x: bx, y: by } = machine.step_b;
-    let Some(beta) = ({
-        let nom = ty * ax - ay * tx;
-        let denom = ax * by - ay * bx;
-        if nom % denom != 0 {
-            None
-        } else {
-            let val = nom / denom;
-            if val < 0 {
-                return None;
-            }
-            Some(val)
+    let valid_root = |nominator: Int, denominator: Int| -> Option<Int> {
+        if nominator % denominator != 0 {
+            return None;
         }
-    }) else {
+        let val = nominator / denominator;
+        if val < 0 {
+            return None;
+        }
+        Some(val)
+    };
+    let Some(b_taps) = valid_root(ty * ax - ay * tx, ax * by - ay * bx) else {
         return None;
     };
-
-    let Some(alpha) = ({
-        let nom = tx - bx * beta;
-        if nom < 0 {
-            None
-        } else if nom % ax != 0 {
-            None
-        } else {
-            Some(nom / ax)
-        }
-    }) else {
+    let Some(a_taps) = valid_root(tx - bx * b_taps, ax) else {
         return None;
     };
-
-    let route = Route {
-        a_taps: alpha,
-        b_taps: beta,
-    };
-
-    Some(route.cost())
+    Some(a_taps * COST_A + b_taps * COST_B)
 }
 
 #[cfg(test)]
