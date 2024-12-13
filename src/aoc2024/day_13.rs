@@ -1,21 +1,21 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::collections::{HashMap, VecDeque};
+use std::collections::HashMap;
 use std::fs::read_to_string;
 use std::io;
 
-type Int = u32;
+type Int = isize;
 type Point = Point2d<Int>;
+
+const COST_A: Int = 3;
+const COST_B: Int = 1;
 
 struct Machine {
     step_a: Point,
     step_b: Point,
     target: Point,
 }
-
-const COST_A: Int = 3;
-const COST_B: Int = 1;
 
 impl From<&str> for Machine {
     fn from(value: &str) -> Self {
@@ -54,11 +54,7 @@ pub struct AoC2024_13 {
 
 impl AoC2024_13 {
     pub fn new() -> io::Result<Self> {
-        Self::with_filename("input/aoc2024_13")
-    }
-
-    fn with_filename(file_name: &str) -> io::Result<Self> {
-        let input = read_to_string(file_name)?;
+        let input = read_to_string("input/aoc2024_13")?;
         Ok(Self::with_data(&input))
     }
 
@@ -77,8 +73,21 @@ impl Solution for AoC2024_13 {
             .to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let val = 10000000000000;
+        self.input
+            .iter()
+            .map(|machine| {
+                let Point { x, y } = machine.target;
+                Machine {
+                    target: Point::new(x + val, y + val),
+                    ..*machine
+                }
+            })
+            .filter_map(|m| get_cost(&m))
+            .sum::<Int>()
+            .to_string()
+    }
 
     fn description(&self) -> String {
         "2024/Day 13: Claw Contraption".to_string()
@@ -124,15 +133,13 @@ impl Route {
     }
 }
 
-fn get_cost(machine: &Machine) -> Option<Int> {
+fn _get_cost(machine: &Machine) -> Option<Int> {
     let mut price_map = HashMap::new();
     price_map.insert(Point::new(0, 0), 0);
-
     let target = machine.target;
-
-    let mut queue = VecDeque::new();
-    queue.push_back(Route::zero());
-    while let Some(route) = queue.pop_front() {
+    let mut queue = Vec::new();
+    queue.push(Route::zero());
+    while let Some(route) = queue.pop() {
         let routes = [route.by_a_tap(), route.by_b_tap()];
         for next in &routes {
             let pos = next.position(machine);
@@ -146,11 +153,56 @@ fn get_cost(machine: &Machine) -> Option<Int> {
             }
             if is_better {
                 price_map.insert(pos, cost);
-                queue.push_back(*next);
+                queue.push(*next);
+            }
+
+            if pos == machine.target {
+                return Some(cost);
             }
         }
     }
     price_map.get(&machine.target).copied()
+}
+
+fn get_cost(machine: &Machine) -> Option<Int> {
+    let Point { x: tx, y: ty } = machine.target;
+    let Point { x: ax, y: ay } = machine.step_a;
+    let Point { x: bx, y: by } = machine.step_b;
+    let Some(beta) = ({
+        let nom = ty * ax - ay * tx;
+        let denom = ax * by - ay * bx;
+        if nom % denom != 0 {
+            None
+        } else {
+            let val = nom / denom;
+            if val < 0 {
+                return None;
+            }
+            Some(val)
+        }
+    }) else {
+        return None;
+    };
+
+    let Some(alpha) = ({
+        let nom = tx - bx * beta;
+        if nom < 0 {
+            None
+        } else if nom % ax != 0 {
+            None
+        } else {
+            Some(nom / ax)
+        }
+    }) else {
+        return None;
+    };
+
+    let route = Route {
+        a_taps: alpha,
+        b_taps: beta,
+    };
+
+    Some(route.cost())
 }
 
 #[cfg(test)]
@@ -194,7 +246,7 @@ mod test {
     #[test]
     fn aoc2024_13_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "77407675412647");
         Ok(())
     }
 
