@@ -1,4 +1,5 @@
 use crate::solution::Solution;
+use crate::utils::Vec2;
 
 use std::collections::{HashMap, HashSet};
 use std::fs::read_to_string;
@@ -6,7 +7,7 @@ use std::io;
 
 pub struct AoC2024_05 {
     ordering_rules: Vec<(usize, usize)>,
-    updates: Vec<Vec<usize>>,
+    updates: Vec2<usize>,
 }
 
 impl AoC2024_05 {

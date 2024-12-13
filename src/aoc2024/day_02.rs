@@ -6,7 +6,7 @@ use std::io;
 type Int = i32;
 
 pub struct AoC2024_02 {
-    reports: Vec<Vec<Int>>,
+    reports: Vec2<Int>,
 }
 
 impl AoC2024_02 {

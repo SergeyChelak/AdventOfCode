@@ -107,12 +107,8 @@ fn get_cost(machine: &Machine) -> Option<Int> {
         }
         Some(val)
     };
-    let Some(b_taps) = valid_root(ty * ax - ay * tx, ax * by - ay * bx) else {
-        return None;
-    };
-    let Some(a_taps) = valid_root(tx - bx * b_taps, ax) else {
-        return None;
-    };
+    let b_taps = valid_root(ty * ax - ay * tx, ax * by - ay * bx)?;
+    let a_taps = valid_root(tx - bx * b_taps, ax)?;
     Some(a_taps * COST_A + b_taps * COST_B)
 }
 

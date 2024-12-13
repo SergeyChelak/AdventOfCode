@@ -10,7 +10,7 @@ type CoordinateSet = HashSet<Coordinate>;
 type CharCoordinateMap = HashMap<char, Vec<Coordinate>>;
 
 pub struct AoC2024_08 {
-    input: Vec<Vec<char>>,
+    input: Vec2<char>,
 }
 
 impl AoC2024_08 {

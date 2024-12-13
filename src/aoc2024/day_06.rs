@@ -7,7 +7,7 @@ use std::io;
 type Position = Position2<usize>;
 
 pub struct AoC2024_06 {
-    input: Vec<Vec<char>>,
+    input: Vec2<char>,
     start_position: Position,
 }
 

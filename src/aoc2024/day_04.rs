@@ -3,8 +3,6 @@ use crate::utils::*;
 
 use std::io;
 
-type Vec2<T> = Vec<Vec<T>>;
-
 pub struct AoC2024_04 {
     input: Vec2<char>,
 }
