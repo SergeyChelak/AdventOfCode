@@ -38,10 +38,10 @@ impl AoC2024_07 {
         Ok(Self::with_strings(&input))
     }
 
-    fn with_strings(strings: &[String]) -> Self {
+    fn with_strings<T: AsRef<str>>(strings: &[T]) -> Self {
         let equations = strings
             .iter()
-            .map(|s| Equation::from(s))
+            .map(|s| Equation::from(s.as_ref()))
             .collect::<Vec<_>>();
         Self { equations }
     }
@@ -176,8 +176,7 @@ mod test {
             "192: 17 8 14",
             "21037: 9 7 18 13",
             "292: 11 6 16 20",
-        ]
-        .as_strings();
+        ];
         AoC2024_07::with_strings(&input)
     }
 

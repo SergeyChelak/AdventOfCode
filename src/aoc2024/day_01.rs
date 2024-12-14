@@ -17,15 +17,16 @@ impl AoC2024_01 {
         Ok(Self::new_with(&lines))
     }
 
-    fn new_with(lines: &[String]) -> Self {
+    fn new_with<T: AsRef<str>>(lines: &[T]) -> Self {
         let mut list_a = Vec::<Int>::with_capacity(lines.len());
         let mut list_b = Vec::<Int>::with_capacity(lines.len());
         for line in lines {
             let mut split = line
+                .as_ref()
                 .split_whitespace()
                 .map(|x| x.parse::<Int>().expect("Failed to parse {x}"));
             let (Some(a), Some(b)) = (split.next(), split.next()) else {
-                panic!("Failed to split {line}");
+                panic!("Failed to split {}", line.as_ref());
             };
             list_a.push(a);
             list_b.push(b);
@@ -110,7 +111,7 @@ mod test {
             "1   3",
             "3   9",
             "3   3",
-        ].as_strings();
+        ];
         AoC2024_01::new_with(&input)
     }
 }

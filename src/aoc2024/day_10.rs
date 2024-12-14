@@ -14,9 +14,10 @@ impl AoC2024_10 {
         Ok(Self::with_lines(&lines))
     }
 
-    fn with_lines(lines: &[String]) -> Self {
+    fn with_lines<T: AsRef<str>>(lines: &[T]) -> Self {
         let map = lines
             .iter()
+            .map(|x| x.as_ref())
             .map(|s| s.trim())
             .filter(|s| !s.is_empty())
             .map(|s| {
@@ -156,7 +157,7 @@ mod test {
             "32019012",
             "01329801",
             "10456732",
-        ].as_strings();
+        ];
         AoC2024_10::with_lines(&input)
     }
 

@@ -17,12 +17,12 @@ impl AoC2024_06 {
         Ok(Self::with_strings(&arr))
     }
 
-    fn with_strings(arr: &[String]) -> Self {
+    fn with_strings<T: AsRef<str>>(arr: &[T]) -> Self {
         let mut input = Vec::with_capacity(arr.len());
         let mut start: Option<Position> = None;
 
         for (row, s) in arr.iter().enumerate() {
-            let chars = s.chars().collect::<Vec<_>>();
+            let chars = s.as_ref().chars().collect::<Vec<_>>();
             if let Some(col) = chars.iter().position(|x| *x == '^') {
                 start = Some(Position { row, col });
             }
@@ -146,21 +146,18 @@ mod test {
     }
 
     fn make_puzzle() -> AoC2024_06 {
-        AoC2024_06::with_strings(
-            &[
-                "....#.....",
-                ".........#",
-                "..........",
-                "..#.......",
-                ".......#..",
-                "..........",
-                ".#..^.....",
-                "........#.",
-                "#.........",
-                "......#...",
-            ]
-            .as_strings(),
-        )
+        AoC2024_06::with_strings(&[
+            "....#.....",
+            ".........#",
+            "..........",
+            "..#.......",
+            ".......#..",
+            "..........",
+            ".#..^.....",
+            "........#.",
+            "#.........",
+            "......#...",
+        ])
     }
 
     #[test]

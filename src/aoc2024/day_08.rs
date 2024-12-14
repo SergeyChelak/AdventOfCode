@@ -19,10 +19,10 @@ impl AoC2024_08 {
         Ok(Self::with_strings(&lines))
     }
 
-    fn with_strings(arr: &[String]) -> Self {
+    fn with_strings<T: AsRef<str>>(arr: &[T]) -> Self {
         let input = arr
             .iter()
-            .map(|s| s.chars().collect::<Vec<_>>())
+            .map(|s| s.as_ref().chars().collect::<Vec<_>>())
             .collect::<Vec<_>>();
         Self { input }
     }
@@ -150,8 +150,7 @@ mod test {
             ".........A..",
             "............",
             "............",
-        ]
-        .as_strings();
+        ];
         AoC2024_08::with_strings(&input)
     }
 
