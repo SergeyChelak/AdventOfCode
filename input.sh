@@ -23,4 +23,5 @@ echo "Fetching $YEAR day $DAY..."
 INPUT_FILE=input/aoc"$YEAR"_"$FORMATTED_DAY"
 curl https://adventofcode.com/$YEAR/day/$DAY/input --cookie "session=$AOC_SESSION" -o $INPUT_FILE
 
+head $INPUT_FILE
 wc -l $INPUT_FILE
