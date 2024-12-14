@@ -1,6 +1,7 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
+use std::collections::HashSet;
 use std::io;
 
 type Int = isize;
@@ -55,29 +56,40 @@ impl AoC2024_14 {
 
 impl Solution for AoC2024_14 {
     fn part_one(&self) -> String {
-        let robots = simulate(&self.input, 100, self.rows, self.cols);
+        let mut robots = self.input.clone();
+        for _ in 0..100 {
+            simulate(&mut robots, self.rows, self.cols);
+        }
         safety_factor(&robots, self.rows, self.cols).to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut robots = self.input.clone();
+        let mut seconds = 0;
+        let len = robots.len();
+        loop {
+            seconds += 1;
+            simulate(&mut robots, self.rows, self.cols);
+            let set = robots.iter().map(|r| r.position).collect::<HashSet<_>>();
+            if set.len() == len {
+                break;
+            }
+        }
+        seconds.to_string()
+    }
 
     fn description(&self) -> String {
         "2024/Day 14: Restroom Redoubt".to_string()
     }
 }
 
-fn simulate(robots: &[Robot], duration: usize, rows: Int, cols: Int) -> Vec<Robot> {
+fn simulate(robots: &mut [Robot], rows: Int, cols: Int) {
     assert!(rows > 0 && cols > 0);
-    let mut robots = robots.iter().copied().collect::<Vec<_>>();
-    for _ in 0..duration {
-        robots.iter_mut().for_each(|r| {
-            let x = (r.position.x + cols + r.velocity.x) % cols;
-            let y = (r.position.y + rows + r.velocity.y) % rows;
-            r.position = Point::new(x, y);
-        });
-    }
-    robots
+    robots.iter_mut().for_each(|r| {
+        let x = (r.position.x + cols + r.velocity.x) % cols;
+        let y = (r.position.y + rows + r.velocity.y) % rows;
+        r.position = Point::new(x, y);
+    });
 }
 
 fn safety_factor(robots: &[Robot], rows: Int, cols: Int) -> usize {
@@ -99,6 +111,21 @@ fn safety_factor(robots: &[Robot], rows: Int, cols: Int) -> usize {
     }
     count[0] * count[1] * count[2] * count[3]
 }
+
+// fn dump(robots: &[Robot], rows: Int, cols: Int) {
+//     let set = robots.iter().map(|r| r.position).collect::<HashSet<_>>();
+//     for row in 0..rows {
+//         for col in 0..cols {
+//             let point = Point::new(col, row);
+//             if set.contains(&point) {
+//                 print!("*")
+//             } else {
+//                 print!(" ")
+//             }
+//         }
+//         println!()
+//     }
+// }
 
 #[cfg(test)]
 mod test {
@@ -136,7 +163,7 @@ mod test {
     #[test]
     fn aoc2024_14_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "8050");
         Ok(())
     }
 
