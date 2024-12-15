@@ -1,6 +1,6 @@
 # Advent of Code Solutions in Rust
 
-This repository contains my solutions for the Advent of Code challenges for the years 2015 to 2018, implemented in the Rust programming language. Advent of Code is an annual online event where participants solve daily programming puzzles from December 1st to December 25th.
+This repository contains my solutions for the Advent of Code challenges for the some years, implemented in the Rust programming language. Advent of Code is an annual online event where participants solve daily programming puzzles from December 1st to December 25th.
 
 Each year's solutions are organized in separate folders, and within each folder, you'll find the solutions for each day's challenge.
 
