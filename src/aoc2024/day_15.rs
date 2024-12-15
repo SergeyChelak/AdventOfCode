@@ -250,7 +250,7 @@ mod test {
     #[test]
     fn aoc2024_15_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "1521453");
         Ok(())
     }
 
