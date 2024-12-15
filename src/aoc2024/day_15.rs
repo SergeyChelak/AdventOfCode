@@ -1,6 +1,7 @@
 use crate::solution::Solution;
 use crate::utils::{Direction, Position2, Vec2};
 
+use std::collections::HashMap;
 use std::fs::read_to_string;
 use std::io;
 
@@ -61,11 +62,13 @@ impl Solution for AoC2024_15 {
     fn part_two(&self) -> String {
         let mut map = expand_map(&self.map);
         let mut pos = get_robot_position(&map).expect("robot position not found");
-        map[pos.row][pos.col] = EMPTY;
+        // map[pos.row][pos.col] = EMPTY;
         for dir in &self.path {
             wide_move(&mut map, &mut pos, *dir);
+            // dump(&map, pos);
+            // println!();
         }
-        todo!()
+        calc_gps_sum(&map).to_string()
     }
 
     fn description(&self) -> String {
@@ -114,20 +117,21 @@ fn get_robot_position(map: &[Vec<char>]) -> Option<Position> {
     None
 }
 
+fn next_position(p: Position, direction: Direction) -> Position {
+    use Direction::*;
+    match direction {
+        Left => Position::new(p.row, p.col - 1),
+        Right => Position::new(p.row, p.col + 1),
+        Up => Position::new(p.row - 1, p.col),
+        Down => Position::new(p.row + 1, p.col),
+    }
+}
+
 fn simple_move(map: &mut [Vec<char>], pos: &mut Position, direction: Direction) {
-    let next = |p: Position| -> Position {
-        use Direction::*;
-        match direction {
-            Left => Position::new(p.row, p.col - 1),
-            Right => Position::new(p.row, p.col + 1),
-            Up => Position::new(p.row - 1, p.col),
-            Down => Position::new(p.row + 1, p.col),
-        }
-    };
     let mut current = *pos;
     let mut box_position: Option<Position> = None;
     loop {
-        current = next(current);
+        current = next_position(current, direction);
         match map[current.row][current.col] {
             WALL => {
                 return;
@@ -153,8 +157,72 @@ fn simple_move(map: &mut [Vec<char>], pos: &mut Position, direction: Direction) 
     map[pos.row][pos.col] = EMPTY;
 }
 
-fn wide_move(map: &mut [Vec<char>], pos: &mut Position, direction: Direction) {
-    todo!()
+fn wide_move(map: &mut [Vec<char>], robot_position: &mut Position, direction: Direction) {
+    let mut layers = vec![vec![*robot_position]];
+    loop {
+        let Some(layer) = layers.last() else {
+            unreachable!("????")
+        };
+        let mut cells = Vec::new();
+        for pos in layer {
+            let next = next_position(*pos, direction);
+            match map[next.row][next.col] {
+                WALL => return,
+                BOX => panic!("Only wide boxes are expected"),
+                BOX_L => {
+                    cells.push(next);
+                    if direction.is_vertical() {
+                        cells.push(next_position(next, Direction::Right));
+                    }
+                }
+                BOX_R => {
+                    cells.push(next);
+                    if direction.is_vertical() {
+                        cells.push(next_position(next, Direction::Left));
+                    }
+                }
+                _ => {
+                    //
+                }
+            }
+        }
+        if cells.is_empty() {
+            break;
+        }
+        layers.push(cells);
+    }
+
+    let preserved_values = {
+        let mut store = HashMap::new();
+        for p in layers.iter().flatten() {
+            let val = map[p.row][p.col];
+            store.insert(*p, val);
+        }
+        store
+    };
+
+    while let Some(layer) = layers.pop() {
+        for p in layer {
+            let val = preserved_values.get(&p).expect("Preserved value not found");
+            let next = next_position(p, direction);
+            map[next.row][next.col] = *val;
+            map[p.row][p.col] = EMPTY;
+        }
+    }
+    *robot_position = next_position(*robot_position, direction);
+}
+
+fn dump(map: &[Vec<char>], pos: Position) {
+    for (row, arr) in map.iter().enumerate() {
+        for (col, val) in arr.iter().enumerate() {
+            if row == pos.row && col == pos.col {
+                print!("@");
+                continue;
+            }
+            print!("{val}");
+        }
+        println!();
+    }
 }
 
 fn calc_gps_sum(map: &[Vec<char>]) -> usize {
@@ -208,11 +276,6 @@ mod test {
 
     #[test]
     fn aoc2024_15_small_case_1() {
-        let puzzle = make_small_test_solution();
-        assert_eq!("2028", puzzle.part_one());
-    }
-
-    fn make_small_test_solution() -> AoC2024_15 {
         let input = "########
 #..O.O.#
 ##@.O..#
@@ -223,7 +286,35 @@ mod test {
 ########
 
 <^^>>>vv<v>>v<<";
-        AoC2024_15::with_string(input)
+        let puzzle = AoC2024_15::with_string(input);
+        assert_eq!("2028", puzzle.part_one());
+    }
+
+    #[test]
+    fn aoc2024_15_small_case_2() {
+        let input = "##########
+#..O..O.O#
+#......O.#
+#.OO..O.O#
+#..O@..O.#
+#O#..O...#
+#O..O..O.#
+#.OO.O.OO#
+#....O...#
+##########
+
+<vv>^<v^>v>^vv^v>v<>v^v<v<^vv<<<^><<><>>v<vvv<>^v^>^<<<><<v<<<v^vv^v>^
+vvv<<^>^v^^><<>>><>^<<><^vv^^<>vvv<>><^^v>^>vv<>v<<<<v<^v>^<^^>>>^<v<v
+><>vv>v^v^<>><>>>><^^>vv>v<^^^>>v^v^<^^>v^^>v^<^v>v<>>v^v^<v>v^^<^^vv<
+<<v<^>>^^^^>>>v^<>vvv^><v<<<>^^^vv^<vvv>^>v<^^^^v<>^>vvvv><>>v^<<^^^^^
+^><^><>>><>^^<<^^v>>><^<v>^<vv>>v>>>^v><>^v><<<<v>>v<v<v>vvv>^<><<>^><
+^>><>^v<><^vvv<^^<><v<<<<<><^v<<<><<<^^<v<^^^><^>>^<v^><<<^>>^v<v^v<v^
+>^>>^v>vv>^<<^v<>><<><<v<<v><>v<^vv<<<>^^v^>^^>>><<^v>>v^v><^^>>^<>vv^
+<><^^>^^^<><vvvvv^v<v<<>^v<v>v<<^><<><<><<<^^<<<^<<>><<><^^^>^^<>^>v<>
+^^>vv<^v^v<vv>^<><v<^v>^^^>>>^^vvv^>vvv<>>>^<^>>>>>^<<^v>^vvv<>^<><<v>
+v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^";
+        let puzzle = AoC2024_15::with_string(input);
+        assert_eq!("9021", puzzle.part_two());
     }
 
     #[test]

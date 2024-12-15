@@ -12,6 +12,10 @@ impl Direction {
         [Up, Down, Left, Right]
     }
 
+    pub fn is_vertical(&self) -> bool {
+        matches!(self, Self::Down | Self::Up)
+    }
+
     pub fn turn_left(&self) -> Self {
         match self {
             Self::Up => Self::Left,
