@@ -62,11 +62,8 @@ impl Solution for AoC2024_15 {
     fn part_two(&self) -> String {
         let mut map = expand_map(&self.map);
         let mut pos = get_robot_position(&map).expect("robot position not found");
-        // map[pos.row][pos.col] = EMPTY;
         for dir in &self.path {
             wide_move(&mut map, &mut pos, *dir);
-            // dump(&map, pos);
-            // println!();
         }
         calc_gps_sum(&map).to_string()
     }
@@ -210,19 +207,6 @@ fn wide_move(map: &mut [Vec<char>], robot_position: &mut Position, direction: Di
         }
     }
     *robot_position = next_position(*robot_position, direction);
-}
-
-fn dump(map: &[Vec<char>], pos: Position) {
-    for (row, arr) in map.iter().enumerate() {
-        for (col, val) in arr.iter().enumerate() {
-            if row == pos.row && col == pos.col {
-                print!("@");
-                continue;
-            }
-            print!("{val}");
-        }
-        println!();
-    }
 }
 
 fn calc_gps_sum(map: &[Vec<char>]) -> usize {
