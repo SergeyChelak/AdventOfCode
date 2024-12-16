@@ -1,7 +1,7 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs::read_to_string;
 use std::io;
 
@@ -31,13 +31,38 @@ impl Solution for AoC2024_16 {
     fn part_one(&self) -> String {
         let start = get_first_position(&self.map, START).expect("Start position not found");
         let end = get_first_position(&self.map, END).expect("End position not found");
-        calc_lower_cost(&self.map, start, end)
-            .map(|x| x.to_string())
+        calc_lower_cost(&self.map, start, end, &mut HashMap::new())
+            .map(|x| x.0.to_string())
             .unwrap_or("Path not found".to_string())
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let start = get_first_position(&self.map, START).expect("Start position not found");
+        let end = get_first_position(&self.map, END).expect("End position not found");
+        let mut path_map = HashMap::new();
+        let Some((_, dir)) = calc_lower_cost(&self.map, start, end, &mut path_map) else {
+            return 0.to_string();
+        };
+
+        let mut nodes = path_map.get(&(end, dir)).expect("????").clone();
+        let mut path = HashSet::new();
+
+        while !nodes.is_empty() {
+            let mut next = HashSet::new();
+            for node in &nodes {
+                path.insert(node.0);
+                let Some(adj) = path_map.get(node) else {
+                    continue;
+                };
+                for elem in adj {
+                    next.insert(*elem);
+                }
+            }
+            nodes = next;
+        }
+
+        (1 + path.len()).to_string()
+    }
 
     fn description(&self) -> String {
         "2024/Day 16: Reindeer Maze".to_string()
@@ -49,8 +74,8 @@ const WALL: char = '#';
 const START: char = 'S';
 const END: char = 'E';
 
-const STEP_COST: usize = 1;
-const TURN_COST: usize = 1000;
+// const STEP_COST: usize = 1;
+// const TURN_COST: usize = 1000;
 
 type Position = Position2<usize>;
 
@@ -65,7 +90,14 @@ fn get_first_position(map: &[Vec<char>], element: char) -> Option<Position> {
     None
 }
 
-fn calc_lower_cost(map: &[Vec<char>], start: Position, end: Position) -> Option<usize> {
+type Node = (Position, Direction);
+
+fn calc_lower_cost(
+    map: &[Vec<char>],
+    start: Position,
+    end: Position,
+    path_map: &mut HashMap<Node, HashSet<Node>>,
+) -> Option<(usize, Direction)> {
     let mut queue = Direction::all()
         .iter()
         .map(|dir| (start, *dir))
@@ -109,23 +141,46 @@ fn calc_lower_cost(map: &[Vec<char>], start: Position, end: Position) -> Option<
                 };
 
             let mut is_better = true;
+            let mut is_equal = false;
             if let Some(old_cost) = table.get(&next) {
                 is_better = *old_cost > next_cost;
+                is_equal = *old_cost == next_cost;
             }
 
+            let path_entry = path_map.entry(next).or_default();
             if is_better {
                 table.insert(next, next_cost);
                 queue.push(next);
+                path_entry.clear();
+                path_entry.insert(elem);
+            } else if is_equal {
+                path_entry.insert(elem);
             }
         }
     }
     ///////
-    Direction::all()
-        .iter()
-        .map(|dir| (end, *dir))
-        .filter_map(|tuple| table.get(&tuple))
-        .copied()
-        .min()
+    let mut result: Option<(usize, Direction)> = None;
+    for dir in Direction::all() {
+        let pos = (end, dir);
+        let Some(val) = table.get(&pos) else {
+            continue;
+        };
+        let mut is_better = true;
+        if let Some(cur) = result {
+            is_better = cur.0 > *val
+        }
+        if is_better {
+            result = Some((*val, dir));
+        }
+    }
+    result
+    // Direction::all()
+    //     .iter()
+    //     .map(|dir| (end, *dir))
+    //     .filter_map(|tuple| table.get(&tuple))
+    //     .copied()
+    //     .inspect(|x| println!("{x}"))
+    //     .min()
 }
 
 #[cfg(test)]
@@ -149,7 +204,7 @@ mod test {
     #[test]
     fn aoc2024_16_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "524");
         Ok(())
     }
 
@@ -171,7 +226,8 @@ mod test {
 #S..#.....#...#
 ###############";
         let puzzle = AoC2024_16::with_str(input);
-        assert_eq!("7036", puzzle.part_one());
+        // assert_eq!("7036", puzzle.part_one());
+        assert_eq!("45", puzzle.part_two());
     }
 
     #[test]
@@ -194,7 +250,8 @@ mod test {
 #S#.............#
 #################";
         let puzzle = AoC2024_16::with_str(input);
-        assert_eq!("11048", puzzle.part_one());
+        // assert_eq!("11048", puzzle.part_one());
+        assert_eq!("64", puzzle.part_two());
     }
 
     fn make_solution() -> io::Result<AoC2024_16> {
