@@ -1,7 +1,8 @@
 use crate::solution::Solution;
 
+use std::collections::HashSet;
 use std::fs::read_to_string;
-use std::{io, usize};
+use std::io;
 
 type Int = usize;
 
@@ -116,20 +117,31 @@ impl Solution for AoC2024_17 {
 
     fn part_two(&self) -> String {
         let original = Machine::from(self.input.as_str());
-        let target = original.memory;
+        // let target = original.memory;
 
         let mut backtrack = vec![0];
         let mut results = Vec::new();
+        let mut processed = HashSet::new();
 
         while let Some(mut acc) = backtrack.pop() {
+            if processed.contains(&acc) {
+                continue;
+            }
+            processed.insert(acc);
             let mut has_next = true;
             let mut acc_next = acc;
             while has_next {
                 has_next = false;
                 for num in 0..8 {
                     acc_next = acc + num;
-                    let arr = function(acc_next);
-                    match validate(&arr, &target) {
+                    let arr = {
+                        let mut m = original.clone();
+                        m.ra = acc_next;
+                        m.run();
+                        m.output
+                        // function(acc_next);
+                    };
+                    match validate(&arr, &original.memory) {
                         MatchResult::Equal => results.push(acc_next),
                         MatchResult::Similar => backtrack.push(acc_next << 3),
                         _ => {}
@@ -175,25 +187,25 @@ fn validate(arr: &[usize], target: &[usize]) -> MatchResult {
     }
 }
 
-fn function(x: usize) -> Vec<usize> {
-    let mut ra = x;
-    let mut rb;
-    let mut rc;
-    let mut out = Vec::new();
-    loop {
-        rb = ra % 8;
-        rb ^= 1;
-        rc = ra >> rb;
-        rb ^= 5;
-        rb ^= rc;
-        out.push(rb % 8);
-        ra >>= 3;
-        if ra == 0 {
-            break;
-        }
-    }
-    out
-}
+// fn function(x: usize) -> Vec<usize> {
+//     let mut ra = x;
+//     let mut rb;
+//     let mut rc;
+//     let mut out = Vec::new();
+//     loop {
+//         rb = ra % 8;
+//         rb ^= 1;
+//         rc = ra >> rb;
+//         rb ^= 5;
+//         rb ^= rc;
+//         out.push(rb % 8);
+//         ra >>= 3;
+//         if ra == 0 {
+//             break;
+//         }
+//     }
+//     out
+// }
 
 #[cfg(test)]
 mod test {
