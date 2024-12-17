@@ -21,18 +21,19 @@ impl Machine {
             let opcode = self.memory[self.pc];
             let operand = self.memory[self.pc + 1];
             match opcode {
-                0 => self.adv(operand),
-                1 => self.bxl(operand),
-                2 => self.bst(operand),
+                0 => self.ra >>= self.combo_value(operand),
+                1 => self.rb ^= operand,
+                2 => self.rb = self.combo_value(operand) % 8,
                 3 => {
-                    if self.jnz(operand) {
+                    if self.ra != 0 {
+                        self.pc = operand;
                         continue;
                     }
                 }
-                4 => self.bxc(),
-                5 => self.out(operand),
-                6 => self.bdv(operand),
-                7 => self.cdv(operand),
+                4 => self.rb ^= self.rc,
+                5 => self.output.push(self.combo_value(operand) % 8),
+                6 => self.rb = self.ra >> self.combo_value(operand),
+                7 => self.rc = self.ra >> self.combo_value(operand),
                 _ => panic!("Unexpected opcode {opcode}"),
             };
             self.pc += 2;
@@ -49,57 +50,6 @@ impl Machine {
         }
     }
 
-    fn adv(&mut self, operand: Int) {
-        // The adv instruction (opcode 0) performs division. The numerator is the value in the A register.
-        // The denominator is found by raising 2 to the power of the instruction's combo operand.
-        // (So, an operand of 2 would divide A by 4 (2^2); an operand of 5 would divide A by 2^B.)
-        // The result of the division operation is truncated to an integer and then written to the A register.
-        self.ra >>= self.combo_value(operand);
-    }
-
-    fn bxl(&mut self, operand: Int) {
-        // The bxl instruction (opcode 1) calculates the bitwise XOR of register B and the instruction's literal operand, then stores the result in register B.
-        self.rb ^= operand;
-    }
-
-    fn bst(&mut self, operand: Int) {
-        // The bst instruction (opcode 2) calculates the value of its combo operand modulo 8 (thereby keeping only its lowest 3 bits), then writes that value to the B register.
-        self.rb = self.combo_value(operand) % 8;
-    }
-
-    fn jnz(&mut self, operand: Int) -> bool {
-        // The jnz instruction (opcode 3) does nothing if the A register is 0.
-        // However, if the A register is not zero, it jumps by setting the instruction pointer to the value of its literal operand;
-        // if this instruction jumps, the instruction pointer is not increased by 2 after this instruction.
-        if self.ra == 0 {
-            return false;
-        }
-        self.pc = operand;
-        true
-    }
-
-    fn bxc(&mut self) {
-        // The bxc instruction (opcode 4) calculates the bitwise XOR of register B and register C,
-        // then stores the result in register B. (For legacy reasons, this instruction reads an operand but ignores it.)
-        self.rb ^= self.rc
-    }
-
-    fn out(&mut self, operand: Int) {
-        // The out instruction (opcode 5) calculates the value of its combo operand modulo 8, then outputs that value.
-        // (If a program outputs multiple values, they are separated by commas.)
-        self.output.push(self.combo_value(operand) % 8);
-    }
-
-    fn bdv(&mut self, operand: Int) {
-        // The bdv instruction (opcode 6) works exactly like the adv instruction except that the result is stored in the B register. (The numerator is still read from the A register.)
-        self.rb = self.ra >> self.combo_value(operand);
-    }
-
-    fn cdv(&mut self, operand: Int) {
-        // The cdv instruction (opcode 7) works exactly like the adv instruction except that the result is stored in the C register. (The numerator is still read from the A register.)
-        self.rc = self.ra >> self.combo_value(operand);
-    }
-
     fn formatted_output(&self) -> String {
         self.output
             .iter()
@@ -112,7 +62,6 @@ impl Machine {
 impl From<&str> for Machine {
     fn from(value: &str) -> Self {
         let (registers, program) = value.split_once("\n\n").expect("Invalid input format");
-
         // parse registers
         let mut regs = [0; 4];
         let names = ["A", "B", "C"];
@@ -126,7 +75,6 @@ impl From<&str> for Machine {
                 }
             }
         }
-
         // parse program
         let program = program
             .split_once(": ")
@@ -274,7 +222,6 @@ Program: 0,1,5,4,3,0";
 
     #[test]
     fn aoc2024_17_program_1() {
-        // If register C contains 9, the program 2,6 would set register B to 1.
         let mut machine = Machine {
             rc: 9,
             memory: vec![2, 6],
@@ -286,7 +233,6 @@ Program: 0,1,5,4,3,0";
 
     #[test]
     fn aoc2024_17_program_2() {
-        // If register A contains 10, the program 5,0,5,1,5,4 would output 0,1,2
         let mut machine = Machine {
             ra: 10,
             memory: vec![5, 0, 5, 1, 5, 4],
@@ -298,7 +244,6 @@ Program: 0,1,5,4,3,0";
 
     #[test]
     fn aoc2024_17_program_3() {
-        // If register A contains 2024, the program 0,1,5,4,3,0 would output 4,2,5,6,7,7,7,7,3,1,0 and leave 0 in register A
         let mut machine = Machine {
             ra: 2024,
             memory: vec![0, 1, 5, 4, 3, 0],
