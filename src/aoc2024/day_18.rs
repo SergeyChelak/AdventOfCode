@@ -9,17 +9,17 @@ type Position = Position2<Int>;
 
 pub struct AoC2024_18 {
     coordinates: Vec<Position>,
-    rows: Int,
-    cols: Int,
+    target: Position,
+    limit: usize,
 }
 
 impl AoC2024_18 {
     pub fn new() -> io::Result<Self> {
         let lines = read_file_as_lines("input/aoc2024_18")?;
-        Ok(Self::with_lines(&lines, 70, 70))
+        Ok(Self::with_lines(&lines, Position::new(70, 70), 1024))
     }
 
-    fn with_lines<T: AsRef<str>>(input: &[T], rows: Int, cols: Int) -> Self {
+    fn with_lines<T: AsRef<str>>(input: &[T], target: Position, limit: usize) -> Self {
         let coordinates = input
             .iter()
             .map(|s| s.as_ref())
@@ -34,33 +34,65 @@ impl AoC2024_18 {
             .collect::<Vec<_>>();
         Self {
             coordinates,
-            rows,
-            cols,
+            target,
+            limit,
         }
+    }
+
+    fn make_map(&self) -> Vec2<bool> {
+        build_map(
+            &self.coordinates,
+            self.limit,
+            self.target.row + 1,
+            self.target.col + 1,
+        )
     }
 }
 
 impl Solution for AoC2024_18 {
     fn part_one(&self) -> String {
-        dfs(&self.coordinates, 1024, self.rows, self.cols)
+        let map = self.make_map();
+        dfs(&map, self.target)
             .map(|x| x.to_string())
             .unwrap_or("Not found".to_string())
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut map = self.make_map();
+        for p in self.coordinates.iter().skip(self.limit) {
+            map[p.row as usize][p.col as usize] = true;
+            if dfs(&map, self.target).is_none() {
+                return format!("{},{}", p.row, p.col);
+            }
+        }
+        "Not found".to_string()
+    }
 
     fn description(&self) -> String {
         "2024/Day 18: RAM Run".to_string()
     }
 }
 
-fn dfs(positions: &[Position], limit: usize, rows: Int, cols: Int) -> Option<usize> {
+fn build_map(positions: &[Position], limit: usize, rows: Int, cols: Int) -> Vec2<bool> {
     let limit = limit.min(positions.len());
+    let set = positions[..limit].iter().collect::<HashSet<_>>();
+    let mut map = Vec::new();
+    for row in 0..rows {
+        let mut arr = Vec::new();
+        for col in 0..cols {
+            let p = Position { row, col };
+            arr.push(set.contains(&p));
+        }
+        map.push(arr);
+    }
+    map
+}
+
+fn dfs(map: &[Vec<bool>], target: Position) -> Option<usize> {
     let mut elements = vec![Position::new(0, 0)];
     let mut visited = HashSet::new();
-    let target = Position::new(rows, cols);
     let mut step = 0;
+    let rows = map.len() as isize;
     while !elements.is_empty() {
         let mut next = Vec::new();
         for pos in elements {
@@ -71,11 +103,12 @@ fn dfs(positions: &[Position], limit: usize, rows: Int, cols: Int) -> Option<usi
                 continue;
             }
             visited.insert(pos);
+            let cols = map[pos.row as usize].len() as isize;
             [(1, 0), (-1, 0), (0, 1), (0, -1)]
                 .iter()
                 .map(|(dr, dc)| Position::new(pos.row + *dr, pos.col + *dc))
-                .filter(|&p| p.row >= 0 && p.col >= 0 && p.row <= rows && p.col <= cols)
-                .filter(|p| !positions[..limit].contains(p))
+                .filter(|&p| p.row >= 0 && p.col >= 0 && p.row < rows && p.col < cols)
+                .filter(|p| !map[p.row as usize][p.col as usize])
                 .for_each(|p| {
                     next.push(p);
                 });
@@ -107,7 +140,7 @@ mod test {
     #[test]
     fn aoc2024_18_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "45,16");
         Ok(())
     }
 
@@ -118,10 +151,13 @@ mod test {
     #[test]
     fn aoc2024_18_case_1() {
         let solution = make_test_solution();
-        assert_eq!(
-            dfs(&solution.coordinates, 12, solution.rows, solution.cols),
-            Some(22)
-        );
+        assert_eq!(solution.part_one(), "22");
+    }
+
+    #[test]
+    fn aoc2024_18_case_2() {
+        let solution = make_test_solution();
+        assert_eq!(solution.part_two(), "6,1");
     }
 
     fn make_test_solution() -> AoC2024_18 {
@@ -130,6 +166,6 @@ mod test {
             "1,2", "5,5", "2,5", "6,5", "1,4", "0,4", "6,4", "1,1", "6,1", "1,0", "0,5", "1,6",
             "2,0",
         ];
-        AoC2024_18::with_lines(&input, 6, 6)
+        AoC2024_18::with_lines(&input, Position::new(6, 6), 12)
     }
 }
