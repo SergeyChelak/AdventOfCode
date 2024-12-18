@@ -70,12 +70,11 @@ impl Solution for AoC2024_16 {
 }
 
 const WALL: char = '#';
-// const EMPTY: char = '.';
 const START: char = 'S';
 const END: char = 'E';
 
-// const STEP_COST: usize = 1;
-// const TURN_COST: usize = 1000;
+const STEP_COST: usize = 1;
+const TURN_COST: usize = 1000;
 
 type Position = Position2<usize>;
 
@@ -98,11 +97,7 @@ fn calc_lower_cost(
     end: Position,
     path_map: &mut HashMap<Node, HashSet<Node>>,
 ) -> Option<(usize, Direction)> {
-    let mut queue = Direction::all()
-        .iter()
-        .map(|dir| (start, *dir))
-        .collect::<Vec<_>>();
-
+    let mut queue = vec![(start, Direction::Right)];
     let mut table = HashMap::new();
     for item in &queue {
         table.insert(*item, 0usize);
@@ -135,9 +130,9 @@ fn calc_lower_cost(
             }
             let next_cost = cost
                 + if is_vertical == n_dir.is_vertical() {
-                    1usize
+                    STEP_COST
                 } else {
-                    1001
+                    STEP_COST + TURN_COST
                 };
 
             let mut is_better = true;
@@ -226,7 +221,7 @@ mod test {
 #S..#.....#...#
 ###############";
         let puzzle = AoC2024_16::with_str(input);
-        // assert_eq!("7036", puzzle.part_one());
+        assert_eq!("7036", puzzle.part_one());
         assert_eq!("45", puzzle.part_two());
     }
 
