@@ -1,6 +1,5 @@
 use crate::solution::Solution;
 
-use std::collections::HashSet;
 use std::fs::read_to_string;
 use std::io;
 
@@ -125,40 +124,34 @@ impl Solution for AoC2024_17 {
 
     fn part_two(&self) -> String {
         let mut machine = Machine::from(self.input.as_str());
-
-        let mut backtrack = vec![0];
-        let mut results = Vec::new();
-        let mut processed = HashSet::new();
-
-        while let Some(mut acc) = backtrack.pop() {
-            if processed.contains(&acc) {
-                continue;
-            }
-            processed.insert(acc);
-            let mut has_next = true;
-            let mut acc_next = acc;
-            while has_next {
-                has_next = false;
+        let mut candidates = vec![0];
+        for _ in 0..machine.memory.len() {
+            let mut next = Vec::new();
+            for candidate in &candidates {
                 for num in 0..8 {
-                    acc_next = acc + num;
+                    let acc = candidate << 3 | num;
+                    if acc == *candidate {
+                        continue;
+                    }
                     let output = {
                         machine.reset();
-                        machine.ra = acc_next;
+                        machine.ra = acc;
                         machine.run();
                         &machine.output
                         // function(acc_next);
                     };
-                    match validate(output, &machine.memory) {
-                        MatchResult::Equal => results.push(acc_next),
-                        MatchResult::Similar => backtrack.push(acc_next << 3),
-                        _ => {}
+                    if is_acceptable(output, &machine.memory) {
+                        next.push(acc)
                     };
                 }
-                acc = acc_next << 3;
             }
+            candidates = next;
         }
-
-        results.iter().min().expect("Result not found").to_string()
+        candidates
+            .iter()
+            .min()
+            .expect("Result not found")
+            .to_string()
     }
 
     fn description(&self) -> String {
@@ -166,32 +159,14 @@ impl Solution for AoC2024_17 {
     }
 }
 
-enum MatchResult {
-    Similar,
-    Equal,
-    Wrong,
-}
-
-fn validate(arr: &[usize], target: &[usize]) -> MatchResult {
+fn is_acceptable(arr: &[usize], target: &[usize]) -> bool {
     if arr.len() > target.len() {
-        return MatchResult::Wrong;
+        return false;
     }
-
-    let is_equals = arr
-        .iter()
+    arr.iter()
         .rev()
         .zip(target.iter().rev())
-        .all(|(a, b)| a == b);
-
-    if !is_equals {
-        return MatchResult::Wrong;
-    }
-
-    if arr.len() == target.len() {
-        MatchResult::Equal
-    } else {
-        MatchResult::Similar
-    }
+        .all(|(a, b)| a == b)
 }
 
 // fn function(x: usize) -> Vec<usize> {
