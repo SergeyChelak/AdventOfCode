@@ -17,6 +17,14 @@ struct Machine {
 }
 
 impl Machine {
+    fn reset(&mut self) {
+        self.ra = 0;
+        self.rb = 0;
+        self.rc = 0;
+        self.pc = 0;
+        self.output = Vec::new();
+    }
+
     fn run(&mut self) {
         while self.pc <= self.memory.len() - 2 {
             let opcode = self.memory[self.pc];
@@ -116,8 +124,7 @@ impl Solution for AoC2024_17 {
     }
 
     fn part_two(&self) -> String {
-        let original = Machine::from(self.input.as_str());
-        // let target = original.memory;
+        let mut machine = Machine::from(self.input.as_str());
 
         let mut backtrack = vec![0];
         let mut results = Vec::new();
@@ -134,14 +141,14 @@ impl Solution for AoC2024_17 {
                 has_next = false;
                 for num in 0..8 {
                     acc_next = acc + num;
-                    let arr = {
-                        let mut m = original.clone();
-                        m.ra = acc_next;
-                        m.run();
-                        m.output
+                    let output = {
+                        machine.reset();
+                        machine.ra = acc_next;
+                        machine.run();
+                        &machine.output
                         // function(acc_next);
                     };
-                    match validate(&arr, &original.memory) {
+                    match validate(output, &machine.memory) {
                         MatchResult::Equal => results.push(acc_next),
                         MatchResult::Similar => backtrack.push(acc_next << 3),
                         _ => {}
