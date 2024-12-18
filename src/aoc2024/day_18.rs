@@ -39,10 +39,10 @@ impl AoC2024_18 {
         }
     }
 
-    fn make_map(&self) -> Vec2<bool> {
+    fn make_map(&self, limit: usize) -> Vec2<bool> {
         build_map(
             &self.coordinates,
-            self.limit,
+            limit,
             self.target.row + 1,
             self.target.col + 1,
         )
@@ -51,21 +51,27 @@ impl AoC2024_18 {
 
 impl Solution for AoC2024_18 {
     fn part_one(&self) -> String {
-        let map = self.make_map();
+        let map = self.make_map(self.limit);
         dfs(&map, self.target)
             .map(|x| x.to_string())
             .unwrap_or("Not found".to_string())
     }
 
     fn part_two(&self) -> String {
-        let mut map = self.make_map();
-        for p in self.coordinates.iter().skip(self.limit) {
-            map[p.row as usize][p.col as usize] = true;
+        let mut left = self.limit;
+        let mut right = self.coordinates.len() - 1;
+        while left < right {
+            let mid = (left + right) >> 1;
+            let map = self.make_map(mid);
             if dfs(&map, self.target).is_none() {
-                return format!("{},{}", p.row, p.col);
+                right = mid;
+            } else {
+                left = mid + 1;
             }
         }
-        "Not found".to_string()
+
+        let p = self.coordinates[left - 1];
+        return format!("{},{}", p.row, p.col);
     }
 
     fn description(&self) -> String {
