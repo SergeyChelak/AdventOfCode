@@ -71,7 +71,7 @@ impl Solution for AoC2024_18 {
         }
 
         let p = self.coordinates[left - 1];
-        return format!("{},{}", p.row, p.col);
+        format!("{},{}", p.row, p.col)
     }
 
     fn description(&self) -> String {
