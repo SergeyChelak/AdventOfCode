@@ -60,6 +60,21 @@ use day_19::*;
 mod day_20;
 use day_20::*;
 
+// mod day_21;
+// use day_21::*;
+
+// mod day_22;
+// use day_22::*;
+
+// mod day_23;
+// use day_23::*;
+
+// mod day_24;
+// use day_24::*;
+
+// mod day_25;
+// use day_25::*;
+
 pub fn puzzle_factory_2024() -> PuzzleFactory {
     let producers: Vec<&'static PuzzleFactoryMethod> = vec![
         &|| Ok(Box::new(AoC2024_01::new()?)),
@@ -82,11 +97,11 @@ pub fn puzzle_factory_2024() -> PuzzleFactory {
         &|| Ok(Box::new(AoC2024_18::new()?)),
         &|| Ok(Box::new(AoC2024_19::new()?)),
         &|| Ok(Box::new(AoC2024_20::new()?)),
-        // &|| { Ok(Box::new(AoC2024_21::new()?)) },
-        // &|| { Ok(Box::new(AoC2024_22::new()?)) },
-        // &|| { Ok(Box::new(AoC2024_23::new()?)) },
-        // &|| { Ok(Box::new(AoC2024_24::new()?)) },
-        // &|| { Ok(Box::new(AoC2024_25::new()?)) },
+        // &|| Ok(Box::new(AoC2024_21::new()?)),
+        // &|| Ok(Box::new(AoC2024_22::new()?)),
+        // &|| Ok(Box::new(AoC2024_23::new()?)),
+        // &|| Ok(Box::new(AoC2024_24::new()?)),
+        // &|| Ok(Box::new(AoC2024_25::new()?)),
     ];
     PuzzleFactory::new(2024, producers)
 }
