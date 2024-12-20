@@ -1,13 +1,12 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, VecDeque};
 use std::io;
 
 type Int = usize;
 type Position = Position2<Int>;
 const WALL: char = '#';
-const EMPTY: char = '.';
 
 pub struct AoC2024_20 {
     map: Vec2<char>,
@@ -69,8 +68,26 @@ impl Solution for AoC2024_20 {
         total.to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let start = get_first_position(&self.map, 'S').expect("Start position not found");
+        let distances = distances_with_bfs(&self.map, start);
+        let mut total = 0;
+        for (pos1, dist1) in distances.iter() {
+            for (pos2, dist2) in distances.iter() {
+                if pos1 == pos2 {
+                    continue;
+                }
+                let val = pos1.row.abs_diff(pos2.row) + pos1.col.abs_diff(pos2.col);
+                if val > 20 {
+                    continue;
+                }
+                if *dist1 + val + 100 <= *dist2 {
+                    total += 1;
+                }
+            }
+        }
+        total.to_string()
+    }
 
     fn description(&self) -> String {
         "2024/Day 20: Race Condition".to_string()
@@ -100,7 +117,7 @@ fn distances_with_bfs(map: &[Vec<char>], start: Position) -> HashMap<Position, u
             if map[next.row][next.col] == WALL {
                 continue;
             }
-            if distances.get(&next).is_some() {
+            if distances.contains_key(&next) {
                 continue;
             }
             distances.insert(next, 1 + dist);
@@ -133,32 +150,11 @@ mod test {
     #[test]
     fn aoc2024_20_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "1010981");
         Ok(())
     }
 
     fn make_solution() -> io::Result<AoC2024_20> {
         AoC2024_20::new()
     }
-
-    // fn make_test_solution() -> AoC2024_20 {
-    //     let lines = [
-    //         "###############",
-    //         "#...#.........#",
-    //         "#.#.#.#.#.###.#",
-    //         "#S#...#.#.#...#",
-    //         "#######.#.#.###",
-    //         "#######.#.#...#",
-    //         "#######.#.###.#",
-    //         "###..E#...#...#",
-    //         "###.#######.###",
-    //         "#...###...#...#",
-    //         "#.#####.#.###.#",
-    //         "#.#...#.#.#...#",
-    //         "#.#.#.#.#.#.###",
-    //         "#...#...#...###",
-    //         "###############",
-    //     ];
-    //     AoC2024_20::with_lines(&lines)
-    // }
 }
