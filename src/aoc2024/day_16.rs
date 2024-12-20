@@ -77,18 +77,6 @@ const STEP_COST: usize = 1;
 const TURN_COST: usize = 1000;
 
 type Position = Position2<usize>;
-
-fn get_first_position(map: &[Vec<char>], element: char) -> Option<Position> {
-    for (row, arr) in map.iter().enumerate() {
-        for (col, val) in arr.iter().enumerate() {
-            if *val == element {
-                return Some(Position { row, col });
-            }
-        }
-    }
-    None
-}
-
 type Node = (Position, Direction);
 
 fn calc_lower_cost(
