@@ -1,7 +1,7 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::io;
 
 type Int = usize;
@@ -33,36 +33,39 @@ impl AoC2024_20 {
 
 impl Solution for AoC2024_20 {
     fn part_one(&self) -> String {
+        let start = get_first_position(&self.map, 'S').expect("Start position not found");
+        let distances = distances_with_bfs(&self.map, start);
         let mut total = 0;
-        let mut map = self.map.clone();
-        let start = get_first_position(&map, 'S').expect("Start position not found");
-        let end = get_first_position(&map, 'E').expect("End position not found");
-
-        let longest = get_path_len(&map, start, end).expect("Path not exist");
-
         let rows = self.map.len();
-        for row in 1..rows - 1 {
-            let cols = self.map[row].len();
-            for col in 1..cols - 1 {
-                if map[row][col] != WALL {
+        let cols = self.map[0].len();
+        for r in 1..rows - 1 {
+            for c in 1..cols - 1 {
+                if self.map[r][c] == WALL {
                     continue;
                 }
-                map[row][col] = EMPTY;
-                for (r, c) in [(row + 1, col), (row, col + 1)] {
-                    if map[r][c] == WALL {
+                let dist = *distances
+                    .get(&Position::new(r, c))
+                    .expect("Bug in code (2)");
+                let mut positions = Vec::new();
+                if r < rows - 2 {
+                    positions.push(Position::new(r + 2, c));
+                }
+                if c < cols - 2 {
+                    positions.push(Position::new(r, c + 2));
+                }
+                positions.push(Position::new(r + 1, c + 1));
+                positions.push(Position::new(r - 1, c + 1));
+                for p in positions {
+                    if self.map[p.row][p.col] == WALL {
                         continue;
                     }
-                    if let Some(len) = get_path_len(&map, start, end) {
-                        assert!(len <= longest);
-                        if longest - len >= 100 {
-                            total += 1;
-                        }
+                    let val = *distances.get(&p).expect("Bug in code (3)");
+                    if val.abs_diff(dist) >= 102 {
+                        total += 1;
                     }
                 }
-                map[row][col] = WALL;
             }
         }
-
         total.to_string()
     }
 
@@ -74,35 +77,37 @@ impl Solution for AoC2024_20 {
     }
 }
 
-fn get_path_len(map: &[Vec<char>], start: Position, end: Position) -> Option<usize> {
-    let mut elems = vec![start];
-    let mut visited = HashSet::new();
-    let mut len = 0;
-    while !elems.is_empty() {
-        let mut next = Vec::new();
-        for elem in elems {
-            if visited.contains(&elem) {
+fn distances_with_bfs(map: &[Vec<char>], start: Position) -> HashMap<Position, usize> {
+    let mut queue = VecDeque::new();
+    queue.push_back(start);
+
+    let mut distances = HashMap::new();
+    distances.insert(start, 0usize);
+
+    let rows = map.len();
+    let cols = map[0].len();
+
+    while let Some(elem) = queue.pop_front() {
+        let dist = *distances.get(&elem).expect("check code (1)");
+        for dir in Direction::all() {
+            let next = match dir {
+                Direction::Up if elem.row > 0 => Position::new(elem.row - 1, elem.col),
+                Direction::Down if elem.row < rows - 1 => Position::new(elem.row + 1, elem.col),
+                Direction::Left if elem.col > 0 => Position::new(elem.row, elem.col - 1),
+                Direction::Right if elem.col < cols - 1 => Position::new(elem.row, elem.col + 1),
+                _ => continue,
+            };
+            if map[next.row][next.col] == WALL {
                 continue;
             }
-            if elem == end {
-                return Some(len);
+            if distances.get(&next).is_some() {
+                continue;
             }
-            visited.insert(elem);
-            Direction::all()
-                .iter()
-                .map(|d| match d {
-                    Direction::Up => Position::new(elem.row - 1, elem.col),
-                    Direction::Down => Position::new(elem.row + 1, elem.col),
-                    Direction::Left => Position::new(elem.row, elem.col - 1),
-                    Direction::Right => Position::new(elem.row, elem.col + 1),
-                })
-                .filter(|p| map[p.row][p.col] != WALL)
-                .for_each(|p| next.push(p));
+            distances.insert(next, 1 + dist);
+            queue.push_back(next);
         }
-        elems = next;
-        len += 1;
     }
-    None
+    distances
 }
 
 #[cfg(test)]
