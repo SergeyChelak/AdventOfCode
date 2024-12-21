@@ -25,8 +25,14 @@ impl Solution for AoC2024_21 {
             .to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        self.codes
+            .iter()
+            .map(|code| (code, solve_dfs(code)))
+            .map(|(inp, out)| complexity_len(inp, out))
+            .sum::<usize>()
+            .to_string()
+    }
 
     fn description(&self) -> String {
         "2024/Day 21: Keypad Conundrum".to_string()
@@ -34,6 +40,60 @@ impl Solution for AoC2024_21 {
 }
 
 type PathMap = HashMap<(char, char), Vec<String>>;
+
+fn solve_dfs(code: &str) -> usize {
+    fn dfs(
+        a: char,
+        b: char,
+        depth: usize,
+        path_map: &PathMap,
+        memo: &mut HashMap<(char, char, usize), usize>,
+    ) -> usize {
+        let key = (a, b, depth);
+        if depth == 1 {
+            return path_map
+                .get(&(a, b))
+                .and_then(|x| x.first())
+                .expect("Direction pad path map created incorrectly")
+                .len();
+        }
+        if let Some(val) = memo.get(&key) {
+            return *val;
+        }
+        let mut result = usize::MAX;
+        for path in path_map
+            .get(&(a, b))
+            .expect("Path wasn't calculated initially")
+        {
+            let mut acc = 0;
+            for (x, y) in iter::once('A').chain(path.chars()).zip(path.chars()) {
+                acc += dfs(x, y, depth - 1, path_map, memo);
+            }
+            result = result.min(acc);
+        }
+        memo.insert(key, result);
+        result
+    }
+
+    let inputs = {
+        let num_path_map = make_paths_map(&NUMPAD);
+        code_to_direction(code, &num_path_map)
+    };
+    let dir_path_map = make_paths_map(&DIR_PAD);
+    let mut memo = HashMap::new();
+
+    let mut result = usize::MAX;
+
+    for path in inputs {
+        let mut acc = 0;
+        for (x, y) in iter::once('A').chain(path.chars()).zip(path.chars()) {
+            acc += dfs(x, y, 25, &dir_path_map, &mut memo);
+        }
+        result = result.min(acc);
+    }
+
+    result
+}
 
 fn solve(code: &str) -> String {
     let num_path_map = make_paths_map(&NUMPAD);
@@ -71,8 +131,12 @@ fn code_to_direction(code: &str, path_map: &PathMap) -> Vec<String> {
 }
 
 fn complexity(input: &str, output: &str) -> usize {
+    complexity_len(input, output.len())
+}
+
+fn complexity_len(input: &str, output_len: usize) -> usize {
     let l = input.len();
-    output.len() * input[..l - 1].parse::<usize>().expect("Invalid input")
+    output_len * input[..l - 1].parse::<usize>().expect("Invalid input")
 }
 
 fn make_paths_map<T: AsRef<[char]>>(pad: &[T]) -> PathMap {
@@ -196,7 +260,7 @@ mod test {
     #[test]
     fn aoc2024_21_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "341460772681012");
         Ok(())
     }
 
