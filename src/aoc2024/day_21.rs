@@ -4,6 +4,18 @@ use crate::utils::*;
 use std::collections::{HashMap, VecDeque};
 use std::{io, iter};
 
+type Position = Position2<isize>;
+type KeyMap = HashMap<Position, char>;
+
+const NUMPAD: [[char; 3]; 4] = [
+    ['7', '8', '9'],
+    ['4', '5', '6'],
+    ['1', '2', '3'],
+    ['#', '0', 'A'],
+];
+
+const DIR_PAD: [[char; 3]; 2] = [['#', '^', 'A'], ['<', 'v', '>']];
+
 pub struct AoC2024_21 {
     codes: Vec<String>,
 }
@@ -19,8 +31,7 @@ impl Solution for AoC2024_21 {
     fn part_one(&self) -> String {
         self.codes
             .iter()
-            .map(|code| (code, solve(code)))
-            .map(|(inp, out)| complexity(inp, &out))
+            .map(|code| solve(code, 2))
             .sum::<usize>()
             .to_string()
     }
@@ -28,8 +39,7 @@ impl Solution for AoC2024_21 {
     fn part_two(&self) -> String {
         self.codes
             .iter()
-            .map(|code| (code, solve_dfs(code)))
-            .map(|(inp, out)| complexity_len(inp, out))
+            .map(|code| solve(code, 25))
             .sum::<usize>()
             .to_string()
     }
@@ -41,7 +51,7 @@ impl Solution for AoC2024_21 {
 
 type PathMap = HashMap<(char, char), Vec<String>>;
 
-fn solve_dfs(code: &str) -> usize {
+fn calculate_length(code: &str, depth: usize) -> usize {
     fn dfs(
         a: char,
         b: char,
@@ -87,7 +97,7 @@ fn solve_dfs(code: &str) -> usize {
     for path in inputs {
         let mut acc = 0;
         for (x, y) in iter::once('A').chain(path.chars()).zip(path.chars()) {
-            acc += dfs(x, y, 25, &dir_path_map, &mut memo);
+            acc += dfs(x, y, depth, &dir_path_map, &mut memo);
         }
         result = result.min(acc);
     }
@@ -95,23 +105,10 @@ fn solve_dfs(code: &str) -> usize {
     result
 }
 
-fn solve(code: &str) -> String {
-    let num_path_map = make_paths_map(&NUMPAD);
-    let mut inputs = code_to_direction(code, &num_path_map);
-    let dir_path_map = make_paths_map(&DIR_PAD);
-    for _ in 0..2 {
-        let mut next = Vec::new();
-        for inp in &inputs {
-            let mut result = code_to_direction(inp, &dir_path_map);
-            next.append(&mut result);
-        }
-        let len = next.iter().map(|v| v.len()).min().unwrap_or_default();
-        inputs = next
-            .into_iter()
-            .filter(|v| v.len() == len)
-            .collect::<Vec<_>>();
-    }
-    inputs.first().cloned().unwrap_or_default()
+fn solve(code: &str, depth: usize) -> usize {
+    let len = calculate_length(code, depth);
+    let l = code.len();
+    len * code[..l - 1].parse::<usize>().expect("Invalid input")
 }
 
 fn code_to_direction(code: &str, path_map: &PathMap) -> Vec<String> {
@@ -128,15 +125,6 @@ fn code_to_direction(code: &str, path_map: &PathMap) -> Vec<String> {
         .into_iter()
         .filter(|v| v.len() == len)
         .collect::<Vec<_>>()
-}
-
-fn complexity(input: &str, output: &str) -> usize {
-    complexity_len(input, output.len())
-}
-
-fn complexity_len(input: &str, output_len: usize) -> usize {
-    let l = input.len();
-    output_len * input[..l - 1].parse::<usize>().expect("Invalid input")
 }
 
 fn make_paths_map<T: AsRef<[char]>>(pad: &[T]) -> PathMap {
@@ -169,9 +157,6 @@ fn cartesian_product(inp: &[Vec<String>]) -> Vec<String> {
     dfs(inp, String::new(), 0, &mut result);
     result
 }
-
-type Position = Position2<isize>;
-type KeyMap = HashMap<Position, char>;
 
 fn find_paths(map: &KeyMap, from: Position, to: Position) -> Vec<String> {
     let mut deque = VecDeque::new();
@@ -216,15 +201,6 @@ fn find_paths(map: &KeyMap, from: Position, to: Position) -> Vec<String> {
     path_map.get(&to).cloned().unwrap_or_default()
 }
 
-const NUMPAD: [[char; 3]; 4] = [
-    ['7', '8', '9'],
-    ['4', '5', '6'],
-    ['1', '2', '3'],
-    ['#', '0', 'A'],
-];
-
-const DIR_PAD: [[char; 3]; 2] = [['#', '^', 'A'], ['<', 'v', '>']];
-
 fn make_map<T: AsRef<[char]>>(pad: &[T]) -> KeyMap {
     let mut map = KeyMap::new();
     for (r, row) in pad.iter().enumerate() {
@@ -262,16 +238,6 @@ mod test {
         let sol = make_solution()?;
         assert_eq!(sol.part_two(), "341460772681012");
         Ok(())
-    }
-
-    #[test]
-    fn aoc2024_21_complexity() {
-        let val = complexity(
-            "029A",
-            "<vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A",
-        );
-
-        assert_eq!(val, 68 * 29)
     }
 
     #[test]
