@@ -53,34 +53,41 @@ type PathMap = HashMap<(char, char), Vec<String>>;
 
 fn calculate_length(code: &str, depth: usize) -> usize {
     fn dfs(
-        a: char,
-        b: char,
+        code: &str,
         depth: usize,
         path_map: &PathMap,
-        memo: &mut HashMap<(char, char, usize), usize>,
+        memo: &mut HashMap<(String, usize), usize>,
     ) -> usize {
-        let key = (a, b, depth);
-        if depth == 1 {
-            return path_map
-                .get(&(a, b))
-                .and_then(|x| x.first())
-                .expect("Direction pad path map created incorrectly")
-                .len();
-        }
+        let key = (code.to_string(), depth);
         if let Some(val) = memo.get(&key) {
             return *val;
         }
-        let mut result = usize::MAX;
-        for path in path_map
-            .get(&(a, b))
-            .expect("Path wasn't calculated initially")
-        {
-            let mut acc = 0;
-            for (x, y) in iter::once('A').chain(path.chars()).zip(path.chars()) {
-                acc += dfs(x, y, depth - 1, path_map, memo);
-            }
-            result = result.min(acc);
+        if depth == 1 {
+            let result = iter::once('A')
+                .chain(code.chars())
+                .zip(code.chars())
+                .filter_map(|x| path_map.get(&x).and_then(|x| x.first()))
+                .map(|x| x.len())
+                .sum();
+
+            memo.insert(key, result);
+            return result;
         }
+
+        let mut result = 0;
+        for sub_codes in iter::once('A')
+            .chain(code.chars())
+            .zip(code.chars())
+            .filter_map(|x| path_map.get(&x))
+        {
+            let mut tmp = usize::MAX;
+            for sub_code in sub_codes {
+                let val = dfs(sub_code, depth - 1, path_map, memo);
+                tmp = tmp.min(val);
+            }
+            result += tmp;
+        }
+
         memo.insert(key, result);
         result
     }
@@ -91,17 +98,11 @@ fn calculate_length(code: &str, depth: usize) -> usize {
     };
     let dir_path_map = make_paths_map(&DIR_PAD);
     let mut memo = HashMap::new();
-
     let mut result = usize::MAX;
-
-    for path in inputs {
-        let mut acc = 0;
-        for (x, y) in iter::once('A').chain(path.chars()).zip(path.chars()) {
-            acc += dfs(x, y, depth, &dir_path_map, &mut memo);
-        }
-        result = result.min(acc);
+    for input in inputs {
+        let val = dfs(&input, depth, &dir_path_map, &mut memo);
+        result = result.min(val);
     }
-
     result
 }
 
