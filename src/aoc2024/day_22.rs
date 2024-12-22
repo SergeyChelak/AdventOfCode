@@ -1,6 +1,8 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
+use std::collections::{HashMap, HashSet};
+use std::hash::{DefaultHasher, Hash, Hasher};
 use std::io;
 
 type Int = isize;
@@ -36,29 +38,89 @@ impl Solution for AoC2024_22 {
             .to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut sequences = Vec::new();
+        let mut keys = HashSet::new();
+
+        for x in self.input.iter() {
+            let map = make_sequences(*x);
+            for key in map.keys() {
+                keys.insert(*key);
+            }
+            sequences.push(map);
+        }
+
+        let mut result = 0;
+        for key in keys {
+            let tmp = sequences
+                .iter()
+                .filter_map(|seq| seq.get(&key))
+                .sum::<Int>();
+            result = result.max(tmp);
+        }
+
+        result.to_string()
+    }
 
     fn description(&self) -> String {
         "2024/Day 22: Monkey Market".to_string()
     }
 }
 
+fn make_sequences(secret: Int) -> HashMap<u64, Int> {
+    let info = generate_price_info(secret, 2000);
+    let mut map = HashMap::new();
+    for (i, seq) in info.diff[..].windows(4).enumerate() {
+        let mut hasher = DefaultHasher::new();
+        seq.hash(&mut hasher);
+        let hash = hasher.finish();
+        if map.contains_key(&hash) {
+            continue;
+        }
+        let val = info.price[i + 4];
+        map.insert(hash, val);
+    }
+    map
+}
+
+struct PriceInfo {
+    price: Vec<Int>,
+    diff: Vec<Int>,
+}
+
+fn generate_price_info(mut secret: Int, length: usize) -> PriceInfo {
+    let mut prev = secret % 10;
+    let mut price = vec![prev];
+    let mut diff = Vec::new();
+    for _ in 0..length {
+        secret = generate_step(secret);
+        let val = secret % 10;
+        price.push(val);
+        diff.push(val - prev);
+        prev = val;
+    }
+    PriceInfo { price, diff }
+}
+
 fn generate(mut secret: Int, number: usize) -> Int {
+    for _ in 0..number {
+        secret = generate_step(secret);
+    }
+    secret
+}
+
+fn generate_step(mut secret: Int) -> Int {
     let mix = |val: Int, secret: Int| val ^ secret;
     let prune = |val: Int| val % 16777216;
 
-    for _ in 0..number {
-        secret = mix(secret * 64, secret);
-        secret = prune(secret);
+    secret = mix(secret * 64, secret);
+    secret = prune(secret);
 
-        secret = mix(secret / 32, secret);
-        secret = prune(secret);
+    secret = mix(secret / 32, secret);
+    secret = prune(secret);
 
-        secret = mix(secret * 2048, secret);
-        secret = prune(secret);
-    }
-    secret
+    secret = mix(secret * 2048, secret);
+    prune(secret)
 }
 
 #[cfg(test)]
@@ -82,7 +144,7 @@ mod test {
     #[test]
     fn aoc2024_22_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "1444");
         Ok(())
     }
 
@@ -98,6 +160,12 @@ mod test {
         assert_eq!(12249484, generate(123, 8));
         assert_eq!(7753432, generate(123, 9));
         assert_eq!(5908254, generate(123, 10));
+    }
+
+    #[test]
+    fn aoc2024_22_gen_price_info() {
+        let info = generate_price_info(1, 2000);
+        assert_eq!(1, info.price.len() - info.diff.len());
     }
 
     fn make_solution() -> io::Result<AoC2024_22> {
