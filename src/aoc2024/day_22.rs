@@ -1,7 +1,7 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::hash::{DefaultHasher, Hash, Hasher};
 use std::io;
 
@@ -39,27 +39,18 @@ impl Solution for AoC2024_22 {
     }
 
     fn part_two(&self) -> String {
-        let mut sequences = Vec::new();
-        let mut keys = HashSet::new();
-
-        for x in self.input.iter() {
-            let map = make_sequences(*x);
-            for key in map.keys() {
-                keys.insert(*key);
+        let mut accumulator = HashMap::<u64, Int>::new();
+        for secret in self.input.iter() {
+            for (key, value) in make_sequences(*secret) {
+                let entry = accumulator.entry(key).or_default();
+                *entry += value;
             }
-            sequences.push(map);
         }
-
-        let mut result = 0;
-        for key in keys {
-            let tmp = sequences
-                .iter()
-                .filter_map(|seq| seq.get(&key))
-                .sum::<Int>();
-            result = result.max(tmp);
-        }
-
-        result.to_string()
+        accumulator
+            .values()
+            .max()
+            .expect("Empty accumulator isn't expected")
+            .to_string()
     }
 
     fn description(&self) -> String {
@@ -171,10 +162,4 @@ mod test {
     fn make_solution() -> io::Result<AoC2024_22> {
         AoC2024_22::new()
     }
-
-    // fn make_test_solution() -> AoC2024_22 {
-    //     AoC2024_22::with_lines(&[
-    //         //
-    //     ])
-    // }
 }
