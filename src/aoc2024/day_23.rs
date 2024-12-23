@@ -45,7 +45,7 @@ impl Solution for AoC2024_23 {
                     if b == c {
                         continue;
                     }
-                    if check_triple(&map, &key, b, c) {
+                    if check_triple(&map, key, b, c) {
                         let mut arr = vec![key.to_string(), b.to_string(), c.to_string()];
                         arr.sort();
                         output.insert(arr);
@@ -56,8 +56,10 @@ impl Solution for AoC2024_23 {
         output.len().to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let map = make_connection_map(&self.input);
+        find_largest_set(&map).to_string()
+    }
 
     fn description(&self) -> String {
         "2024/Day 23: LAN Party".to_string()
@@ -65,6 +67,39 @@ impl Solution for AoC2024_23 {
 }
 
 type ConnectionMap = HashMap<String, HashSet<String>>;
+
+fn find_largest_set(map: &ConnectionMap) -> String {
+    let keys = map.keys().cloned().collect::<Vec<_>>();
+    let mut candidates = map
+        .keys()
+        .map(|x| vec![x.to_string()])
+        .collect::<HashSet<_>>();
+    let mut best = String::new();
+    while !candidates.is_empty() {
+        let mut next = HashSet::new();
+        for candidate in &candidates {
+            for key in &keys {
+                if candidate.contains(key) {
+                    continue;
+                }
+                let is_valid = candidate
+                    .iter()
+                    .all(|node| map.get(node).expect("Shouldn't be empty").contains(key));
+                if is_valid {
+                    let mut tmp = candidate.clone();
+                    tmp.push(key.clone());
+                    tmp.sort();
+                    next.insert(tmp);
+                }
+            }
+        }
+        if let Some(arr) = next.iter().next() {
+            best = arr.join(",");
+        }
+        candidates = next;
+    }
+    best
+}
 
 fn check_triple(map: &ConnectionMap, a: &str, b: &str, c: &str) -> bool {
     let check = |a: &str, b: &str, c: &str| -> bool {
@@ -78,7 +113,7 @@ fn check_triple(map: &ConnectionMap, a: &str, b: &str, c: &str) -> bool {
 }
 
 fn make_connection_map(input: &[StringPair]) -> ConnectionMap {
-    let mut map = HashMap::<String, HashSet<String>>::new();
+    let mut map = ConnectionMap::new();
     for (first, second) in input {
         let entry = map.entry(first.clone()).or_default();
         entry.insert(second.clone());
@@ -109,7 +144,7 @@ mod test {
     #[test]
     fn aoc2024_23_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "aa,cf,cj,cv,dr,gj,iu,jh,oy,qr,xr,xy,zb");
         Ok(())
     }
 
@@ -121,6 +156,12 @@ mod test {
     fn aoc2024_23_case_1() {
         let s = make_test_solution();
         assert_eq!(s.part_one(), "7");
+    }
+
+    #[test]
+    fn aoc2024_23_case_2() {
+        let s = make_test_solution();
+        assert_eq!(s.part_two(), "co,de,ka,ta");
     }
 
     fn make_test_solution() -> AoC2024_23 {
