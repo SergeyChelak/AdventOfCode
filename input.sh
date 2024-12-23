@@ -19,6 +19,8 @@ if [ "${#FORMATTED_DAY}" -lt 2 ]; then
     FORMATTED_DAY=0"$FORMATTED_DAY"
 fi
 
+mkdir -p input
+
 echo "Fetching $YEAR day $DAY..."
 INPUT_FILE=input/aoc"$YEAR"_"$FORMATTED_DAY"
 curl https://adventofcode.com/$YEAR/day/$DAY/input --cookie "session=$AOC_SESSION" -o $INPUT_FILE
