@@ -34,8 +34,11 @@ impl Element {
         (name.to_string(), gate)
     }
 
-    fn is_gate(&self) -> bool {
-        !matches!(self, Self::Const(_))
+    fn value(&self) -> Option<bool> {
+        match self {
+            Self::Const(val) => Some(*val),
+            _ => None,
+        }
     }
 }
 
@@ -71,27 +74,8 @@ impl AoC2024_24 {
 
 impl Solution for AoC2024_24 {
     fn part_one(&self) -> String {
-        let mut circuit = self.circuit.clone();
-        calc_outputs(&mut circuit);
-        circuit
-            .iter()
-            .filter(|(key, _)| key.starts_with('z'))
-            .map(|(key, elem)| {
-                let val = match elem {
-                    Element::Const(x) => x,
-                    _ => panic!("Unreachable case"),
-                };
-                (key, *val)
-            })
-            .fold(0usize, |acc, val| {
-                let (name, value) = val;
-                if !value {
-                    return acc;
-                }
-                let shift = name[1..].parse::<usize>().expect("Invalid wire name");
-                acc | 1 << shift
-            })
-            .to_string()
+        let circuit = eval(&self.circuit);
+        calculate(&circuit, 'z').to_string()
     }
 
     // fn part_two(&self) -> String {
@@ -102,29 +86,45 @@ impl Solution for AoC2024_24 {
     }
 }
 
-fn calc_outputs(circuit: &mut Circuit) {
-    fn update(circuit: &mut Circuit, key: &str) -> bool {
-        let Some(elem) = circuit.get(key).cloned() else {
+fn calculate(circuit: &Circuit, wire: char) -> usize {
+    circuit
+        .iter()
+        .filter(|(key, _)| key.starts_with(wire))
+        .filter_map(|(key, elem)| elem.value().map(|val| (key, val)))
+        .fold(0usize, |acc, val| {
+            let (name, value) = val;
+            if !value {
+                return acc;
+            }
+            let shift = name[1..].parse::<usize>().expect("Invalid wire name");
+            acc | 1 << shift
+        })
+}
+
+fn eval(circuit: &Circuit) -> Circuit {
+    fn update(circuit: &Circuit, key: &str, output: &mut Circuit) -> bool {
+        if let Some(value) = output.get(key).and_then(|x| x.value()) {
+            return value;
+        }
+
+        let Some(elem) = circuit.get(key) else {
             panic!("Missing element {key}");
         };
         let value = match elem {
-            Element::Const(val) => val,
-            Element::And(l, r) => update(circuit, &l) && update(circuit, &r),
-            Element::Or(l, r) => update(circuit, &l) || update(circuit, &r),
-            Element::Xor(l, r) => update(circuit, &l) ^ update(circuit, &r),
+            Element::Const(val) => *val,
+            Element::And(l, r) => update(circuit, l, output) && update(circuit, r, output),
+            Element::Or(l, r) => update(circuit, l, output) || update(circuit, r, output),
+            Element::Xor(l, r) => update(circuit, l, output) ^ update(circuit, r, output),
         };
-        circuit.insert(key.to_string(), Element::Const(value));
+        output.insert(key.to_string(), Element::Const(value));
         value
     }
 
-    let gate_keys = circuit
-        .iter()
-        .filter(|(_, elem)| elem.is_gate())
-        .map(|(k, _)| k.to_string())
-        .collect::<Vec<_>>();
-    for key in gate_keys {
-        update(circuit, &key);
+    let mut output = HashMap::new();
+    for key in circuit.keys() {
+        update(circuit, &key, &mut output);
     }
+    output
 }
 
 #[cfg(test)]
