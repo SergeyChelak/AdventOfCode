@@ -1,6 +1,10 @@
 use crate::solution::Solution;
 
-use std::{collections::HashMap, fs::read_to_string, io};
+use std::{
+    collections::{HashMap, HashSet},
+    fs::read_to_string,
+    io,
+};
 
 #[derive(Debug, Clone)]
 struct Gate {
@@ -45,12 +49,129 @@ impl Solution for AoC2024_24 {
         wires_value(&output, 'z').to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        // full-adder:
+        // Sum = A xor B xor CarryIn
+        // CarryOut = A and B or (A xor B) and CarryIN
+        //
+        // x## & y## are inputs
+        //
+
+        // z00 = x00 xor y00
+        //           Carry00         half-adder
+        // z01 = (x00 and y00) xor (x01 xor y01)
+        //           Carry00                       Carry01                   half-adder
+        // z02 = ( ((y00 and x00) and (y01 Xor x01)) or (y01 And x01) ) xor (y02 Xor x02)
+        let mut gates = self.gates.clone();
+        let get_wrong_index = |gates: &HashMap<String, Gate>| -> Option<usize> {
+            for i in 0.. {
+                let name = format!("z{i:02}");
+                if !validate_output(gates, &name, i) {
+                    return Some(i);
+                }
+            }
+            None
+        };
+        let mut target = get_wrong_index(&gates);
+        let keys = gates.keys().cloned().collect::<Vec<_>>();
+        let mut result = Vec::new();
+        for _ in 0..4 {
+            'next: for (i, wire_i) in keys.iter().enumerate() {
+                for wire_j in keys.iter().skip(i + 1) {
+                    let val_i = gates.get(wire_i).unwrap().clone();
+                    let val_j = gates.get(wire_j).unwrap().clone();
+                    gates.insert(wire_i.clone(), val_j.clone());
+                    gates.insert(wire_j.clone(), val_i.clone());
+                    let progress = get_wrong_index(&gates);
+                    if progress > target {
+                        result.push(wire_i.clone());
+                        result.push(wire_j.clone());
+                        target = progress;
+                        continue 'next;
+                    }
+                    // revert
+                    gates.insert(wire_i.clone(), val_i);
+                    gates.insert(wire_j.clone(), val_j);
+                }
+            }
+        }
+        result.sort();
+        result.join(",")
+    }
 
     fn description(&self) -> String {
         "2024/Day 24: Crossed Wires".to_string()
     }
+}
+
+// z-gates are outputs
+fn validate_output(gates: &Gates, wire: &str, idx: usize) -> bool {
+    let Some(gate) = gates.get(wire) else {
+        return false;
+    };
+    if !matches!(gate.op, Operator::Xor) {
+        return false;
+    }
+    if idx == 0 {
+        return is_valid_inputs(&gate.l, &gate.r, 0);
+    }
+    validate_half_adder(gates, &gate.l, idx) && validate_carry(gates, &gate.r, idx)
+        || validate_half_adder(gates, &gate.r, idx) && validate_carry(gates, &gate.l, idx)
+}
+
+fn validate_half_adder(gates: &Gates, wire: &str, idx: usize) -> bool {
+    let Some(gate) = gates.get(wire) else {
+        return false;
+    };
+    if !matches!(gate.op, Operator::Xor) {
+        return false;
+    }
+    is_valid_inputs(&gate.l, &gate.r, idx)
+}
+
+fn validate_carry(gates: &Gates, wire: &str, idx: usize) -> bool {
+    let Some(gate) = gates.get(wire) else {
+        return false;
+    };
+    if idx == 1 {
+        if !matches!(gate.op, Operator::And) {
+            return false;
+        }
+        return is_valid_inputs(&gate.l, &gate.r, idx - 1);
+    }
+    if !matches!(gate.op, Operator::Or) {
+        return false;
+    }
+    validate_direct_carry(gates, &gate.l, idx - 1)
+        && validate_indirect_carry(gates, &gate.r, idx - 1)
+        || validate_direct_carry(gates, &gate.r, idx - 1)
+            && validate_indirect_carry(gates, &gate.l, idx - 1)
+}
+
+fn validate_direct_carry(gates: &Gates, wire: &str, idx: usize) -> bool {
+    let Some(gate) = gates.get(wire) else {
+        return false;
+    };
+    if !matches!(gate.op, Operator::And) {
+        return false;
+    }
+    is_valid_inputs(&gate.l, &gate.r, idx)
+}
+
+fn validate_indirect_carry(gates: &Gates, wire: &str, idx: usize) -> bool {
+    let Some(gate) = gates.get(wire) else {
+        return false;
+    };
+    if !matches!(gate.op, Operator::And) {
+        return false;
+    }
+    validate_half_adder(gates, &gate.l, idx) && validate_carry(gates, &gate.r, idx)
+        || validate_half_adder(gates, &gate.r, idx) && validate_carry(gates, &gate.l, idx)
+}
+
+fn is_valid_inputs(wire1: &str, wire2: &str, idx: usize) -> bool {
+    let set = HashSet::from([format!("x{idx:02}"), format!("y{idx:02}")]);
+    set.contains(wire1) && set.contains(wire2)
 }
 
 fn wires_value(output: &Values, wire: char) -> usize {
@@ -160,7 +281,7 @@ mod test {
     #[test]
     fn aoc2024_24_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "dnt,gdf,gwc,jst,mcm,z05,z15,z30");
         Ok(())
     }
 
