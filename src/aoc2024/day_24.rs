@@ -3,49 +3,26 @@ use crate::solution::Solution;
 use std::{collections::HashMap, fs::read_to_string, io};
 
 #[derive(Debug, Clone)]
-enum Element {
-    Const(bool),
-    And(String, String),
-    Or(String, String),
-    Xor(String, String),
+struct Gate {
+    l: String,
+    r: String,
+    op: Operator,
 }
 
-impl Element {
-    fn value_from(s: &str) -> (String, Self) {
-        let (name, value) = s.split_once(": ").expect("Invalid value format");
-        (name.to_string(), Self::Const(value == "1"))
-    }
-
-    fn gate_from(s: &str) -> (String, Self) {
-        // ntg XOR fgs -> mjb
-        let (gate, name) = s.split_once(" -> ").expect("Invalid gate format");
-
-        let tokens = gate.split_whitespace().collect::<Vec<_>>();
-        assert_eq!(tokens.len(), 3, "invalid gate parameters");
-
-        let l = tokens[0].to_string();
-        let r = tokens[2].to_string();
-        let gate = match tokens[1] {
-            "XOR" => Self::Xor(l, r),
-            "OR" => Self::Or(l, r),
-            "AND" => Self::And(l, r),
-            x => panic!("Unknown gate {x}"),
-        };
-        (name.to_string(), gate)
-    }
-
-    fn value(&self) -> Option<bool> {
-        match self {
-            Self::Const(val) => Some(*val),
-            _ => None,
-        }
-    }
+#[derive(Debug, Clone, Copy)]
+enum Operator {
+    And,
+    Or,
+    Xor,
 }
 
-type Circuit = HashMap<String, Element>;
+type Value = bool;
+type Gates = HashMap<String, Gate>;
+type Values = HashMap<String, Value>;
 
 pub struct AoC2024_24 {
-    circuit: Circuit,
+    gates: Gates,
+    values: Values,
 }
 
 impl AoC2024_24 {
@@ -56,26 +33,16 @@ impl AoC2024_24 {
 
     fn with_input(input: &str) -> Self {
         let (values, gates) = input.split_once("\n\n").expect("Invalid input format");
-        let mut circuit = HashMap::new();
-        let mut parse = |data: &str, parser: &dyn Fn(&str) -> (String, Element)| {
-            data.split("\n")
-                .map(|s| s.trim())
-                .filter(|s| !s.is_empty())
-                .for_each(|s| {
-                    let (name, value) = parser(s);
-                    circuit.insert(name, value);
-                });
-        };
-        parse(values, &Element::value_from);
-        parse(gates, &Element::gate_from);
-        Self { circuit }
+        let gates = parse(gates, parse_gate);
+        let values = parse(values, parse_value);
+        Self { gates, values }
     }
 }
 
 impl Solution for AoC2024_24 {
     fn part_one(&self) -> String {
-        let circuit = eval(&self.circuit);
-        calculate(&circuit, 'z').to_string()
+        let output = calculate_output(&self.gates, &self.values);
+        wires_value(&output, 'z').to_string()
     }
 
     // fn part_two(&self) -> String {
@@ -86,11 +53,10 @@ impl Solution for AoC2024_24 {
     }
 }
 
-fn calculate(circuit: &Circuit, wire: char) -> usize {
-    circuit
+fn wires_value(output: &Values, wire: char) -> usize {
+    output
         .iter()
         .filter(|(key, _)| key.starts_with(wire))
-        .filter_map(|(key, elem)| elem.value().map(|val| (key, val)))
         .fold(0usize, |acc, val| {
             let (name, value) = val;
             if !value {
@@ -101,30 +67,75 @@ fn calculate(circuit: &Circuit, wire: char) -> usize {
         })
 }
 
-fn eval(circuit: &Circuit) -> Circuit {
-    fn update(circuit: &Circuit, key: &str, output: &mut Circuit) -> bool {
-        if let Some(value) = output.get(key).and_then(|x| x.value()) {
-            return value;
+fn calculate_output(gates: &Gates, values: &Values) -> Values {
+    fn update(gates: &Gates, key: &str, output: &mut Values) -> bool {
+        if let Some(value) = output.get(key) {
+            return *value;
         }
-
-        let Some(elem) = circuit.get(key) else {
+        let Some(gate) = gates.get(key) else {
             panic!("Missing element {key}");
         };
-        let value = match elem {
-            Element::Const(val) => *val,
-            Element::And(l, r) => update(circuit, l, output) && update(circuit, r, output),
-            Element::Or(l, r) => update(circuit, l, output) || update(circuit, r, output),
-            Element::Xor(l, r) => update(circuit, l, output) ^ update(circuit, r, output),
+        let value = match gate.op {
+            Operator::And => update(gates, &gate.l, output) && update(gates, &gate.r, output),
+            Operator::Or => update(gates, &gate.l, output) || update(gates, &gate.r, output),
+            Operator::Xor => update(gates, &gate.l, output) ^ update(gates, &gate.r, output),
         };
-        output.insert(key.to_string(), Element::Const(value));
+        output.insert(key.to_string(), value);
         value
     }
 
-    let mut output = HashMap::new();
-    for key in circuit.keys() {
-        update(circuit, &key, &mut output);
+    let mut output = values.clone();
+    for key in gates.keys() {
+        update(gates, key, &mut output);
     }
     output
+}
+
+fn parse_gate(s: &str) -> (String, Gate) {
+    let (gate, name) = s.split_once(" -> ").expect("Invalid gate format");
+    let tokens = gate.split_whitespace().collect::<Vec<_>>();
+    assert_eq!(tokens.len(), 3, "invalid gate parameters");
+    let l = tokens[0].to_string();
+    let r = tokens[2].to_string();
+    let gate = match tokens[1] {
+        "XOR" => Gate {
+            l,
+            r,
+            op: Operator::Xor,
+        },
+        "OR" => Gate {
+            l,
+            r,
+            op: Operator::Or,
+        },
+        "AND" => Gate {
+            l,
+            r,
+            op: Operator::And,
+        },
+        x => panic!("Unknown gate {x}"),
+    };
+    (name.to_string(), gate)
+}
+
+fn parse_value(s: &str) -> (String, Value) {
+    let (name, value) = s.split_once(": ").expect("Invalid value format");
+    (name.to_string(), value == "1")
+}
+
+fn parse<T, P>(data: &str, parser: P) -> HashMap<String, T>
+where
+    P: Fn(&str) -> (String, T),
+{
+    let mut map = HashMap::new();
+    data.split("\n")
+        .map(|s| s.trim())
+        .filter(|s| !s.is_empty())
+        .for_each(|s| {
+            let (name, value) = parser(s);
+            map.insert(name, value);
+        });
+    map
 }
 
 #[cfg(test)]
@@ -134,7 +145,8 @@ mod test {
     #[test]
     fn aoc2024_24_input_load_test() -> io::Result<()> {
         let sol = make_solution()?;
-        assert!(!sol.circuit.is_empty());
+        assert!(!sol.gates.is_empty());
+        assert!(!sol.values.is_empty());
         Ok(())
     }
 
