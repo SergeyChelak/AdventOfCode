@@ -79,14 +79,14 @@ mod test {
     #[test]
     fn aoc2019_01_correctness_part_1() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "3239503");
         Ok(())
     }
 
     #[test]
     fn aoc2019_01_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "4856390");
         Ok(())
     }
 
