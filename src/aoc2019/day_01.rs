@@ -33,8 +33,13 @@ impl Solution for AoC2019_01 {
             .to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        self.input
+            .iter()
+            .map(|x| extra_fuel_amount(*x))
+            .sum::<Int>()
+            .to_string()
+    }
 
     fn description(&self) -> String {
         "Day 1: The Tyranny of the Rocket Equation".to_string()
@@ -46,6 +51,18 @@ fn fuel_amount(mass: Int) -> Int {
     // Specifically, to find the fuel required for a module,
     // take its mass, divide by three, round down, and subtract 2.
     mass / 3 - 2
+}
+
+fn extra_fuel_amount(mut mass: Int) -> Int {
+    let mut amount = 0;
+    loop {
+        mass = fuel_amount(mass);
+        if mass <= 0 {
+            break;
+        }
+        amount += mass;
+    }
+    amount
 }
 
 #[cfg(test)]
