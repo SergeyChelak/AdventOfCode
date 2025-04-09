@@ -34,8 +34,22 @@ impl Solution for AoC2019_02 {
         data[0].to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let target = 19690720;
+        for noun in 0usize..=99 {
+            for verb in 0usize..=99 {
+                let mut data = self.input.clone();
+                data[1] = noun;
+                data[2] = verb;
+                execute(&mut data);
+                if data[0] == target {
+                    let result = 100 * noun + verb;
+                    return result.to_string();
+                }
+            }
+        }
+        "Not found".to_string()
+    }
 
     fn description(&self) -> String {
         "Day 2: 1202 Program Alarm".to_string()
@@ -92,7 +106,7 @@ mod test {
     #[test]
     fn aoc2019_02_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "6255");
         Ok(())
     }
 
