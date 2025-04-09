@@ -184,7 +184,7 @@ fn wires_value(output: &Values, wire: char) -> usize {
                 return acc;
             }
             let shift = name[1..].parse::<usize>().expect("Invalid wire name");
-            acc | 1 << shift
+            acc | (1 << shift)
         })
 }
 

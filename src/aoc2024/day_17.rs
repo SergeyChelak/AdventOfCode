@@ -129,7 +129,7 @@ impl Solution for AoC2024_17 {
             let mut next = Vec::new();
             for candidate in &candidates {
                 for num in 0..8 {
-                    let acc = candidate << 3 | num;
+                    let acc = (candidate << 3) | num;
                     if acc == *candidate {
                         continue;
                     }
