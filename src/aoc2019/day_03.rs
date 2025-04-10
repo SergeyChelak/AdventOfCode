@@ -36,21 +36,14 @@ impl FromStr for WireNode {
     }
 }
 
-type Filler = usize;
-
-#[derive(Debug, Clone, Copy)]
-enum GridElement {
-    Empty,
-    Color(Filler),
-    Intersection,
-}
-
 type Position = Point2d<Int>;
-type Grid = HashMap<Position, GridElement>;
+type WirePositions = HashMap<Position, usize>;
 type Wire = Vec<WireNode>;
 
-fn fill_grid(grid: &mut Grid, wire: &Wire, filler: Filler) {
+fn wire_positions(wire: &Wire) -> WirePositions {
+    let mut positions = WirePositions::new();
     let mut position = Position::new(0, 0);
+    let mut steps = 0;
     for node in wire {
         let times = node.value;
         for _ in 0..times {
@@ -60,22 +53,32 @@ fn fill_grid(grid: &mut Grid, wire: &Wire, filler: Filler) {
                 Direction::Left => position.left(),
                 Direction::Right => position.right(),
             };
-            let grid_value = grid.entry(position).or_insert(GridElement::Empty);
-            match grid_value {
-                GridElement::Empty => *grid_value = GridElement::Color(filler),
-                GridElement::Color(color) if *color != filler => {
-                    *grid_value = GridElement::Intersection
-                }
-                _ => continue,
-            }
+            steps += 1;
+            if positions.contains_key(&position) {
+                continue;
+            };
+
+            positions.insert(position, steps);
         }
     }
+    positions
 }
 
-fn min_dist(grid: &Grid) -> Option<i32> {
-    grid.iter()
-        .filter(|(_, v)| matches!(v, GridElement::Intersection))
+fn min_dist(first: &WirePositions, second: &WirePositions) -> Option<i32> {
+    first
+        .iter()
+        .filter(|(k, _)| second.contains_key(k))
         .map(|(k, _)| k.x.abs() + k.y.abs())
+        .min()
+}
+
+fn min_steps(first: &WirePositions, second: &WirePositions) -> Option<usize> {
+    first
+        .iter()
+        .filter_map(|(k, v)| {
+            let other_v = second.get(k)?;
+            Some(*other_v + *v)
+        })
         .min()
 }
 
@@ -105,41 +108,23 @@ impl AoC2019_03 {
 
 impl Solution for AoC2019_03 {
     fn part_one(&self) -> String {
-        let mut grid = Grid::new();
-        for (filler, wire) in self.wires.iter().enumerate() {
-            fill_grid(&mut grid, wire, filler);
-            // dump(&grid);
-            // println!()
-        }
-        min_dist(&grid)
+        let first = wire_positions(&self.wires[0]);
+        let second = wire_positions(&self.wires[1]);
+        min_dist(&first, &second)
             .map(|x| x.to_string())
             .unwrap_or("Not found".to_string())
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let first = wire_positions(&self.wires[0]);
+        let second = wire_positions(&self.wires[1]);
+        min_steps(&first, &second)
+            .map(|x| x.to_string())
+            .unwrap_or("Not found".to_string())
+    }
 
     fn description(&self) -> String {
         "Day 3: Crossed Wires".to_string()
-    }
-}
-
-fn dump(grid: &Grid) {
-    let min_x = grid.iter().map(|(k, _)| k.x).min().unwrap();
-    let min_y = grid.iter().map(|(k, _)| k.y).min().unwrap();
-    let max_x = grid.iter().map(|(k, _)| k.x).max().unwrap();
-    let max_y = grid.iter().map(|(k, _)| k.y).max().unwrap();
-
-    for row in min_y..=max_y {
-        for col in min_x..=max_x {
-            let pos = Position::new(col, row);
-            match grid.get(&pos).unwrap_or(&GridElement::Empty) {
-                GridElement::Empty => print!("."),
-                GridElement::Color(clr) => print!("{clr}"),
-                GridElement::Intersection => print!("+"),
-            }
-        }
-        println!()
     }
 }
 
@@ -172,7 +157,7 @@ mod test {
     #[test]
     fn aoc2019_03_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "164012");
         Ok(())
     }
 
