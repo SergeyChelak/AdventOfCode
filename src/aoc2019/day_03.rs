@@ -64,11 +64,11 @@ fn wire_positions(wire: &Wire) -> WirePositions {
     positions
 }
 
-fn min_dist(first: &WirePositions, second: &WirePositions) -> Option<i32> {
+fn min_dist(first: &WirePositions, second: &WirePositions) -> Option<usize> {
     first
         .iter()
         .filter(|(k, _)| second.contains_key(k))
-        .map(|(k, _)| k.x.abs() + k.y.abs())
+        .map(|(k, _)| (k.x.abs() + k.y.abs()) as usize)
         .min()
 }
 
@@ -80,6 +80,17 @@ fn min_steps(first: &WirePositions, second: &WirePositions) -> Option<usize> {
             Some(*other_v + *v)
         })
         .min()
+}
+
+fn solve<R>(wire_1: &Wire, wire_2: &Wire, resolver: R) -> String
+where
+    R: Fn(&WirePositions, &WirePositions) -> Option<usize>,
+{
+    let first = wire_positions(wire_1);
+    let second = wire_positions(wire_2);
+    resolver(&first, &second)
+        .map(|x| x.to_string())
+        .unwrap_or("Not found".to_string())
 }
 
 pub struct AoC2019_03 {
@@ -108,19 +119,11 @@ impl AoC2019_03 {
 
 impl Solution for AoC2019_03 {
     fn part_one(&self) -> String {
-        let first = wire_positions(&self.wires[0]);
-        let second = wire_positions(&self.wires[1]);
-        min_dist(&first, &second)
-            .map(|x| x.to_string())
-            .unwrap_or("Not found".to_string())
+        solve(&self.wires[0], &self.wires[1], min_dist)
     }
 
     fn part_two(&self) -> String {
-        let first = wire_positions(&self.wires[0]);
-        let second = wire_positions(&self.wires[1]);
-        min_steps(&first, &second)
-            .map(|x| x.to_string())
-            .unwrap_or("Not found".to_string())
+        solve(&self.wires[0], &self.wires[1], min_steps)
     }
 
     fn description(&self) -> String {
