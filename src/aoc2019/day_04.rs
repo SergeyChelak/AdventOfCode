@@ -25,28 +25,29 @@ impl AoC2019_04 {
 
 impl Solution for AoC2019_04 {
     fn part_one(&self) -> String {
-        let mut count = 0;
-        for val in self.from..=self.to {
-            if is_valid(val, any_double) {
-                count += 1;
-            }
-        }
-        count.to_string()
+        solve(self.from, self.to, any_double).to_string()
     }
 
     fn part_two(&self) -> String {
-        let mut count = 0;
-        for val in self.from..=self.to {
-            if is_valid(val, exact_double) {
-                count += 1;
-            }
-        }
-        count.to_string()
+        solve(self.from, self.to, exact_double).to_string()
     }
 
     fn description(&self) -> String {
         "Day 4: Secure Container".to_string()
     }
+}
+
+fn solve<C>(from: Int, to: Int, criteria: C) -> usize
+where
+    C: Fn(&[u8]) -> bool,
+{
+    let mut count = 0;
+    for val in from..=to {
+        if is_valid(val, &criteria) {
+            count += 1;
+        }
+    }
+    count
 }
 
 fn is_valid<C>(value: Int, criteria: C) -> bool
