@@ -27,37 +27,53 @@ impl Solution for AoC2019_04 {
     fn part_one(&self) -> String {
         let mut count = 0;
         for val in self.from..=self.to {
-            if is_valid(val) {
+            if is_valid(val, any_double) {
                 count += 1;
             }
         }
         count.to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut count = 0;
+        for val in self.from..=self.to {
+            if is_valid(val, exact_double) {
+                count += 1;
+            }
+        }
+        count.to_string()
+    }
 
     fn description(&self) -> String {
         "Day 4: Secure Container".to_string()
     }
 }
 
-fn is_valid(value: Int) -> bool {
+fn is_valid<C>(value: Int, criteria: C) -> bool
+where
+    C: Fn(&[u8]) -> bool,
+{
     let mut usage = [0; 10];
     let mut rest = value;
-    let mut has_double = false;
     let mut prev = 11;
     while rest > 0 {
         let x = rest % 10;
         usage[x as usize] += 1;
-        has_double |= usage[x as usize] > 1;
         if x > prev {
             return false;
         }
         prev = x;
         rest /= 10;
     }
-    has_double
+    criteria(&usage)
+}
+
+fn any_double(arr: &[u8]) -> bool {
+    arr.iter().any(|x| *x > 1)
+}
+
+fn exact_double(arr: &[u8]) -> bool {
+    arr.iter().any(|x| *x == 2)
 }
 
 #[cfg(test)]
@@ -74,7 +90,7 @@ mod test {
     #[test]
     fn aoc2019_04_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "1419");
         Ok(())
     }
 
