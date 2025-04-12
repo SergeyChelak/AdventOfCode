@@ -57,7 +57,7 @@ struct Instruction {
     op_code: OpCode,
     mode_arg1: Mode,
     mode_arg2: Mode,
-    mode_arg3: Mode,
+    // mode_arg3: Mode,
 }
 
 impl From<Int> for Instruction {
@@ -76,7 +76,7 @@ impl From<Int> for Instruction {
             op_code,
             mode_arg1: modes[0],
             mode_arg2: modes[1],
-            mode_arg3: modes[2],
+            // mode_arg3: modes[2],
         }
     }
 }
@@ -100,33 +100,30 @@ impl IntcodeComputer {
 
     fn run(&mut self) {
         loop {
-            let instr = self.consume_instruction();
+            let instr = Instruction::from(self.consume());
             match instr.op_code {
                 OpCode::Add => {
                     let left = self.consume_read(instr.mode_arg1);
                     let right = self.consume_read(instr.mode_arg2);
-                    self.consume_write(left + right, instr.mode_arg3);
+                    self.consume_write(left + right);
                 }
                 OpCode::Mul => {
                     let left = self.consume_read(instr.mode_arg1);
                     let right = self.consume_read(instr.mode_arg2);
-                    self.consume_write(left * right, instr.mode_arg3);
+                    self.consume_write(left * right);
                 }
                 OpCode::Inp => {
-                    let val = self.consume_read(Mode::Immediate);
+                    let val = self.consume();
                     assert!(val >= 0);
                     self.memory[val as usize] = self.input;
                 }
                 OpCode::Out => {
-                    let val = self.consume_read(Mode::Immediate);
+                    let val = self.consume();
                     assert!(val >= 0);
                     self.output = self.memory[val as usize];
                 }
                 OpCode::Hlt => break,
                 OpCode::Jit => {
-                    // Opcode 5 is jump-if-true:
-                    // if the first parameter is non-zero, it sets the instruction pointer to the value from the second parameter.
-                    // Otherwise, it does nothing.
                     let value = self.consume_read(instr.mode_arg1);
                     let addr = self.consume_read(instr.mode_arg2);
                     if value != 0 {
@@ -135,9 +132,6 @@ impl IntcodeComputer {
                     }
                 }
                 OpCode::Jif => {
-                    // Opcode 6 is jump-if-false:
-                    // if the first parameter is zero, it sets the instruction pointer to the value from the second parameter.
-                    // Otherwise, it does nothing.
                     let value = self.consume_read(instr.mode_arg1);
                     let addr = self.consume_read(instr.mode_arg2);
                     if value == 0 {
@@ -146,69 +140,46 @@ impl IntcodeComputer {
                     }
                 }
                 OpCode::Lt => {
-                    // Opcode 7 is less than:
-                    // if the first parameter is less than the second parameter, it stores 1 in the position given by the third parameter.
-                    // Otherwise, it stores 0.
                     let first = self.consume_read(instr.mode_arg1);
                     let second = self.consume_read(instr.mode_arg2);
-                    let addr = self.consume_read(Mode::Immediate);
-                    assert!(addr >= 0);
-                    self.memory[addr as usize] = if first < second { 1 } else { 0 }
+                    self.consume_write(if first < second { 1 } else { 0 });
                 }
                 OpCode::Eq => {
-                    // Opcode 8 is equals:
-                    // if the first parameter is equal to the second parameter, it stores 1 in the position given by the third parameter.
-                    // Otherwise, it stores 0.
                     let first = self.consume_read(instr.mode_arg1);
                     let second = self.consume_read(instr.mode_arg2);
-                    let addr = self.consume_read(Mode::Immediate);
-                    assert!(addr >= 0);
-                    self.memory[addr as usize] = if first == second { 1 } else { 0 }
+                    self.consume_write(if first == second { 1 } else { 0 });
                 }
             }
         }
     }
 
-    fn consume_instruction(&mut self) -> Instruction {
-        let instr = Instruction::from(self.memory[self.pc]);
-        self.pc += 1;
-        instr
+    fn consume_read(&mut self, mode: Mode) -> Int {
+        let val = self.consume();
+        self.value(val, mode)
     }
 
-    fn consume_read(&mut self, mode: Mode) -> Int {
-        let value = match mode {
-            Mode::Position => {
-                let addr = self.memory[self.pc];
-                assert!(addr >= 0);
-                let addr = addr as usize;
-                self.memory[addr]
-            }
-            Mode::Immediate => self.memory[self.pc],
-        };
+    fn consume_write(&mut self, value: Int) {
+        let addr = self.consume();
+        assert!(addr >= 0);
+        self.memory[addr as usize] = value;
+    }
+
+    fn consume(&mut self) -> Int {
+        let value = self.memory[self.pc];
         self.pc += 1;
         value
     }
 
-    fn consume_write(&mut self, value: Int, mode: Mode) {
+    fn value(&mut self, value: Int, mode: Mode) -> Int {
         match mode {
             Mode::Position => {
-                let addr = self.memory[self.pc];
-                assert!(addr >= 0);
-                let addr = addr as usize;
-                self.memory[addr] = value
+                assert!(value >= 0);
+                let value = value as usize;
+                self.memory[value]
             }
-            Mode::Immediate => panic!("It isn't expected to write in immediate mode"), //self.memory[self.pc] = value,
+            Mode::Immediate => value,
         }
-        self.pc += 1;
     }
-}
-
-fn parse(input: &str) -> Memory {
-    input
-        .trim()
-        .split(',')
-        .map(|x| x.parse::<Int>().expect("Invalid input"))
-        .collect()
 }
 
 pub struct AoC2019_05 {
@@ -221,8 +192,12 @@ impl AoC2019_05 {
         Ok(Self::with_str(&input))
     }
 
-    fn with_str(s: &str) -> Self {
-        let input = parse(s);
+    fn with_str(input: &str) -> Self {
+        let input = input
+            .trim()
+            .split(',')
+            .map(|x| x.parse::<Int>().expect("Invalid input"))
+            .collect();
         Self { input }
     }
 }
