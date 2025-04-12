@@ -12,6 +12,10 @@ enum OpCode {
     Mul,
     Inp,
     Out,
+    Jit,
+    Jif,
+    Lt,
+    Eq,
     Hlt,
 }
 
@@ -22,6 +26,10 @@ impl From<Int> for OpCode {
             2 => OpCode::Mul,
             3 => OpCode::Inp,
             4 => OpCode::Out,
+            5 => OpCode::Jit,
+            6 => OpCode::Jif,
+            7 => OpCode::Lt,
+            8 => OpCode::Eq,
             99 => OpCode::Hlt,
             _ => panic!("Unexpected opcode {value}"),
         }
@@ -115,6 +123,48 @@ impl IntcodeComputer {
                     self.output = self.memory[val as usize];
                 }
                 OpCode::Hlt => break,
+                OpCode::Jit => {
+                    // Opcode 5 is jump-if-true:
+                    // if the first parameter is non-zero, it sets the instruction pointer to the value from the second parameter.
+                    // Otherwise, it does nothing.
+                    let value = self.consume_read(instr.mode_arg1);
+                    let addr = self.consume_read(instr.mode_arg2);
+                    if value != 0 {
+                        assert!(addr >= 0);
+                        self.pc = addr as usize;
+                    }
+                }
+                OpCode::Jif => {
+                    // Opcode 6 is jump-if-false:
+                    // if the first parameter is zero, it sets the instruction pointer to the value from the second parameter.
+                    // Otherwise, it does nothing.
+                    let value = self.consume_read(instr.mode_arg1);
+                    let addr = self.consume_read(instr.mode_arg2);
+                    if value == 0 {
+                        assert!(addr >= 0);
+                        self.pc = addr as usize;
+                    }
+                }
+                OpCode::Lt => {
+                    // Opcode 7 is less than:
+                    // if the first parameter is less than the second parameter, it stores 1 in the position given by the third parameter.
+                    // Otherwise, it stores 0.
+                    let first = self.consume_read(instr.mode_arg1);
+                    let second = self.consume_read(instr.mode_arg2);
+                    let addr = self.consume_read(Mode::Immediate);
+                    assert!(addr >= 0);
+                    self.memory[addr as usize] = if first < second { 1 } else { 0 }
+                }
+                OpCode::Eq => {
+                    // Opcode 8 is equals:
+                    // if the first parameter is equal to the second parameter, it stores 1 in the position given by the third parameter.
+                    // Otherwise, it stores 0.
+                    let first = self.consume_read(instr.mode_arg1);
+                    let second = self.consume_read(instr.mode_arg2);
+                    let addr = self.consume_read(Mode::Immediate);
+                    assert!(addr >= 0);
+                    self.memory[addr as usize] = if first == second { 1 } else { 0 }
+                }
             }
         }
     }
@@ -184,8 +234,11 @@ impl Solution for AoC2019_05 {
         computer.output.to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut computer = IntcodeComputer::new(self.input.clone(), 5);
+        computer.run();
+        computer.output.to_string()
+    }
 
     fn description(&self) -> String {
         "Day 5: Sunny with a Chance of Asteroids".to_string()
@@ -213,7 +266,7 @@ mod test {
     #[test]
     fn aoc2019_05_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "14340395");
         Ok(())
     }
 
