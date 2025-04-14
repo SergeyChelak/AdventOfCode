@@ -1,4 +1,4 @@
-type Int = i64;
+pub type Int = i64;
 pub type Memory = Vec<Int>;
 
 #[derive(Debug, Clone, Copy)]
@@ -78,19 +78,29 @@ impl From<Int> for Instruction {
 
 pub struct IntcodeComputer {
     memory: Memory,
-    input: Int,
+    input: Vec<Int>,
     output: Int,
     pc: usize,
 }
 
 impl IntcodeComputer {
-    pub fn new(memory: Memory, input: Int) -> Self {
+    pub fn with_memory(memory: Memory) -> Self {
         Self {
             memory,
-            input,
+            input: Vec::new(),
             output: 0,
             pc: 0,
         }
+    }
+
+    pub fn new(memory: Memory, input: Int) -> Self {
+        let mut computer = Self::with_memory(memory);
+        computer.push_input(input);
+        computer
+    }
+
+    pub fn push_input(&mut self, value: Int) {
+        self.input.push(value);
     }
 
     pub fn output(&self) -> Int {
@@ -114,7 +124,7 @@ impl IntcodeComputer {
                 OpCode::Inp => {
                     let val = self.consume();
                     assert!(val >= 0);
-                    self.memory[val as usize] = self.input;
+                    self.memory[val as usize] = self.input.pop().expect("Input is empty");
                 }
                 OpCode::Out => {
                     let val = self.consume();
