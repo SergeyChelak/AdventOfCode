@@ -1,4 +1,6 @@
-use crate::{aoc2019::intcode_computer::IntcodeComputer, solution::Solution};
+use crate::{
+    aoc2019::intcode_computer::IntcodeComputer, solution::Solution, utils::PermutationIterator,
+};
 
 use std::fs::read_to_string;
 use std::io;
@@ -11,7 +13,7 @@ pub struct AoC2019_07 {
 
 impl AoC2019_07 {
     pub fn new() -> io::Result<Self> {
-        let input = read_to_string("input/aoc2019_05")?;
+        let input = read_to_string("input/aoc2019_07")?;
         Ok(Self::with_str(&input))
     }
 
@@ -40,7 +42,11 @@ impl AoC2019_07 {
 
 impl Solution for AoC2019_07 {
     fn part_one(&self) -> String {
-        todo!()
+        PermutationIterator::from_array(&[0, 1, 2, 3, 4])
+            .map(|arr| self.thruster_output(0, &arr))
+            .max()
+            .expect("Not found")
+            .to_string()
     }
 
     // fn part_two(&self) -> String {
@@ -89,7 +95,7 @@ mod test {
     #[test]
     fn aoc2019_07_correctness_part_1() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "844468");
         Ok(())
     }
 
