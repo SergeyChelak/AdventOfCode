@@ -138,10 +138,6 @@ impl Solution for AoC2017_25 {
             .to_string()
     }
 
-    fn part_two(&self) -> String {
-        ":)".to_string()
-    }
-
     fn description(&self) -> String {
         "AoC 2017/Day 25: The Halting Problem".to_string()
     }
@@ -162,7 +158,6 @@ mod test {
     fn aoc2017_25_correctness() -> io::Result<()> {
         let sol = AoC2017_25::new()?;
         assert_eq!(sol.part_one(), "2870");
-        assert_eq!(sol.part_two(), ":)");
         Ok(())
     }
 }

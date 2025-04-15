@@ -42,10 +42,6 @@ impl Solution for AoC2016_25 {
         reg_a.to_string()
     }
 
-    fn part_two(&self) -> String {
-        "".to_string()
-    }
-
     fn description(&self) -> String {
         "AoC 2016/Day 25: Clock Signal".to_string()
     }
@@ -66,7 +62,6 @@ mod test {
     fn aoc2016_25_correctness() -> io::Result<()> {
         let sol = AoC2016_25::new()?;
         assert_eq!(sol.part_one(), "180");
-        assert_eq!(sol.part_two(), "");
         Ok(())
     }
 }

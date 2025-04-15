@@ -28,10 +28,6 @@ impl Solution for AoC2018_25 {
         constellations(&self.points).to_string()
     }
 
-    fn part_two(&self) -> String {
-        "".to_string()
-    }
-
     fn description(&self) -> String {
         "AoC 2018/Day 25: Four-Dimensional Adventure".to_string()
     }
@@ -163,7 +159,6 @@ mod test {
     fn aoc2018_25_correctness() -> io::Result<()> {
         let sol = AoC2018_25::new()?;
         assert_eq!(sol.part_one(), "305");
-        assert_eq!(sol.part_two(), "");
         Ok(())
     }
 }

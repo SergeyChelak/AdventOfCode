@@ -48,10 +48,6 @@ impl Solution for AoC2015_25 {
         calc_code(position_to_number(self.row, self.col)).to_string()
     }
 
-    fn part_two(&self) -> String {
-        ":-)".to_string()
-    }
-
     fn description(&self) -> String {
         "AoC 2015/Day 25: Let It Snow".to_string()
     }
@@ -65,7 +61,6 @@ mod test {
     fn aoc2015_25_correctness() -> io::Result<()> {
         let sol = AoC2015_25::new()?;
         assert_eq!(sol.part_one(), "19980801");
-        assert_eq!(sol.part_two(), ":-)");
         Ok(())
     }
 
