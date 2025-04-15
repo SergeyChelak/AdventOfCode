@@ -25,20 +25,15 @@ impl Solution for AoC2019_08 {
     fn part_one(&self) -> String {
         let mut zeros = usize::MAX;
         let mut value = 0usize;
-        let mut usage = [0usize; 10];
-        for (i, ch) in self.input.iter().enumerate() {
-            if i > 0 && i % (LAYER_HEIGHT * LAYER_WIDTH) == 0 {
-                if usage[0] < zeros {
-                    value = usage[1] * usage[2];
-                    zeros = usage[0];
-                }
-                usage.iter_mut().for_each(|x| *x = 0);
+        for arr in self.input.chunks(LAYER_HEIGHT * LAYER_WIDTH) {
+            let mut usage = [0usize; 10];
+            arr.iter()
+                .map(|ch| ch.to_digit(10).expect("Non-digit value found"))
+                .for_each(|digit| usage[digit as usize] += 1);
+            if usage[0] < zeros {
+                value = usage[1] * usage[2];
+                zeros = usage[0];
             }
-            let digit = ch
-                .to_digit(10)
-                .map(|x| x as usize)
-                .expect("Non-digit value found");
-            usage[digit] += 1;
         }
         value.to_string()
     }
