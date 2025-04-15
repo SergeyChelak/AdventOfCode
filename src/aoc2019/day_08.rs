@@ -6,7 +6,7 @@ const LAYER_WIDTH: usize = 25;
 const LAYER_HEIGHT: usize = 6;
 const LAYER_SIZE: usize = LAYER_HEIGHT * LAYER_WIDTH;
 
-const COLOR_BLACK: char = '0';
+// const COLOR_BLACK: char = '0';
 const COLOR_WHITE: char = '1';
 const COLOR_TRANSPARENT: char = '2';
 

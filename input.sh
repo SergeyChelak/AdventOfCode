@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 AOC_SESSION=$(cat etc/session)
 if [ "${#AOC_SESSION}" -eq 0 ]; then
