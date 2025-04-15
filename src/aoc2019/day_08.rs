@@ -4,6 +4,11 @@ use std::{fs::read_to_string, io};
 
 const LAYER_WIDTH: usize = 25;
 const LAYER_HEIGHT: usize = 6;
+const LAYER_SIZE: usize = LAYER_HEIGHT * LAYER_WIDTH;
+
+const COLOR_BLACK: char = '0';
+const COLOR_WHITE: char = '1';
+const COLOR_TRANSPARENT: char = '2';
 
 pub struct AoC2019_08 {
     input: Vec<char>,
@@ -25,7 +30,7 @@ impl Solution for AoC2019_08 {
     fn part_one(&self) -> String {
         let mut zeros = usize::MAX;
         let mut value = 0usize;
-        for arr in self.input.chunks(LAYER_HEIGHT * LAYER_WIDTH) {
+        for arr in self.input.chunks(LAYER_SIZE) {
             let mut usage = [0usize; 10];
             arr.iter()
                 .map(|ch| ch.to_digit(10).expect("Non-digit value found"))
@@ -38,8 +43,31 @@ impl Solution for AoC2019_08 {
         value.to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut output = [COLOR_TRANSPARENT; LAYER_SIZE];
+
+        for arr in self.input.chunks(LAYER_SIZE) {
+            for (i, ch) in arr.iter().enumerate() {
+                if output[i] != COLOR_TRANSPARENT {
+                    continue;
+                }
+                output[i] = *ch;
+            }
+        }
+
+        for (i, ch) in output.iter().enumerate() {
+            if i % LAYER_WIDTH == 0 {
+                println!()
+            }
+            let val = match *ch {
+                COLOR_WHITE => '*',
+                _ => ' ',
+            };
+            print!("{val}");
+        }
+
+        "".to_string()
+    }
 
     fn description(&self) -> String {
         "Day 8: Space Image Format".to_string()
@@ -61,13 +89,6 @@ mod test {
     fn aoc2019_08_correctness_part_1() -> io::Result<()> {
         let sol = make_solution()?;
         assert_eq!(sol.part_one(), "2318");
-        Ok(())
-    }
-
-    #[test]
-    fn aoc2019_08_correctness_part_2() -> io::Result<()> {
-        let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
         Ok(())
     }
 
