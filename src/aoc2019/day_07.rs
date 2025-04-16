@@ -5,7 +5,7 @@ use crate::{
 use std::fs::read_to_string;
 use std::io;
 
-use super::intcode_computer::{self, Int, InterruptReason};
+use super::intcode_computer::{self, ExecutionStatus, Int};
 
 pub struct AoC2019_07 {
     input: intcode_computer::Memory,
@@ -28,7 +28,7 @@ impl AoC2019_07 {
             computer.push_input(phase);
             computer.push_input(input);
             computer.run();
-            computer.output()
+            computer.pop_output()
         };
         let mut value = 0;
         for phase in phases {
@@ -53,18 +53,18 @@ impl AoC2019_07 {
             for (i, _) in phases.iter().enumerate() {
                 let comp = computers.get_mut(i).expect("Computer not exists");
                 comp.push_input(value);
-                let reason = comp.run();
-                match reason {
-                    InterruptReason::Halted => {
+                let status = comp.run();
+                match status {
+                    ExecutionStatus::Halted => {
                         halted = true;
                     }
-                    InterruptReason::WrongInstruction { code, pc } => {
+                    ExecutionStatus::WrongInstruction { code, pc } => {
                         panic!("Comp #{i} issued wrong instruction {} at {}", code, pc);
                     }
-                    InterruptReason::WaitForInput => {}
+                    ExecutionStatus::WaitForInput => {}
                 }
                 value = comp
-                    .output()
+                    .pop_output()
                     .expect("Empty output in 'thruster_feedback_output'");
             }
             if halted {

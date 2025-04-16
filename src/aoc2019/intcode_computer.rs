@@ -11,6 +11,7 @@ enum OpCode {
     Jif,
     Lt,
     Eq,
+    Arb,
     Hlt,
 }
 
@@ -27,6 +28,7 @@ impl TryFrom<Int> for OpCode {
             6 => Ok(OpCode::Jif),
             7 => Ok(OpCode::Lt),
             8 => Ok(OpCode::Eq),
+            9 => Ok(OpCode::Arb),
             99 => Ok(OpCode::Hlt),
             _ => Err(format!("Unexpected opcode {value}")),
         }
@@ -37,6 +39,7 @@ impl TryFrom<Int> for OpCode {
 enum Mode {
     Position,
     Immediate,
+    Relative,
 }
 
 impl From<Int> for Mode {
@@ -44,13 +47,14 @@ impl From<Int> for Mode {
         match value {
             0 => Mode::Position,
             1 => Mode::Immediate,
+            2 => Mode::Relative,
             _ => panic!("Unexpected position"),
         }
     }
 }
 
 #[derive(Debug, Clone, Copy)]
-pub enum InterruptReason {
+pub enum ExecutionStatus {
     Halted,
     WaitForInput,
     WrongInstruction { code: Int, pc: usize },
@@ -61,7 +65,7 @@ struct Instruction {
     op_code: OpCode,
     mode_arg1: Mode,
     mode_arg2: Mode,
-    // mode_arg3: Mode,
+    mode_arg3: Mode,
 }
 
 impl TryFrom<Int> for Instruction {
@@ -82,7 +86,7 @@ impl TryFrom<Int> for Instruction {
             op_code,
             mode_arg1: modes[0],
             mode_arg2: modes[1],
-            // mode_arg3: modes[2],
+            mode_arg3: modes[2],
         })
     }
 }
@@ -92,16 +96,24 @@ pub struct IntcodeComputer {
     input: Vec<Int>,
     output: Vec<Int>,
     pc: usize,
+    relative_base: Int,
 }
 
 impl IntcodeComputer {
-    pub fn with_memory(memory: Memory) -> Self {
+    pub fn with_size(memory_size: usize) -> Self {
         Self {
-            memory,
+            memory: vec![0; memory_size],
             input: Vec::new(),
             output: Vec::new(),
             pc: 0,
+            relative_base: 0,
         }
+    }
+
+    pub fn with_memory(memory: Memory) -> Self {
+        let mut instance = Self::with_size(memory.len());
+        instance.load_program(&memory);
+        instance
     }
 
     pub fn new(memory: Memory, input: Int) -> Self {
@@ -110,20 +122,29 @@ impl IntcodeComputer {
         computer
     }
 
+    pub fn load_program(&mut self, data: &[Int]) {
+        self.memory[..data.len()].clone_from_slice(data);
+    }
+
     pub fn push_input(&mut self, value: Int) {
         self.input.push(value);
     }
 
-    pub fn output(&mut self) -> Option<Int> {
+    pub fn pop_output(&mut self) -> Option<Int> {
         self.output.pop()
     }
 
-    pub fn run(&mut self) -> InterruptReason {
+    #[allow(dead_code)]
+    pub fn output(&self) -> Vec<Int> {
+        self.output.clone()
+    }
+
+    pub fn run(&mut self) -> ExecutionStatus {
         loop {
             let instruction_pc = self.pc;
             let code = self.consume();
             let Ok(instr) = Instruction::try_from(code) else {
-                return InterruptReason::WrongInstruction {
+                return ExecutionStatus::WrongInstruction {
                     code,
                     pc: instruction_pc,
                 };
@@ -132,29 +153,30 @@ impl IntcodeComputer {
                 OpCode::Add => {
                     let left = self.consume_read(instr.mode_arg1);
                     let right = self.consume_read(instr.mode_arg2);
-                    self.consume_write(left + right);
+                    self.consume_write(left + right, instr.mode_arg3);
                 }
                 OpCode::Mul => {
                     let left = self.consume_read(instr.mode_arg1);
                     let right = self.consume_read(instr.mode_arg2);
-                    self.consume_write(left * right);
+                    self.consume_write(left * right, instr.mode_arg3);
                 }
                 OpCode::Inp => {
                     if self.input.is_empty() {
                         // redo instruction
                         self.pc = instruction_pc;
-                        return InterruptReason::WaitForInput;
+                        return ExecutionStatus::WaitForInput;
                     };
-                    let val = self.consume();
+                    let mut val = self.consume();
+                    if matches!(instr.mode_arg1, Mode::Relative) {
+                        val += self.relative_base;
+                    }
                     assert!(val >= 0);
                     self.memory[val as usize] = self.input.remove(0)
                 }
                 OpCode::Out => {
-                    let val = self.consume();
-                    assert!(val >= 0);
-                    self.output.push(self.memory[val as usize]);
+                    let val = self.consume_address(instr.mode_arg1);
+                    self.output.push(self.memory[val]);
                 }
-                OpCode::Hlt => return InterruptReason::Halted,
                 OpCode::Jit => {
                     let value = self.consume_read(instr.mode_arg1);
                     let addr = self.consume_read(instr.mode_arg2);
@@ -174,13 +196,19 @@ impl IntcodeComputer {
                 OpCode::Lt => {
                     let first = self.consume_read(instr.mode_arg1);
                     let second = self.consume_read(instr.mode_arg2);
-                    self.consume_write(if first < second { 1 } else { 0 });
+                    self.consume_write(if first < second { 1 } else { 0 }, instr.mode_arg3);
                 }
                 OpCode::Eq => {
                     let first = self.consume_read(instr.mode_arg1);
                     let second = self.consume_read(instr.mode_arg2);
-                    self.consume_write(if first == second { 1 } else { 0 });
+                    self.consume_write(if first == second { 1 } else { 0 }, instr.mode_arg3);
                 }
+                OpCode::Arb => {
+                    // adjust relative base
+                    let parameter = self.consume_read(instr.mode_arg1);
+                    self.relative_base += parameter;
+                }
+                OpCode::Hlt => return ExecutionStatus::Halted,
             }
         }
     }
@@ -190,10 +218,22 @@ impl IntcodeComputer {
         self.value(val, mode)
     }
 
-    fn consume_write(&mut self, value: Int) {
-        let addr = self.consume();
-        assert!(addr >= 0);
-        self.memory[addr as usize] = value;
+    fn consume_address(&mut self, mode: Mode) -> usize {
+        let mut val = self.consume();
+        // assert!(
+        //     !matches!(mode, Mode::Immediate),
+        //     "Immediate mode not expected in address"
+        // );
+        if matches!(mode, Mode::Relative) {
+            val += self.relative_base;
+        }
+        assert!(val >= 0, "Invalid address");
+        val as usize
+    }
+
+    fn consume_write(&mut self, value: Int, mode: Mode) {
+        let addr = self.consume_address(mode);
+        self.memory[addr] = value;
     }
 
     fn consume(&mut self) -> Int {
@@ -208,6 +248,11 @@ impl IntcodeComputer {
                 assert!(value >= 0);
                 let value = value as usize;
                 self.memory[value]
+            }
+            Mode::Relative => {
+                let address = self.relative_base + value;
+                assert!(address >= 0, "Bad relative address");
+                self.memory[address as usize]
             }
             Mode::Immediate => value,
         }
