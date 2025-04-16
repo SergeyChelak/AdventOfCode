@@ -196,12 +196,12 @@ impl IntcodeComputer {
                 OpCode::Lt => {
                     let first = self.consume_read(instr.mode_arg1);
                     let second = self.consume_read(instr.mode_arg2);
-                    self.consume_write(if first < second { 1 } else { 0 }, instr.mode_arg3);
+                    self.consume_write_bool(first < second, instr.mode_arg3);
                 }
                 OpCode::Eq => {
                     let first = self.consume_read(instr.mode_arg1);
                     let second = self.consume_read(instr.mode_arg2);
-                    self.consume_write(if first == second { 1 } else { 0 }, instr.mode_arg3);
+                    self.consume_write_bool(first == second, instr.mode_arg3);
                 }
                 OpCode::Arb => {
                     // adjust relative base
@@ -234,6 +234,10 @@ impl IntcodeComputer {
     fn consume_write(&mut self, value: Int, mode: Mode) {
         let addr = self.consume_address(mode);
         self.memory[addr] = value;
+    }
+
+    fn consume_write_bool(&mut self, value: bool, mode: Mode) {
+        self.consume_write(if value { 1 } else { 0 }, mode);
     }
 
     fn consume(&mut self) -> Int {

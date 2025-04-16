@@ -33,15 +33,21 @@ impl AoC2019_09 {
         );
         computer.pop_output()
     }
+
+    fn solve(&self, input: Int) -> String {
+        self.calculate(input)
+            .map(|x| x.to_string())
+            .unwrap_or("Output is empty".to_string())
+    }
 }
 
 impl Solution for AoC2019_09 {
     fn part_one(&self) -> String {
-        self.calculate(1).expect("Output is empty").to_string()
+        self.solve(1)
     }
 
     fn part_two(&self) -> String {
-        self.calculate(2).expect("Output is empty").to_string()
+        self.solve(2)
     }
 
     fn description(&self) -> String {
