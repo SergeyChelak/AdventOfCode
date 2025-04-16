@@ -20,24 +20,29 @@ impl AoC2019_09 {
             input: parse_program(input),
         }
     }
-}
 
-impl Solution for AoC2019_09 {
-    fn part_one(&self) -> String {
+    fn calculate(&self, input: Int) -> Option<Int> {
         let mut computer = IntcodeComputer::with_size(10 * 1024);
         computer.load_program(&self.input);
-        computer.push_input(1);
+        computer.push_input(input);
         let status = computer.run();
         assert!(
             matches!(status, ExecutionStatus::Halted),
             "Unexpected execution status: {:?}",
             status
         );
-        computer.pop_output().expect("Output is empty").to_string()
+        computer.pop_output()
+    }
+}
+
+impl Solution for AoC2019_09 {
+    fn part_one(&self) -> String {
+        self.calculate(1).expect("Output is empty").to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        self.calculate(2).expect("Output is empty").to_string()
+    }
 
     fn description(&self) -> String {
         "Day 9: Sensor Boost".to_string()
@@ -60,23 +65,26 @@ mod test {
         let program = [
             109, 1, 204, -1, 1001, 100, 1, 100, 1008, 100, 16, 101, 1006, 101, 0, 99,
         ];
-        let mut comp = IntcodeComputer::with_size(10 * 1024);
-        comp.load_program(&program);
-        let status = comp.run();
-        assert!(matches!(status, ExecutionStatus::Halted));
-        let output = comp.output();
+        let output = run_program(&program);
         assert_eq!(output, program);
     }
 
     #[test]
     fn aoc2019_09_execution_2_test() {
         let program = [1102, 34915192, 34915192, 7, 4, 7, 99, 0];
+        let output = run_program(&program)
+            .pop()
+            .expect("Empty output")
+            .to_string();
+        assert_eq!(output.len(), 16);
+    }
+
+    fn run_program(program: &[Int]) -> Vec<Int> {
         let mut comp = IntcodeComputer::with_size(10 * 1024);
-        comp.load_program(&program);
+        comp.load_program(program);
         let status = comp.run();
         assert!(matches!(status, ExecutionStatus::Halted));
-        let output = comp.pop_output().expect("Empty output").to_string();
-        assert_eq!(output.len(), 16);
+        comp.output()
     }
 
     #[test]
@@ -89,7 +97,7 @@ mod test {
     #[test]
     fn aoc2019_09_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "90722");
         Ok(())
     }
 
