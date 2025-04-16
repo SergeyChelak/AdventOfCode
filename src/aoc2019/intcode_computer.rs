@@ -90,7 +90,7 @@ impl TryFrom<Int> for Instruction {
 pub struct IntcodeComputer {
     memory: Memory,
     input: Vec<Int>,
-    output: Int,
+    output: Vec<Int>,
     pc: usize,
 }
 
@@ -99,7 +99,7 @@ impl IntcodeComputer {
         Self {
             memory,
             input: Vec::new(),
-            output: 0,
+            output: Vec::new(),
             pc: 0,
         }
     }
@@ -114,8 +114,8 @@ impl IntcodeComputer {
         self.input.push(value);
     }
 
-    pub fn output(&self) -> Int {
-        self.output
+    pub fn output(&mut self) -> Option<Int> {
+        self.output.pop()
     }
 
     pub fn run(&mut self) -> InterruptReason {
@@ -152,7 +152,7 @@ impl IntcodeComputer {
                 OpCode::Out => {
                     let val = self.consume();
                     assert!(val >= 0);
-                    self.output = self.memory[val as usize];
+                    self.output.push(self.memory[val as usize]);
                 }
                 OpCode::Hlt => return InterruptReason::Halted,
                 OpCode::Jit => {

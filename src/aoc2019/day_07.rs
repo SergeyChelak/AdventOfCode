@@ -23,7 +23,7 @@ impl AoC2019_07 {
     }
 
     fn thruster_output(&self, phases: &[Int]) -> Int {
-        let amplifier_output = |input: Int, phase: Int| -> Int {
+        let amplifier_output = |input: Int, phase: Int| -> Option<Int> {
             let mut computer = IntcodeComputer::with_memory(self.input.clone());
             computer.push_input(phase);
             computer.push_input(input);
@@ -32,7 +32,7 @@ impl AoC2019_07 {
         };
         let mut value = 0;
         for phase in phases {
-            value = amplifier_output(value, *phase);
+            value = amplifier_output(value, *phase).expect("Empty output in 'thruster_output'");
         }
         value
     }
@@ -63,7 +63,9 @@ impl AoC2019_07 {
                     }
                     InterruptReason::WaitForInput => {}
                 }
-                value = comp.output();
+                value = comp
+                    .output()
+                    .expect("Empty output in 'thruster_feedback_output'");
             }
             if halted {
                 break;
