@@ -47,12 +47,8 @@ impl AoC2019_10 {
     fn monitoring_location(&self) -> (Point, usize) {
         let mut result = (Point::new(0, 0), 0);
         for first in self.points.iter() {
-            let mut count = 0;
-            let mut visited = HashSet::<Point>::new();
+            let mut slope = HashSet::<(Int, Int)>::new();
             for second in self.points.iter() {
-                if visited.contains(second) {
-                    continue;
-                }
                 let dx = second.x - first.x;
                 let dy = second.y - first.y;
                 if dx == 0 && dy == 0 {
@@ -61,30 +57,15 @@ impl AoC2019_10 {
                 let divider = gcd(dx.abs_diff(0), dy.abs_diff(0)) as Int;
                 let dx = dx / divider;
                 let dy = dy / divider;
-                let mut ray = *first;
-                loop {
-                    ray.x += dx;
-                    ray.y += dy;
-                    if !self.in_range(&ray) {
-                        break;
-                    }
-                    visited.insert(ray);
-                }
-                count += 1;
+                slope.insert((dx, dy));
             }
+            let count = slope.len();
             if count > result.1 {
                 result.1 = count;
                 result.0 = *first;
             }
         }
         result
-    }
-
-    fn in_range(&self, p: &Point) -> bool {
-        if p.x < 0 || p.y < 0 || p.x > self.max_x || p.y > self.max_y {
-            return false;
-        }
-        true
     }
 
     fn points_by_angle(&self, center: &Point) -> Vec<(f64, Point)> {
