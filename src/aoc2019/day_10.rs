@@ -13,8 +13,6 @@ type Point = Point2d<Int>;
 
 pub struct AoC2019_10 {
     points: HashSet<Point>,
-    max_x: Int,
-    max_y: Int,
 }
 
 impl AoC2019_10 {
@@ -24,24 +22,19 @@ impl AoC2019_10 {
     }
 
     fn from_lines<T: AsRef<str>>(lines: &[T]) -> Self {
-        let max_y = lines.len() - 1;
-        let mut max_x = 0;
-        let mut points: HashSet<Point> = HashSet::new();
-        for (row, line) in lines.iter().map(|x| x.as_ref()).enumerate() {
-            for (col, ch) in line.chars().enumerate() {
-                max_x = max_x.max(col);
-                if ch != MAP_ASTEROID {
-                    continue;
-                }
-                let point = Point::new(col as Int, row as Int);
-                points.insert(point);
-            }
-        }
-        Self {
-            points,
-            max_x: max_x as Int,
-            max_y: max_y as Int,
-        }
+        let points = lines
+            .iter()
+            .map(|x| x.as_ref())
+            .enumerate()
+            .flat_map(|(row, line)| {
+                line.chars()
+                    .enumerate()
+                    .filter(|(_, ch)| *ch == MAP_ASTEROID)
+                    .map(|(col, _)| Point::new(col as Int, row as Int))
+                    .collect::<HashSet<_>>()
+            })
+            .collect();
+        Self { points }
     }
 
     fn monitoring_location(&self) -> (Point, usize) {
@@ -150,8 +143,6 @@ mod test {
     fn aoc2019_10_input_load_test() -> io::Result<()> {
         let sol = make_solution()?;
         assert!(!sol.points.is_empty());
-        assert!(sol.max_x > 0);
-        assert!(sol.max_y > 0);
         Ok(())
     }
 
