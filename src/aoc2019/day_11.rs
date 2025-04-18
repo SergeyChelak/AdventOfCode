@@ -70,16 +70,18 @@ impl Solution for AoC2019_11 {
         let panels = self.paint(Some(COLOR_WHITE));
         let values = panels.keys().copied().collect::<Vec<_>>();
         let bounds = bounds(&values).expect("Failed to calculate bounds");
+
+        let mut output = "\n".to_string();
         for x in bounds.low.x..=bounds.high.x {
             for y in bounds.low.y..=bounds.high.y {
                 let p = Position::new(x, y);
                 let color = panels.get(&p).unwrap_or(&COLOR_BLACK);
                 let ch = if *color == 0 { ' ' } else { '#' };
-                print!("{ch}");
+                output.push(ch);
             }
-            println!()
+            output.push('\n');
         }
-        "".to_string()
+        output.to_string()
     }
 
     fn description(&self) -> String {
