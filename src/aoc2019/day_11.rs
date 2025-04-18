@@ -1,5 +1,5 @@
 use crate::solution::Solution;
-use crate::utils::{Direction, Point2d};
+use crate::utils::{bounds, Direction, Point2d};
 
 use core::panic;
 use std::collections::HashMap;
@@ -11,6 +11,7 @@ use super::intcode_computer::*;
 type Position = Point2d<i32>;
 
 const COLOR_BLACK: Int = 0;
+const COLOR_WHITE: Int = 1;
 
 pub struct AoC2019_11 {
     input: Memory,
@@ -22,15 +23,16 @@ impl AoC2019_11 {
         let input = parse_program(&input);
         Ok(Self { input })
     }
-}
 
-impl Solution for AoC2019_11 {
-    fn part_one(&self) -> String {
+    fn paint(&self, initial_color: Option<Int>) -> HashMap<Position, Int> {
         let mut computer = IntcodeComputer::with_size(10 * 1024);
         computer.load_program(&self.input);
 
         let mut panels: HashMap<Position, Int> = HashMap::new();
         let mut position = Position::new(0, 0);
+        if let Some(color) = initial_color {
+            panels.insert(position, color);
+        }
         let mut direction = Direction::Up;
         loop {
             let inp = panels.get(&position).unwrap_or(&COLOR_BLACK);
@@ -54,11 +56,31 @@ impl Solution for AoC2019_11 {
                 Direction::Right => position.right(),
             }
         }
+        panels
+    }
+}
+
+impl Solution for AoC2019_11 {
+    fn part_one(&self) -> String {
+        let panels = self.paint(None);
         panels.len().to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let panels = self.paint(Some(COLOR_WHITE));
+        let values = panels.keys().copied().collect::<Vec<_>>();
+        let bounds = bounds(&values).expect("Failed to calculate bounds");
+        for x in bounds.low.x..=bounds.high.x {
+            for y in bounds.low.y..=bounds.high.y {
+                let p = Position::new(x, y);
+                let color = panels.get(&p).unwrap_or(&COLOR_BLACK);
+                let ch = if *color == 0 { ' ' } else { '#' };
+                print!("{ch}");
+            }
+            println!()
+        }
+        "".to_string()
+    }
 
     fn description(&self) -> String {
         "Day 11: Space Police".to_string()
