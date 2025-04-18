@@ -174,8 +174,8 @@ impl IntcodeComputer {
                     self.memory[val as usize] = self.input.remove(0)
                 }
                 OpCode::Out => {
-                    let val = self.consume_address(instr.mode_arg1);
-                    self.output.push(self.memory[val]);
+                    let val = self.consume_read(instr.mode_arg1);
+                    self.output.push(val);
                 }
                 OpCode::Jit => {
                     let value = self.consume_read(instr.mode_arg1);
@@ -220,10 +220,10 @@ impl IntcodeComputer {
 
     fn consume_address(&mut self, mode: Mode) -> usize {
         let mut val = self.consume();
-        // assert!(
-        //     !matches!(mode, Mode::Immediate),
-        //     "Immediate mode not expected in address"
-        // );
+        assert!(
+            !matches!(mode, Mode::Immediate),
+            "Immediate mode not expected in address, value = {val}"
+        );
         if matches!(mode, Mode::Relative) {
             val += self.relative_base;
         }
