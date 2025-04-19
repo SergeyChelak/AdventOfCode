@@ -5,7 +5,7 @@ use crate::utils::*;
 
 use std::io;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct Point3D<T> {
     x: T,
     y: T,
@@ -60,9 +60,61 @@ impl Point {
     fn energy(&self) -> Int {
         [self.x, self.y, self.z].iter().map(|x| x.abs()).sum()
     }
+}
 
-    fn dump(&self) -> String {
-        format!("<x={:3} | y={:3} | z={:3}>", self.x, self.y, self.z)
+struct Simulation {
+    position: Vec<Point>,
+    velocity: Vec<Point>,
+    gravity: Vec<Point>,
+}
+
+impl Simulation {
+    fn new(initial: &[Point]) -> Self {
+        let count = initial.len();
+        let position = initial.to_owned();
+        let velocity = vec![Point::zero(); count];
+        let gravity = vec![Point::zero(); count];
+        Self {
+            position,
+            velocity,
+            gravity,
+        }
+    }
+
+    fn step_simulate(&mut self) {
+        let count = self.position.len();
+        self.gravity.iter_mut().for_each(|x| {
+            *x = Point::zero();
+        });
+        for (i, i_pos) in self.position.iter().enumerate().take(count - 1) {
+            for (j, j_pos) in self.position.iter().enumerate().skip(1 + i) {
+                let g = i_pos.gravity_vector(j_pos);
+                self.gravity[i].add(&g);
+                self.gravity[j].add(&g.negative());
+            }
+        }
+        self.velocity
+            .iter_mut()
+            .zip(self.gravity.iter())
+            .for_each(|(v, a)| v.add(a));
+        self.position
+            .iter_mut()
+            .zip(self.velocity.iter())
+            .for_each(|(p, v)| p.add(v));
+    }
+
+    fn simulate(&mut self, steps: usize) {
+        for _ in 0..steps {
+            self.step_simulate();
+        }
+    }
+
+    fn total_energy(&self) -> Int {
+        self.position
+            .iter()
+            .zip(self.velocity.iter())
+            .map(|(a, b)| a.energy() * b.energy())
+            .sum::<Int>()
     }
 }
 
@@ -117,48 +169,60 @@ impl AoC2019_12 {
             .collect::<Vec<_>>();
         Self { moons }
     }
-
-    fn simulate(&self, steps: usize) -> Int {
-        let count = self.moons.len();
-        let mut velocity = vec![Point::zero(); count];
-        let mut position = self.moons.clone();
-        let mut gravity = vec![Point::zero(); count];
-        for _ in 0..steps {
-            gravity.iter_mut().for_each(|x| {
-                *x = Point::zero();
-            });
-
-            for (i, i_pos) in position.iter().enumerate().take(count - 1) {
-                for (j, j_pos) in position.iter().enumerate().skip(1 + i) {
-                    let g = i_pos.gravity_vector(j_pos);
-                    gravity[i].add(&g);
-                    gravity[j].add(&g.negative());
-                }
-            }
-            velocity
-                .iter_mut()
-                .zip(gravity.iter())
-                .for_each(|(v, a)| v.add(a));
-            position
-                .iter_mut()
-                .zip(velocity.iter())
-                .for_each(|(p, v)| p.add(v));
-        }
-        position
-            .iter()
-            .zip(velocity.iter())
-            .map(|(a, b)| a.energy() * b.energy())
-            .sum::<Int>()
-    }
 }
 
 impl Solution for AoC2019_12 {
     fn part_one(&self) -> String {
-        self.simulate(1000).to_string()
+        let mut simulation = Simulation::new(&self.moons);
+        simulation.simulate(1000);
+        simulation.total_energy().to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let count = self.moons.len();
+
+        let mut simulation = Simulation::new(&self.moons);
+        let mut step = 0usize;
+
+        let mut axes = [0usize; 3];
+
+        while axes.iter().any(|x| *x == 0) {
+            simulation.step_simulate();
+            step += 1;
+            let mut x_count = 0;
+            let mut y_count = 0;
+            let mut z_count = 0;
+            for (i, (p, v)) in simulation
+                .position
+                .iter()
+                .zip(simulation.velocity.iter())
+                .enumerate()
+            {
+                if p.x == self.moons[i].x && v.x == 0 {
+                    x_count += 1;
+                }
+                if p.y == self.moons[i].y && v.y == 0 {
+                    y_count += 1;
+                }
+                if p.z == self.moons[i].z && v.z == 0 {
+                    z_count += 1;
+                }
+            }
+
+            if x_count == count && axes[0] == 0 {
+                axes[0] = step;
+            }
+
+            if y_count == count && axes[1] == 0 {
+                axes[1] = step;
+            }
+
+            if z_count == count && axes[0] == 0 {
+                axes[2] = step;
+            }
+        }
+        axes.iter().fold(1, |acc, x| lcm(acc, *x)).to_string()
+    }
 
     fn description(&self) -> String {
         "Day 12: The N-Body Problem".to_string()
@@ -194,7 +258,33 @@ mod test {
             "<x=3, y=5, z=-1>",
         ];
         let p = AoC2019_12::with_lines(&inp);
-        assert_eq!(p.simulate(10), 179);
+        let mut simulation = Simulation::new(&p.moons);
+        simulation.simulate(10);
+        assert_eq!(simulation.total_energy(), 179);
+    }
+
+    // #[test]
+    fn aoc2019_12_case_1() {
+        let inp = [
+            "<x=-1, y=0, z=2>",
+            "<x=2, y=-10, z=-7>",
+            "<x=4, y=-8, z=8>",
+            "<x=3, y=5, z=-1>",
+        ];
+        let p = AoC2019_12::with_lines(&inp);
+        assert_eq!(p.part_two(), "2772")
+    }
+
+    // #[test]
+    fn aoc2019_12_case_2() {
+        let inp = [
+            "<x=-8, y=-10, z=0>",
+            "<x=5, y=5, z=10>",
+            "<x=2, y=-7, z=3>",
+            "<x=9, y=-8, z=-3>",
+        ];
+        let p = AoC2019_12::with_lines(&inp);
+        assert_eq!(p.part_two(), "4686774924")
     }
 
     #[test]
@@ -207,7 +297,7 @@ mod test {
     #[test]
     fn aoc2019_12_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "583523031727256");
         Ok(())
     }
 
