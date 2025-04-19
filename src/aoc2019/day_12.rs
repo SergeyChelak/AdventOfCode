@@ -217,7 +217,7 @@ impl Solution for AoC2019_12 {
                 axes[1] = step;
             }
 
-            if z_count == count && axes[0] == 0 {
+            if z_count == count && axes[2] == 0 {
                 axes[2] = step;
             }
         }
@@ -263,7 +263,7 @@ mod test {
         assert_eq!(simulation.total_energy(), 179);
     }
 
-    // #[test]
+    #[test]
     fn aoc2019_12_case_1() {
         let inp = [
             "<x=-1, y=0, z=2>",
@@ -275,7 +275,7 @@ mod test {
         assert_eq!(p.part_two(), "2772")
     }
 
-    // #[test]
+    #[test]
     fn aoc2019_12_case_2() {
         let inp = [
             "<x=-8, y=-10, z=0>",
