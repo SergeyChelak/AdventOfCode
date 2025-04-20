@@ -90,7 +90,7 @@ mod test {
         comp.load_program(program);
         let status = comp.run();
         assert!(matches!(status, ExecutionStatus::Halted));
-        comp.output()
+        comp.sink_outputs()
     }
 
     #[test]

@@ -4,7 +4,11 @@ use std::{collections::HashMap, fs::read_to_string, io};
 
 use super::intcode_computer::*;
 
+const TILE_EMPTY: Int = 0;
+const TILE_WALL: Int = 1;
 const TILE_BLOCK: Int = 2;
+const TILE_PADDLE: Int = 3;
+const TILE_BALL: Int = 4;
 
 type Pixel = Point2d<Int>;
 
@@ -27,29 +31,117 @@ impl AoC2019_13 {
 
 impl Solution for AoC2019_13 {
     fn part_one(&self) -> String {
-        let mut computer = IntcodeComputer::with_size(10 * 1024);
+        let mut computer = IntcodeComputer::with_size(2 * self.input.len());
         computer.load_program(&self.input);
         let status = computer.run();
         assert!(matches!(status, ExecutionStatus::Halted));
-        let mut display = HashMap::new();
-        for chunk in computer.output().chunks(3) {
-            let point = Pixel::new(chunk[0], chunk[1]);
-            let tile = chunk[2];
-            display.insert(point, tile);
-        }
-        display
-            .iter()
-            .filter(|(_, v)| **v == TILE_BLOCK)
-            .count()
-            .to_string()
+        let display = build_display(&computer);
+        blocks_amount(&display).to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut memory = self.input.clone();
+        // set 2 to play for free
+        memory[0] = 2;
+        best_score(&memory).to_string()
+    }
 
     fn description(&self) -> String {
         "Day 13: Care Package".to_string()
     }
+}
+
+type PixelDisplay = HashMap<Pixel, Int>;
+
+fn build_display(computer: &IntcodeComputer) -> PixelDisplay {
+    let mut display = HashMap::new();
+    for chunk in computer.outputs().chunks(3) {
+        let point = Pixel::new(chunk[0], chunk[1]);
+        let tile = chunk[2];
+        display.insert(point, tile);
+    }
+    display
+}
+
+fn display_image(display: &PixelDisplay) -> String {
+    let max_x = display.keys().map(|p| p.x).max().unwrap_or_default();
+    let max_y = display.keys().map(|p| p.y).max().unwrap_or_default();
+    let mut result = String::new();
+    for y in 0..=max_y {
+        for x in 0..=max_x {
+            let pixel = Pixel::new(x, y);
+            let value = display.get(&pixel).unwrap_or(&TILE_EMPTY);
+            let ch = match *value {
+                TILE_EMPTY => ' ',
+                TILE_WALL => '#',
+                TILE_BLOCK => 'X',
+                TILE_PADDLE => '=',
+                TILE_BALL => 'O',
+                _ => panic!("Unexpected display values {}", value),
+            };
+            result.push(ch);
+        }
+        result.push('\n');
+    }
+    result
+}
+
+fn blocks_amount(display: &PixelDisplay) -> usize {
+    display.iter().filter(|(_, v)| **v == TILE_BLOCK).count()
+}
+
+fn sprites_position(display: &PixelDisplay) -> (Pixel, Pixel) {
+    let mut ball = Pixel::new(0, 0);
+    let mut paddle = Pixel::new(0, 0);
+    display
+        .iter()
+        .filter(|(_, v)| **v == TILE_PADDLE || **v == TILE_BALL)
+        .for_each(|(p, v)| {
+            if *v == TILE_BALL {
+                ball = *p;
+            }
+            if *v == TILE_PADDLE {
+                paddle = *p;
+            }
+        });
+    (ball, paddle)
+}
+
+fn best_score(input: &[Int]) -> Int {
+    fn dfs(computer: &mut IntcodeComputer, best: &mut Int) {
+        let status = computer.run();
+        assert!(!matches!(status, ExecutionStatus::WrongInstruction { .. }));
+        let display = build_display(computer);
+
+        // let image = display_image(&display);
+        // println!("{}\n", image);
+
+        let blocks = blocks_amount(&display);
+        if blocks == 0 {
+            let score = display
+                .get(&Pixel::new(-1, 0))
+                .expect("Score value must be stored");
+            *best = *score.max(best);
+            return;
+        }
+        if matches!(status, ExecutionStatus::WaitForInput) {
+            let (ball, paddle) = sprites_position(&display);
+            let command = match (ball.x, paddle.x) {
+                (b, p) if b > p => 1,
+                (b, p) if b < p => -1,
+                _ => 0,
+            };
+            let mut tmp = computer.clone();
+            tmp.push_input(command);
+            dfs(&mut tmp, best);
+        }
+    }
+
+    let mut computer = IntcodeComputer::with_size(2 * input.len());
+    computer.load_program(input);
+    let mut best = 0;
+    dfs(&mut computer, &mut best);
+    best
 }
 
 #[cfg(test)]
@@ -73,7 +165,7 @@ mod test {
     #[test]
     fn aoc2019_13_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "22225");
         Ok(())
     }
 

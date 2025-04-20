@@ -1,3 +1,5 @@
+use std::mem::swap;
+
 pub type Int = i64;
 pub type Memory = Vec<Int>;
 
@@ -91,6 +93,7 @@ impl TryFrom<Int> for Instruction {
     }
 }
 
+#[derive(Clone)]
 pub struct IntcodeComputer {
     memory: Memory,
     input: Vec<Int>,
@@ -112,7 +115,7 @@ impl IntcodeComputer {
 
     pub fn with_memory(memory: &[Int]) -> Self {
         let mut instance = Self::with_size(memory.len());
-        instance.load_program(&memory);
+        instance.load_program(memory);
         instance
     }
 
@@ -134,83 +137,97 @@ impl IntcodeComputer {
         self.output.pop()
     }
 
+    pub fn outputs(&self) -> &[Int] {
+        &self.output
+    }
+
     #[allow(dead_code)]
-    pub fn output(&self) -> Vec<Int> {
-        self.output.clone()
+    pub fn sink_outputs(&mut self) -> Vec<Int> {
+        let mut val = Vec::new();
+        swap(&mut self.output, &mut val);
+        val
     }
 
     pub fn run(&mut self) -> ExecutionStatus {
         loop {
-            let instruction_pc = self.pc;
-            let code = self.consume();
-            let Ok(instr) = Instruction::try_from(code) else {
-                return ExecutionStatus::WrongInstruction {
-                    code,
-                    pc: instruction_pc,
-                };
-            };
-            match instr.op_code {
-                OpCode::Add => {
-                    let left = self.consume_read(instr.mode_arg1);
-                    let right = self.consume_read(instr.mode_arg2);
-                    self.consume_write(left + right, instr.mode_arg3);
-                }
-                OpCode::Mul => {
-                    let left = self.consume_read(instr.mode_arg1);
-                    let right = self.consume_read(instr.mode_arg2);
-                    self.consume_write(left * right, instr.mode_arg3);
-                }
-                OpCode::Inp => {
-                    if self.input.is_empty() {
-                        // redo instruction
-                        self.pc = instruction_pc;
-                        return ExecutionStatus::WaitForInput;
-                    };
-                    let mut val = self.consume();
-                    if matches!(instr.mode_arg1, Mode::Relative) {
-                        val += self.relative_base;
-                    }
-                    assert!(val >= 0);
-                    self.memory[val as usize] = self.input.remove(0)
-                }
-                OpCode::Out => {
-                    let val = self.consume_read(instr.mode_arg1);
-                    self.output.push(val);
-                }
-                OpCode::Jit => {
-                    let value = self.consume_read(instr.mode_arg1);
-                    let addr = self.consume_read(instr.mode_arg2);
-                    if value != 0 {
-                        assert!(addr >= 0);
-                        self.pc = addr as usize;
-                    }
-                }
-                OpCode::Jif => {
-                    let value = self.consume_read(instr.mode_arg1);
-                    let addr = self.consume_read(instr.mode_arg2);
-                    if value == 0 {
-                        assert!(addr >= 0);
-                        self.pc = addr as usize;
-                    }
-                }
-                OpCode::Lt => {
-                    let first = self.consume_read(instr.mode_arg1);
-                    let second = self.consume_read(instr.mode_arg2);
-                    self.consume_write_bool(first < second, instr.mode_arg3);
-                }
-                OpCode::Eq => {
-                    let first = self.consume_read(instr.mode_arg1);
-                    let second = self.consume_read(instr.mode_arg2);
-                    self.consume_write_bool(first == second, instr.mode_arg3);
-                }
-                OpCode::Arb => {
-                    // adjust relative base
-                    let parameter = self.consume_read(instr.mode_arg1);
-                    self.relative_base += parameter;
-                }
-                OpCode::Hlt => return ExecutionStatus::Halted,
+            let result = self.execute_step();
+            if let Err(status) = result {
+                break status;
             }
         }
+    }
+
+    pub fn execute_step(&mut self) -> Result<(), ExecutionStatus> {
+        let instruction_pc = self.pc;
+        let code = self.consume();
+        let Ok(instr) = Instruction::try_from(code) else {
+            return Err(ExecutionStatus::WrongInstruction {
+                code,
+                pc: instruction_pc,
+            });
+        };
+        match instr.op_code {
+            OpCode::Add => {
+                let left = self.consume_read(instr.mode_arg1);
+                let right = self.consume_read(instr.mode_arg2);
+                self.consume_write(left + right, instr.mode_arg3);
+            }
+            OpCode::Mul => {
+                let left = self.consume_read(instr.mode_arg1);
+                let right = self.consume_read(instr.mode_arg2);
+                self.consume_write(left * right, instr.mode_arg3);
+            }
+            OpCode::Inp => {
+                if self.input.is_empty() {
+                    // redo instruction
+                    self.pc = instruction_pc;
+                    return Err(ExecutionStatus::WaitForInput);
+                };
+                let mut val = self.consume();
+                if matches!(instr.mode_arg1, Mode::Relative) {
+                    val += self.relative_base;
+                }
+                assert!(val >= 0);
+                self.memory[val as usize] = self.input.remove(0)
+            }
+            OpCode::Out => {
+                let val = self.consume_read(instr.mode_arg1);
+                self.output.push(val);
+            }
+            OpCode::Jit => {
+                let value = self.consume_read(instr.mode_arg1);
+                let addr = self.consume_read(instr.mode_arg2);
+                if value != 0 {
+                    assert!(addr >= 0);
+                    self.pc = addr as usize;
+                }
+            }
+            OpCode::Jif => {
+                let value = self.consume_read(instr.mode_arg1);
+                let addr = self.consume_read(instr.mode_arg2);
+                if value == 0 {
+                    assert!(addr >= 0);
+                    self.pc = addr as usize;
+                }
+            }
+            OpCode::Lt => {
+                let first = self.consume_read(instr.mode_arg1);
+                let second = self.consume_read(instr.mode_arg2);
+                self.consume_write_bool(first < second, instr.mode_arg3);
+            }
+            OpCode::Eq => {
+                let first = self.consume_read(instr.mode_arg1);
+                let second = self.consume_read(instr.mode_arg2);
+                self.consume_write_bool(first == second, instr.mode_arg3);
+            }
+            OpCode::Arb => {
+                // adjust relative base
+                let parameter = self.consume_read(instr.mode_arg1);
+                self.relative_base += parameter;
+            }
+            OpCode::Hlt => return Err(ExecutionStatus::Halted),
+        }
+        Ok(())
     }
 
     fn consume_read(&mut self, mode: Mode) -> Int {
