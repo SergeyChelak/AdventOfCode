@@ -10,6 +10,8 @@ const TILE_BLOCK: Int = 2;
 const TILE_PADDLE: Int = 3;
 const TILE_BALL: Int = 4;
 
+const IS_ANIMATION_ENABLED: bool = false;
+
 type Pixel = Point2d<Int>;
 
 pub struct AoC2019_13 {
@@ -43,7 +45,35 @@ impl Solution for AoC2019_13 {
         let mut memory = self.input.clone();
         // set 2 to play for free
         memory[0] = 2;
-        best_score(&memory).to_string()
+        let mut computer = IntcodeComputer::with_size(2 * memory.len());
+        computer.load_program(&memory);
+        loop {
+            let status = computer.run();
+            assert!(!matches!(status, ExecutionStatus::WrongInstruction { .. }));
+            let display = build_display(&computer);
+
+            if IS_ANIMATION_ENABLED {
+                let image = display_image(&display);
+                println!("{}\n", image);
+            }
+
+            let blocks = blocks_amount(&display);
+            if blocks == 0 {
+                break *display
+                    .get(&Pixel::new(-1, 0))
+                    .expect("Score value must be stored");
+            }
+            if matches!(status, ExecutionStatus::WaitForInput) {
+                let (ball, paddle) = sprites_position(&display);
+                let command = match (ball.x, paddle.x) {
+                    (b, p) if b > p => 1,
+                    (b, p) if b < p => -1,
+                    _ => 0,
+                };
+                computer.push_input(command);
+            }
+        }
+        .to_string()
     }
 
     fn description(&self) -> String {
@@ -105,43 +135,6 @@ fn sprites_position(display: &PixelDisplay) -> (Pixel, Pixel) {
             }
         });
     (ball, paddle)
-}
-
-fn best_score(input: &[Int]) -> Int {
-    fn dfs(computer: &mut IntcodeComputer, best: &mut Int) {
-        let status = computer.run();
-        assert!(!matches!(status, ExecutionStatus::WrongInstruction { .. }));
-        let display = build_display(computer);
-
-        // let image = display_image(&display);
-        // println!("{}\n", image);
-
-        let blocks = blocks_amount(&display);
-        if blocks == 0 {
-            let score = display
-                .get(&Pixel::new(-1, 0))
-                .expect("Score value must be stored");
-            *best = *score.max(best);
-            return;
-        }
-        if matches!(status, ExecutionStatus::WaitForInput) {
-            let (ball, paddle) = sprites_position(&display);
-            let command = match (ball.x, paddle.x) {
-                (b, p) if b > p => 1,
-                (b, p) if b < p => -1,
-                _ => 0,
-            };
-            let mut tmp = computer.clone();
-            tmp.push_input(command);
-            dfs(&mut tmp, best);
-        }
-    }
-
-    let mut computer = IntcodeComputer::with_size(2 * input.len());
-    computer.load_program(input);
-    let mut best = 0;
-    dfs(&mut computer, &mut best);
-    best
 }
 
 #[cfg(test)]
