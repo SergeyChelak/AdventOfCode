@@ -24,7 +24,7 @@ impl AoC2019_07 {
 
     fn thruster_output(&self, phases: &[Int]) -> Int {
         let amplifier_output = |input: Int, phase: Int| -> Option<Int> {
-            let mut computer = IntcodeComputer::with_memory(self.input.clone());
+            let mut computer = IntcodeComputer::with_memory(&self.input);
             computer.push_input(phase);
             computer.push_input(input);
             computer.run();
@@ -41,7 +41,7 @@ impl AoC2019_07 {
         let mut computers = phases
             .iter()
             .map(|phase| {
-                let mut computer = IntcodeComputer::with_memory(self.input.clone());
+                let mut computer = IntcodeComputer::with_memory(&self.input);
                 computer.push_input(*phase);
                 computer
             })

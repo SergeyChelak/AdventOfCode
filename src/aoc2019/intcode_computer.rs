@@ -110,13 +110,13 @@ impl IntcodeComputer {
         }
     }
 
-    pub fn with_memory(memory: Memory) -> Self {
+    pub fn with_memory(memory: &[Int]) -> Self {
         let mut instance = Self::with_size(memory.len());
         instance.load_program(&memory);
         instance
     }
 
-    pub fn new(memory: Memory, input: Int) -> Self {
+    pub fn new(memory: &[Int], input: Int) -> Self {
         let mut computer = Self::with_memory(memory);
         computer.push_input(input);
         computer

@@ -23,13 +23,13 @@ impl AoC2019_05 {
 
 impl Solution for AoC2019_05 {
     fn part_one(&self) -> String {
-        let mut computer = IntcodeComputer::new(self.input.clone(), 1);
+        let mut computer = IntcodeComputer::new(&self.input, 1);
         computer.run();
         computer.pop_output().expect("output is empty").to_string()
     }
 
     fn part_two(&self) -> String {
-        let mut computer = IntcodeComputer::new(self.input.clone(), 5);
+        let mut computer = IntcodeComputer::new(&self.input, 5);
         computer.run();
         computer.pop_output().expect("output is empty").to_string()
     }
