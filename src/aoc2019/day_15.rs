@@ -179,40 +179,6 @@ fn fill(map: &mut TileMap, start: Position) -> usize {
     steps
 }
 
-fn dump(map: &TileMap, position: Position) {
-    let Some(min_x) = map.keys().map(|k| k.x).min() else {
-        return;
-    };
-    let Some(max_x) = map.keys().map(|k| k.x).max() else {
-        return;
-    };
-    let Some(min_y) = map.keys().map(|k| k.y).min() else {
-        return;
-    };
-    let Some(max_y) = map.keys().map(|k| k.y).max() else {
-        return;
-    };
-
-    for y in min_y..=max_y {
-        for x in min_x..=max_x {
-            let p = Position::new(x, y);
-            if p == position {
-                print!("D");
-                continue;
-            }
-            let val = map.get(&p).unwrap_or(&TILE_UNDEFINED);
-            let ch = match *val {
-                TILE_WALL => '#',
-                TILE_FREE => '.',
-                TILE_OXYGEN => 'O',
-                _ => ' ',
-            };
-            print!("{ch}")
-        }
-        println!()
-    }
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
