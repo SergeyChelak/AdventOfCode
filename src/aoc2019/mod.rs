@@ -44,8 +44,8 @@ use day_13::*;
 mod day_14;
 use day_14::*;
 
-// mod day_15;
-// use day_15::*;
+mod day_15;
+use day_15::*;
 
 // mod day_16;
 // use day_16::*;
@@ -93,7 +93,7 @@ pub fn puzzle_factory_2019() -> PuzzleFactory {
         &|| Ok(Box::new(AoC2019_12::new()?)),
         &|| Ok(Box::new(AoC2019_13::new()?)),
         &|| Ok(Box::new(AoC2019_14::new()?)),
-        // &|| Ok(Box::new(AoC2019_15::new()?)),
+        &|| Ok(Box::new(AoC2019_15::new()?)),
         // &|| Ok(Box::new(AoC2019_16::new()?)),
         // &|| Ok(Box::new(AoC2019_17::new()?)),
         // &|| Ok(Box::new(AoC2019_18::new()?)),
