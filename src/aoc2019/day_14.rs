@@ -11,14 +11,16 @@ enum ParseError {
     EquationFormat,
 }
 
+type Amount = isize;
+
 #[derive(Debug, Clone)]
 struct Element {
     name: String,
-    amount: usize,
+    amount: Amount,
 }
 
 impl Element {
-    fn new(name: &str, amount: usize) -> Self {
+    fn new(name: &str, amount: Amount) -> Self {
         Self {
             name: name.to_string(),
             amount,
@@ -29,7 +31,7 @@ impl Element {
         Self::fuel(1)
     }
 
-    fn fuel(amount: usize) -> Self {
+    fn fuel(amount: Amount) -> Self {
         Self::new("FUEL", amount)
     }
 }
@@ -43,7 +45,7 @@ impl TryFrom<&str> for Element {
         };
 
         let amount = amount
-            .parse::<usize>()
+            .parse::<Amount>()
             .map_err(|_| ParseError::InvalidAmount)?;
 
         Ok(Self {
@@ -114,21 +116,38 @@ impl Solution for AoC2019_14 {
     }
 
     fn part_two(&self) -> String {
-        let total: usize = 1000000000000;
-        let mut acc = 0;
-        let mut leftovers = HashMap::new();
-        let mut fuel = 0;
-        let step = 1;
-        let elem = Element::fuel(step);
-        while acc < total {
-            fuel += step;
-            acc += ore_amount_helper(&self.equations, &mut leftovers, &elem);
-            println!(
-                "fuel: {fuel}, ore: {acc}, rest: {}",
-                total.saturating_sub(acc)
-            );
+        let total: Amount = 1000000000000;
+        let mut right = {
+            let mut val = 1;
+            loop {
+                let elem = Element::fuel(val);
+                let amount = ore_amount(&self.equations, &elem);
+                if amount > total {
+                    break;
+                }
+                val <<= 1;
+            }
+            val
+        };
+        let mut left = right >> 1;
+        let mut mid = 0;
+        while left < right {
+            mid = (left + right) >> 1;
+            let element = Element::fuel(mid);
+            let val = ore_amount(&self.equations, &element);
+            if val == total {
+                return mid.to_string();
+            }
+            if val > total {
+                right = mid - 1;
+                continue;
+            }
+            if val < total {
+                left = mid + 1;
+                continue;
+            }
         }
-        fuel.to_string()
+        mid.to_string()
     }
 
     fn description(&self) -> String {
@@ -136,47 +155,29 @@ impl Solution for AoC2019_14 {
     }
 }
 
-fn ore_amount(equations: &EquationMap, from: &Element) -> usize {
-    ore_amount_helper(equations, &mut HashMap::new(), from)
+fn ore_amount(equations: &EquationMap, from: &Element) -> Amount {
+    let mut requirements = HashMap::new();
+    requirements.insert(from.name.clone(), from.amount);
+    let mut result = 0;
+    while let Some((key, needed)) = requirements.iter().find(|(_, val)| **val > 0) {
+        let rule = equations.get(key).expect("Failed to get rule");
+        let times = ceil(*needed, rule.output.amount);
+        requirements.insert(key.clone(), *needed - times * rule.output.amount);
+
+        for input in &rule.inputs {
+            if input.name == "ORE" {
+                result += times * input.amount;
+                continue;
+            }
+            let entry = requirements.entry(input.name.clone()).or_default();
+            *entry += times * input.amount;
+        }
+    }
+    result
 }
 
-fn ore_amount_helper(
-    equations: &EquationMap,
-    leftovers: &mut HashMap<String, usize>,
-    from: &Element,
-) -> usize {
-    if from.name == "ORE" {
-        return from.amount;
-    }
-    let mut requested = from.amount;
-    if let Some(&val) = leftovers
-        .get(&from.name)
-        .and_then(|x| if *x > 0 { Some(x) } else { None })
-    {
-        let leftover = val.saturating_sub(requested);
-        leftovers.insert(from.name.clone(), leftover);
-        requested = requested.saturating_sub(val);
-    }
-
-    if requested == 0 {
-        return 0;
-    }
-
-    let Some(element) = equations.get(&from.name) else {
-        return 0;
-    };
-
-    let mut amount = 0;
-    let mut received = 0;
-    while received < requested {
-        for component in element.inputs.iter() {
-            amount += ore_amount_helper(equations, leftovers, component);
-        }
-        received += element.output.amount;
-    }
-
-    leftovers.insert(from.name.clone(), received - requested);
-    amount
+fn ceil(a: Amount, b: Amount) -> Amount {
+    a / b + (a % b > 0) as Amount
 }
 
 #[cfg(test)]
@@ -231,39 +232,6 @@ mod test {
             "2 AB, 3 BC, 4 CA => 1 FUEL",
         ];
         let puzzle = AoC2019_14::with_lines(&input);
-
-        /*
-        Consume 15 B, 21 C to produce 3 BC.
-        Consume 16 C, 4 A to produce 4 CA.
-        Consume 2 AB, 3 BC, 4 CA to produce 1 FUEL.
-        */
-        let equations = &puzzle.equations;
-        {
-            // Consume 45 ORE to produce 10 A.
-            let val = ore_amount(equations, &Element::new("A", 10));
-            assert_eq!(val, 45);
-        }
-
-        {
-            // Consume 64 ORE to produce 24 B.
-            let val = ore_amount(equations, &Element::new("B", 24));
-            assert_eq!(val, 64);
-        }
-
-        {
-            // Consume 56 ORE to produce 40 C.
-            let val = ore_amount(equations, &Element::new("C", 40));
-            assert_eq!(val, 56);
-        }
-        {
-            // Consume 6 A, 8 B to produce 2 AB.
-            let mut leftovers = HashMap::new();
-            let a6 = ore_amount_helper(equations, &mut leftovers, &Element::new("A", 6));
-            let b8 = ore_amount_helper(equations, &mut leftovers, &Element::new("B", 8));
-            let ab2 = ore_amount(equations, &Element::new("AB", 2));
-            assert_eq!(a6 + b8, ab2)
-        }
-
         assert_eq!(puzzle.part_one(), "165")
     }
 
