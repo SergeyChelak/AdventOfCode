@@ -1,7 +1,7 @@
 use crate::solution::Solution;
 use crate::utils::{Direction, Point2d};
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs::read_to_string;
 use std::io;
 
@@ -33,8 +33,13 @@ impl Solution for AoC2019_15 {
         distance.to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut data = traverse_environment(&self.input);
+        let Some(start) = data.oxygen_position else {
+            return "Not found".to_string();
+        };
+        fill(&mut data.map, start).to_string()
+    }
 
     fn description(&self) -> String {
         "Day 15: Oxygen System".to_string()
@@ -144,6 +149,36 @@ fn traverse_environment(input: &[Int]) -> Environment {
     }
 }
 
+fn fill(map: &mut TileMap, start: Position) -> usize {
+    let mut positions: HashSet<Position> = HashSet::new();
+    positions.insert(start);
+    let mut steps = 0;
+
+    while !positions.is_empty() {
+        let mut next = HashSet::new();
+        for p in positions.iter() {
+            Direction::all()
+                .iter()
+                .map(|dir| p.move_by(dir))
+                .filter(|p| {
+                    let tile = map.get(p).unwrap_or(&TILE_UNDEFINED);
+                    *tile == TILE_FREE
+                })
+                .for_each(|p| {
+                    next.insert(p);
+                });
+        }
+        next.iter().for_each(|p| {
+            map.insert(*p, TILE_OXYGEN);
+        });
+        positions = next;
+        if !positions.is_empty() {
+            steps += 1;
+        }
+    }
+    steps
+}
+
 fn dump(map: &TileMap, position: Position) {
     let Some(min_x) = map.keys().map(|k| k.x).min() else {
         return;
@@ -199,7 +234,7 @@ mod test {
     #[test]
     fn aoc2019_15_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "394");
         Ok(())
     }
 
