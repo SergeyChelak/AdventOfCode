@@ -38,8 +38,32 @@ impl Solution for AoC2019_16 {
         self.process(100)
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let offset = self
+            .input
+            .iter()
+            .take(7)
+            .fold(0usize, |acc, x| acc * 10 + *x as usize);
+
+        let mut input = (0..10_000)
+            .flat_map(|_| self.input.clone())
+            .collect::<Vec<Int>>();
+        assert!(offset > input.len() / 2, "Solution is not applicable");
+        let input = &mut input[offset..];
+        for _ in 0..100 {
+            let mut total = 0;
+            input.iter_mut().rev().for_each(|x| {
+                total += *x;
+                *x = total % 10;
+            });
+        }
+
+        input
+            .iter()
+            .take(8)
+            .map(|x| x.to_string())
+            .collect::<String>()
+    }
 
     fn description(&self) -> String {
         "Day 16: Flawed Frequency Transmission".to_string()
@@ -75,7 +99,7 @@ fn pattern(step: usize, at: usize) -> Int {
     let base_pattern = [0, 1, 0, -1];
     let period = base_pattern.len() * step;
     let mut position = at % period;
-    position = position / step;
+    position /= step;
     assert!(
         position < base_pattern.len(),
         "f({step},{at}) :: position {position}, len {}, period {period}",
@@ -137,6 +161,24 @@ mod test {
     }
 
     #[test]
+    fn aoc2019_16_case_pt2_1() {
+        let puzzle = AoC2019_16::with_str("03036732577212944063491565474664");
+        assert_eq!(puzzle.part_two(), "84462026");
+    }
+
+    #[test]
+    fn aoc2019_16_case_pt2_2() {
+        let puzzle = AoC2019_16::with_str("02935109699940807407585447034323");
+        assert_eq!(puzzle.part_two(), "78725270");
+    }
+
+    #[test]
+    fn aoc2019_16_case_pt2_3() {
+        let puzzle = AoC2019_16::with_str("03081770884921959731165446850517");
+        assert_eq!(puzzle.part_two(), "53553731");
+    }
+
+    #[test]
     fn aoc2019_16_correctness_part_1() -> io::Result<()> {
         let sol = make_solution()?;
         assert_eq!(sol.part_one(), "27229269");
@@ -146,7 +188,7 @@ mod test {
     #[test]
     fn aoc2019_16_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "26857164");
         Ok(())
     }
 
