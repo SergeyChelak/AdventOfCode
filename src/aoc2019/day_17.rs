@@ -81,6 +81,7 @@ impl Solution for AoC2019_17 {
 }
 
 fn build_movement_instructions(input: &[String]) -> String {
+    let max_length = 20;
     let path = input.join(",");
 
     let mut dictionary = HashSet::<String>::new();
@@ -91,7 +92,7 @@ fn build_movement_instructions(input: &[String]) -> String {
             if dictionary.contains(&pattern) {
                 continue;
             }
-            if !(3..=20).contains(&pattern.len()) {
+            if !(3..=max_length).contains(&pattern.len()) {
                 continue;
             }
             let count = path.matches(&pattern).count();
@@ -109,6 +110,9 @@ fn build_movement_instructions(input: &[String]) -> String {
             let compressed = compressed.replace(b_pattern, "B");
             for c_pattern in patterns.iter().skip(b) {
                 let compressed = compressed.replace(c_pattern, "C");
+                if compressed.len() > max_length {
+                    continue;
+                }
                 let is_valid = compressed.chars().all(|ch| allowed_set.contains(&ch));
                 if is_valid {
                     return [
