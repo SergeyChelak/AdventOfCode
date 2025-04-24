@@ -201,7 +201,7 @@ fn build_path(
         }
 
         // can turn left
-        if adjacent.get(&node.direction.turn_left()).is_some() {
+        if adjacent.contains_key(&node.direction.turn_left()) {
             let next = StackNode {
                 path_element: PathElement::Left,
                 distance: 0,
@@ -213,7 +213,7 @@ fn build_path(
         }
 
         // can turn right
-        if adjacent.get(&node.direction.turn_right()).is_some() {
+        if adjacent.contains_key(&node.direction.turn_right()) {
             let next = StackNode {
                 path_element: PathElement::Right,
                 distance: 0,
