@@ -28,12 +28,7 @@ impl AoC2019_17 {
 
 impl Solution for AoC2019_17 {
     fn part_one(&self) -> String {
-        let mut computer = IntcodeComputer::with_size(10 * 1024);
-        computer.load_program(&self.input);
-        let status = computer.run();
-        assert!(matches!(status, ExecutionStatus::Halted));
-        let output = computer.sink_outputs();
-        let map = convert_map(&output);
+        let map = build_map(&self.input);
         map.keys()
             .filter(|p| {
                 [
@@ -53,43 +48,29 @@ impl Solution for AoC2019_17 {
     }
 
     fn part_two(&self) -> String {
-        let mut computer = IntcodeComputer::with_size(10 * 1024);
-        let mut program = self.input.clone();
-        // build map
-        computer.load_program(&program);
-        let status = computer.run();
-        assert!(matches!(status, ExecutionStatus::Halted));
-        let output = computer.sink_outputs();
-        // dump(&output);
-        let map = convert_map(&output);
+        let map = build_map(&self.input);
         let Some(pos) = bot_position(&map) else {
             panic!("Bot not found");
         };
-        println!("{pos:?}");
         let Some(direction) = map.get(&pos).map(|x| Direction::from(*x)) else {
             panic!("Failed to determine direction");
         };
-        // let path = build_path(&map, pos, direction);
-        // format_path(&path);
+        let path = build_path(&map, pos, direction);
+        format_path(&path);
         //
+        let mut computer = IntcodeComputer::with_size(10 * 1024);
+        let mut program = self.input.clone();
         program[0] = 2;
         computer.load_program(&program);
 
-        let push_input = |comp: &mut IntcodeComputer, s: &str| {
-            s.chars()
-                .map(|ch| ch as u8 as Int)
-                .for_each(|x| comp.push_input(x));
-            comp.push_input(10);
-        };
-
-        push_input(&mut computer, "A,B,B,C,B,C,B,C,A,A");
-        push_input(&mut computer, "L,6,R,8,L,4,R,8,L,12");
-        push_input(&mut computer, "L,12,R,10,L,4");
-        push_input(&mut computer, "L,12,L,6,L,4,L,4");
-        push_input(&mut computer, "n");
+        computer.push_input_str("A,B,B,C,B,C,B,C,A,A\n");
+        computer.push_input_str("L,6,R,8,L,4,R,8,L,12\n");
+        computer.push_input_str("L,12,R,10,L,4\n");
+        computer.push_input_str("L,12,L,6,L,4,L,4\n");
+        computer.push_input_str("n\n");
 
         let status = computer.run();
-        println!("Status: {status:?}");
+        assert!(matches!(status, ExecutionStatus::Halted));
         computer
             .pop_output()
             .map(|x| x.to_string())
@@ -103,6 +84,19 @@ impl Solution for AoC2019_17 {
 
 type Point = Point2d<Int>;
 type ScaffoldMap = HashMap<Point, Int>;
+
+fn format_path(path: &[StackNode]) {
+    let arr = path
+        .iter()
+        .map(|x| match x.path_element {
+            PathElement::Direct => x.distance.to_string(),
+            PathElement::Left => "L".to_string(),
+            PathElement::Right => "R".to_string(),
+        })
+        .collect::<Vec<_>>();
+    let s = arr.join(",");
+    println!("{s}");
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum PathElement {
@@ -135,19 +129,8 @@ fn build_path(
     });
 
     while let Some(node) = stack.last() {
-        println!(
-            "P: ({}, {})\tPE: {:?}\tDir: {:?}\tDist: {}\t SS: {}",
-            node.position.x,
-            node.position.y,
-            node.path_element,
-            node.direction,
-            node.distance,
-            stack.len()
-        );
-
         visited.insert(node.position);
         if visited.len() == total_nodes {
-            println!("Path found");
             break;
         }
 
@@ -196,38 +179,25 @@ fn build_path(
             stack.push(next);
             continue;
         }
-
-        _ = stack.pop();
+        unreachable!()
     }
 
     stack
-}
-
-fn format_path(path: &[StackNode]) {
-    let arr = path
-        .iter()
-        .map(|x| match x.path_element {
-            PathElement::Direct => x.distance.to_string(),
-            PathElement::Left => "L".to_string(),
-            PathElement::Right => "R".to_string(),
-        })
-        .collect::<Vec<_>>();
-    let s = arr.join(",");
-    println!("{s}");
-}
-
-fn dump(output: &[Int]) {
-    output
-        .iter()
-        .map(|x| *x as u8 as char)
-        .for_each(|x| print!("{x}"));
-    println!()
 }
 
 fn bot_position(map: &ScaffoldMap) -> Option<Point> {
     map.iter()
         .find(|(_, v)| [b'^', b'v', b'<', b'>'].contains(&(**v as u8)))
         .map(|(k, _)| *k)
+}
+
+fn build_map(input: &[Int]) -> ScaffoldMap {
+    let mut computer = IntcodeComputer::with_size(10 * 1024);
+    computer.load_program(input);
+    let status = computer.run();
+    assert!(matches!(status, ExecutionStatus::Halted));
+    let output = computer.sink_outputs();
+    convert_map(&output)
 }
 
 fn convert_map(output: &[Int]) -> ScaffoldMap {

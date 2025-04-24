@@ -141,6 +141,13 @@ impl IntcodeComputer {
         self.input.push(value);
     }
 
+    pub fn push_input_str(&mut self, value: &str) {
+        value
+            .chars()
+            .map(|ch| ch as u8 as Int)
+            .for_each(|x| self.push_input(x));
+    }
+
     pub fn pop_output(&mut self) -> Option<Int> {
         self.output.pop()
     }
