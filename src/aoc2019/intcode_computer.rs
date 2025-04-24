@@ -126,7 +126,15 @@ impl IntcodeComputer {
     }
 
     pub fn load_program(&mut self, data: &[Int]) {
+        self.reset();
         self.memory[..data.len()].clone_from_slice(data);
+    }
+
+    pub fn reset(&mut self) {
+        self.pc = 0;
+        self.relative_base = 0;
+        self.input.clear();
+        self.output.clear();
     }
 
     pub fn push_input(&mut self, value: Int) {
