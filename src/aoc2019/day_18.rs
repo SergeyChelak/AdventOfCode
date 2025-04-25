@@ -58,6 +58,10 @@ impl Solution for AoC2019_18 {
 }
 
 type Keys = [bool; 26];
+type PointData = (Point, usize);
+type PointDataSet = HashSet<PointData>;
+type MemoKey = (Point, Keys);
+type Memo = HashMap<MemoKey, PointDataSet>;
 
 #[derive(Clone, Copy)]
 struct StackElement {
@@ -78,31 +82,37 @@ fn shortest_path_len(map: &Maze, start: Point) -> usize {
     let mut distances = HashMap::new();
     // no reason to insert initial position as it doesn't impact the search
 
+    let mut memo = Memo::new();
+
     while !stack.is_empty() {
         let data = *stack.last().unwrap();
-        let points = get_available_points(map, data.position, &data.keys);
+        let memo_key = (data.position, data.keys);
+        let points = memo
+            .entry(memo_key)
+            .or_insert_with(|| get_available_points(map, data.position, &data.keys));
+
         let mut has_next = false;
         if points.is_empty() {
             min_distance = min_distance.min(data.distance);
         } else {
-            for (point, dist) in points {
+            for (point, dist) in points.iter() {
                 let acc_distance = dist + data.distance;
                 if acc_distance >= min_distance {
                     continue;
                 }
 
-                let distance_key = (point, data.keys);
+                let distance_key = (*point, data.keys);
                 let existing_distance = distances.get(&distance_key).unwrap_or(&usize::MAX);
                 if *existing_distance <= acc_distance {
                     continue;
                 }
                 distances.insert(distance_key, acc_distance);
                 let mut keys = data.keys;
-                let index = key_index(map, point).expect("Missing value");
+                let index = key_index(map, *point).expect("Missing value");
                 keys[index] = true;
 
                 let elem = StackElement {
-                    position: point,
+                    position: *point,
                     keys,
                     distance: acc_distance,
                 };
@@ -118,8 +128,8 @@ fn shortest_path_len(map: &Maze, start: Point) -> usize {
     min_distance
 }
 
-fn get_available_points(map: &Maze, start: Point, keys: &Keys) -> HashSet<(Point, usize)> {
-    let mut result = HashSet::new();
+fn get_available_points(map: &Maze, start: Point, keys: &Keys) -> PointDataSet {
+    let mut result = PointDataSet::new();
     let mut current = vec![start];
     let mut seen = HashSet::new();
     let mut step = 0;
@@ -154,9 +164,6 @@ fn get_available_points(map: &Maze, start: Point, keys: &Keys) -> HashSet<(Point
     result
 }
 
-//
-//
-//
 fn char_to_index(ch: char) -> usize {
     (ch as u8 - b'a') as usize
 }
