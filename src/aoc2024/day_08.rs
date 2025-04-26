@@ -103,7 +103,7 @@ fn make_char_coordinate_map(input: &[Vec<char>]) -> CharCoordinateMap {
                 continue;
             }
             let entry = map.entry(*ch).or_default();
-            entry.push(Coordinate::new(row as isize, col as isize));
+            entry.push(Coordinate::new(col as isize, row as isize));
         }
     }
     map
