@@ -57,7 +57,7 @@ fn calculate(
     let mut total = 0;
     for (row, arr) in region.iter().enumerate() {
         for (col, _) in arr.iter().enumerate() {
-            let position = Position::new(row, col);
+            let position = Position::new(col, row);
             if visited.contains(&position) {
                 continue;
             }
@@ -106,20 +106,12 @@ fn find_sides(area: &HashSet<Position>) -> usize {
 fn find_perimeter(area: &HashSet<Position>) -> usize {
     let mut perimeter = 0;
     for pos in area {
-        let Position { y: row, x: col } = *pos;
-        perimeter += 4;
-        for dir in Direction::all() {
-            let other = match dir {
-                Direction::Down => Position::new(row + 1, col),
-                Direction::Up if row > 0 => Position::new(row - 1, col),
-                Direction::Left if col > 0 => Position::new(row, col - 1),
-                Direction::Right => Position::new(row, col + 1),
-                _ => continue,
-            };
-            if area.contains(&other) {
-                perimeter -= 1;
-            }
-        }
+        // let Position { y: row, x: col } = *pos;
+        perimeter += 4 - Direction::all()
+            .iter()
+            .filter_map(|dir| pos.safe_moved_by(dir))
+            .filter(|p| area.contains(p))
+            .count();
     }
     perimeter
 }
@@ -139,16 +131,12 @@ fn find_area(
         }
         visited.insert(pos);
         area.insert(pos);
-        let Position { y: row, x: col } = pos;
-        let cols = region[row].len();
-        for dir in Direction::all() {
-            let adj = match dir {
-                Direction::Down if row < rows - 1 => Position::new(row + 1, col),
-                Direction::Up if row > 0 => Position::new(row - 1, col),
-                Direction::Left if col > 0 => Position::new(row, col - 1),
-                Direction::Right if col < cols - 1 => Position::new(row, col + 1),
-                _ => continue,
-            };
+        let cols = region[pos.y].len();
+        for adj in Direction::all()
+            .iter()
+            .filter_map(|dir| pos.safe_moved_by(dir))
+            .filter(|p| p.y < rows && p.x < cols)
+        {
             if region[adj.y][adj.x] != plot_id || visited.contains(&adj) {
                 continue;
             }
@@ -179,7 +167,7 @@ mod test {
     #[test]
     fn aoc2024_12_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "862714");
         Ok(())
     }
 
