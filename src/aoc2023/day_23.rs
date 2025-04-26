@@ -36,7 +36,7 @@ impl AoC2023_23 {
 
     fn path_position(&self, row: usize) -> Option<Position> {
         let col = self.maze[row].iter().position(|x| *x == MAP_PATH)?;
-        Some(Position::new(row, col))
+        Some(Position::new(col, row))
     }
 
     fn position_start(&self) -> Position {
@@ -83,7 +83,7 @@ impl AoC2023_23 {
         let mut result = vec![self.position_start(), self.position_end()];
         for (r, row) in self.maze.iter().enumerate() {
             for (c, _) in row.iter().enumerate() {
-                let pos = Position::new(r, c);
+                let pos = Position::new(c, r);
                 let adj = self.adjacent(pos, provider);
                 if adj.len() > 2 {
                     result.push(pos);
@@ -94,23 +94,17 @@ impl AoC2023_23 {
     }
 
     fn adjacent(&self, pos: Position, provider: &DirectionProvider) -> Vec<Position> {
-        let Position { y: row, x: col } = pos;
         let rows = self.maze.len();
         let cols = self.maze[rows - 1].len();
-        let mut possible: HashMap<Direction, Position> = HashMap::new();
-        if row > 0 {
-            possible.insert(Direction::Up, Position::new(row - 1, col));
-        }
-        if row < rows - 1 {
-            possible.insert(Direction::Down, Position::new(row + 1, col));
-        }
-        if col > 0 {
-            possible.insert(Direction::Left, Position::new(row, col - 1));
-        }
-        if col < cols - 1 {
-            possible.insert(Direction::Right, Position::new(row, col + 1));
-        }
-        provider(self.maze[row][col])
+        let possible = Direction::all()
+            .iter()
+            .filter_map(|dir| {
+                let p = pos.safe_moved_by(dir)?;
+                Some((*dir, p))
+            })
+            .filter(|(_, p)| p.x < cols && p.y < rows)
+            .collect::<HashMap<_, _>>();
+        provider(self.maze[pos.y][pos.x])
             .iter()
             .filter_map(|dir| possible.get(dir))
             .filter(|Position { y: r, x: c }| self.maze[*r][*c] != MAP_FOREST)
