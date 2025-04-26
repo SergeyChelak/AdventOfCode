@@ -101,17 +101,7 @@ fn calc_lower_cost(
 
         let is_vertical = dir.is_vertical();
 
-        for next in Direction::all().iter().map(|dir| {
-            let mut next = p;
-            use Direction::*;
-            match dir {
-                Up => next.y -= 1,
-                Down => next.y += 1,
-                Left => next.x -= 1,
-                Right => next.x += 1,
-            }
-            (next, *dir)
-        }) {
+        for next in Direction::all().iter().map(|dir| (p.moved_by(dir), *dir)) {
             let (n_pos, n_dir) = next;
             if map[n_pos.y][n_pos.x] == WALL {
                 continue;
