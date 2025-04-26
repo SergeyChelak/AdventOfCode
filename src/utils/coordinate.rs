@@ -112,19 +112,19 @@ impl<T> Point2d<T>
 where
     T: Copy + std::ops::Add<Output = T> + std::ops::Sub<Output = T> + From<i8>,
 {
-    pub fn left(&self) -> Self {
+    pub fn up(&self) -> Self {
         Self::new(self.x, self.y - T::from(1))
     }
 
-    pub fn right(&self) -> Self {
+    pub fn down(&self) -> Self {
         Self::new(self.x, self.y + T::from(1))
     }
 
-    pub fn up(&self) -> Self {
+    pub fn left(&self) -> Self {
         Self::new(self.x - T::from(1), self.y)
     }
 
-    pub fn down(&self) -> Self {
+    pub fn right(&self) -> Self {
         Self::new(self.x + T::from(1), self.y)
     }
 
@@ -141,4 +141,41 @@ where
     //     self.x = self.x + T::from(dx);
     //     self.y = self.y + T::from(dy);
     // }
+}
+
+pub trait CheckedOps {
+    fn checked_add(self, rhs: Self) -> Option<Self>
+    where
+        Self: Sized;
+    fn checked_sub(self, rhs: Self) -> Option<Self>
+    where
+        Self: Sized;
+}
+
+macro_rules! impl_checked_ops {
+    ($($t:ty),*) => {
+        $(
+            impl CheckedOps for $t {
+                fn checked_add(self, rhs: Self) -> Option<Self> {
+                    Self::checked_add(self, rhs)
+                }
+                fn checked_sub(self, rhs: Self) -> Option<Self> {
+                    Self::checked_sub(self, rhs)
+                }
+            }
+        )*
+    };
+}
+
+impl_checked_ops!(i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize);
+impl<T> Point2d<T>
+where
+    T: Copy + std::ops::Add<Output = T> + std::ops::Sub<Output = T> + CheckedOps + From<i8>,
+{
+    pub fn _safe_up(&self) -> Option<Self> {
+        Some(Self {
+            x: self.x,
+            y: self.y.checked_sub(T::from(1))?,
+        })
+    }
 }

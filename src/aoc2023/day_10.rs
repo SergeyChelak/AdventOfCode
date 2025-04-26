@@ -57,7 +57,7 @@ impl AoC2023_10 {
         let mut maze: Maze = HashMap::new();
         for (r, line) in lines.iter().enumerate() {
             for (c, ch) in line.chars().enumerate() {
-                let pos = Position::new(r as Int, c as Int);
+                let pos = Position::new(c as Int, r as Int);
                 if ch == 'S' {
                     start = Some(pos);
                 } else {
@@ -174,7 +174,7 @@ impl Solution for AoC2023_10 {
             let mut maze = self.maze.borrow_mut();
             for row in 0..self.rows {
                 for col in 0..self.cols {
-                    let pos = Position::new(row, col);
+                    let pos = Position::new(col, row);
                     if !path.contains(&pos) {
                         maze.insert(pos, Pipe::Ground);
                     }
@@ -187,7 +187,7 @@ impl Solution for AoC2023_10 {
             let mut is_within = false;
             let mut edge_start = EdgeStart::Nope;
             for col in 0..self.cols {
-                let pos = Position::new(row, col);
+                let pos = Position::new(col, row);
                 let item = *maze.get(&pos).expect("Expected item (3)");
                 match item {
                     Pipe::NorthSouth => {
