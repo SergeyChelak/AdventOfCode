@@ -63,7 +63,7 @@ fn find_trailheads(map: &[Vec<u8>]) -> Vec<Coordinate> {
     for (row, arr) in map.iter().enumerate() {
         for (col, val) in arr.iter().enumerate() {
             if *val == 0 {
-                result.push(Coordinate::new(row, col));
+                result.push(Coordinate::new(col, row));
             }
         }
     }
@@ -109,16 +109,8 @@ fn get_adjacent(map: &[Vec<u8>], coordinate: Coordinate) -> Vec<Coordinate> {
     let expected_value = map[row][col] + 1;
     Direction::all()
         .iter()
-        .map(|dir| {
-            use Direction::*;
-            match dir {
-                Left if col > 0 => Coordinate::new(row, col - 1),
-                Right if col < cols - 1 => Coordinate::new(row, col + 1),
-                Up if row > 0 => Coordinate::new(row - 1, col),
-                Down if row < rows - 1 => Coordinate::new(row + 1, col),
-                _ => coordinate,
-            }
-        })
+        .filter_map(|dir| coordinate.safe_moved_by(dir))
+        .filter(|p| p.x < cols && p.y < rows)
         .filter(|c| map[c.y][c.x] == expected_value)
         .collect::<Vec<_>>()
 }
