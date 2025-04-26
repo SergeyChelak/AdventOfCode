@@ -53,20 +53,11 @@ impl AoC2023_21 {
             if step % 2 == 0 {
                 ans.insert(item);
             }
-            let Position { y: row, x: col } = item;
-            let mut adjacent = Vec::new();
-            if row > 0 {
-                adjacent.push(Position { y: row - 1, x: col });
-            }
-            if row < self.map.len() - 1 {
-                adjacent.push(Position { y: row + 1, x: col });
-            }
-            if col > 0 {
-                adjacent.push(Position { y: row, x: col - 1 });
-            }
-            if col < self.map[row].len() - 1 {
-                adjacent.push(Position { y: row, x: col + 1 });
-            }
+            let adjacent = Direction::all()
+                .iter()
+                .filter_map(|dir| item.safe_moved_by(dir))
+                .filter(|p| p.y < self.map.len() && p.x < self.map[item.y].len())
+                .collect::<Vec<_>>();
             for adj in adjacent {
                 if matches!(self.map[adj.y][adj.x], MapElement::Rock) || seen.contains(&adj) {
                     continue;
