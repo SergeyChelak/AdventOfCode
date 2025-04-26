@@ -107,28 +107,18 @@ fn get_robot_position(map: &[Vec<char>]) -> Option<Position> {
     for (r, row) in map.iter().enumerate() {
         for (c, elem) in row.iter().enumerate() {
             if *elem == ROBOT {
-                return Some(Position::new(r, c));
+                return Some(Position::new(c, r));
             }
         }
     }
     None
 }
 
-fn next_position(p: Position, direction: Direction) -> Position {
-    use Direction::*;
-    match direction {
-        Left => Position::new(p.y, p.x - 1),
-        Right => Position::new(p.y, p.x + 1),
-        Up => Position::new(p.y - 1, p.x),
-        Down => Position::new(p.y + 1, p.x),
-    }
-}
-
 fn simple_move(map: &mut [Vec<char>], pos: &mut Position, direction: Direction) {
     let mut current = *pos;
     let mut box_position: Option<Position> = None;
     loop {
-        current = next_position(current, direction);
+        current = current.moved_by(&direction);
         match map[current.y][current.x] {
             WALL => {
                 return;
@@ -162,20 +152,20 @@ fn wide_move(map: &mut [Vec<char>], robot_position: &mut Position, direction: Di
         };
         let mut cells = Vec::new();
         for pos in layer {
-            let next = next_position(*pos, direction);
+            let next = pos.moved_by(&direction);
             match map[next.y][next.x] {
                 WALL => return,
                 BOX => panic!("Only wide boxes are expected"),
                 BOX_L => {
                     cells.push(next);
                     if direction.is_vertical() {
-                        cells.push(next_position(next, Direction::Right));
+                        cells.push(next.moved_by(&Direction::Right));
                     }
                 }
                 BOX_R => {
                     cells.push(next);
                     if direction.is_vertical() {
-                        cells.push(next_position(next, Direction::Left));
+                        cells.push(next.moved_by(&Direction::Left));
                     }
                 }
                 _ => {
@@ -201,12 +191,12 @@ fn wide_move(map: &mut [Vec<char>], robot_position: &mut Position, direction: Di
     while let Some(layer) = layers.pop() {
         for p in layer {
             let val = preserved_values.get(&p).expect("Preserved value not found");
-            let next = next_position(p, direction);
+            let next = p.moved_by(&direction);
             map[next.y][next.x] = *val;
             map[p.y][p.x] = EMPTY;
         }
     }
-    *robot_position = next_position(*robot_position, direction);
+    *robot_position = robot_position.moved_by(&direction);
 }
 
 fn calc_gps_sum(map: &[Vec<char>]) -> usize {
