@@ -166,7 +166,7 @@ impl<T> Point2d<T>
 where
     T: Copy + std::ops::Add<Output = T> + std::ops::Sub<Output = T> + CheckedOps + From<u8>,
 {
-    pub fn _safe_moved_by(&self, direction: &Direction) -> Option<Self> {
+    pub fn safe_moved_by(&self, direction: &Direction) -> Option<Self> {
         match *direction {
             Direction::Up => self.safe_up(),
             Direction::Down => self.safe_down(),

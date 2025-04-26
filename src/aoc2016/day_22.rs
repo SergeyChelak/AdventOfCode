@@ -99,22 +99,11 @@ fn bfs_fewest_steps(grid: &Grid) -> usize {
 }
 
 fn adjacent_nodes(grid: &Grid, position: &Coordinate) -> Vec<Coordinate> {
-    vec![
-        position.safe_left(),
-        position.safe_right(),
-        position.safe_up(),
-        position.safe_down(),
-    ]
-    .into_iter()
-    .filter_map(|opt| {
-        if let Some(pos) = opt {
-            if grid.contains_key(&pos) {
-                return Some(pos);
-            }
-        }
-        None
-    })
-    .collect()
+    Direction::all()
+        .iter()
+        .filter_map(|dir| position.safe_moved_by(dir))
+        .filter(|pos| grid.contains_key(pos))
+        .collect()
 }
 
 pub struct AoC2016_22 {
