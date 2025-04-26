@@ -173,8 +173,8 @@ fn find_paths(map: &KeyMap, from: Position, to: Position) -> Vec<String> {
         let paths = path_map.get(&elem).expect("Bug (1)").clone();
         let len = paths.first().map(|x| x.len()).expect("Bug (2)");
 
-        for (dr, dc, ch) in [(0, 1, '>'), (0, -1, '<'), (1, 0, 'v'), (-1, 0, '^')] {
-            let next = Position::new(elem.y + dr, elem.x + dc);
+        for direction in Direction::all() {
+            let next = elem.moved_by(&direction);
             if !map.contains_key(&next) {
                 continue;
             }
@@ -189,7 +189,7 @@ fn find_paths(map: &KeyMap, from: Position, to: Position) -> Vec<String> {
             let entry = path_map.entry(next).or_default();
             for s in paths.iter() {
                 let mut p = s.clone();
-                p.push(ch);
+                p.push(direction.into());
                 if !entry.contains(&p) {
                     entry.push(p);
                 }
@@ -209,11 +209,22 @@ fn make_map<T: AsRef<[char]>>(pad: &[T]) -> KeyMap {
             if *val == '#' {
                 continue;
             }
-            let p = Position::new(r as isize, c as isize);
+            let p = Position::new(c as isize, r as isize);
             map.insert(p, *val);
         }
     }
     map
+}
+
+impl From<Direction> for char {
+    fn from(value: Direction) -> Self {
+        match value {
+            Direction::Up => '^',
+            Direction::Down => 'v',
+            Direction::Left => '<',
+            Direction::Right => '>',
+        }
+    }
 }
 
 #[cfg(test)]
