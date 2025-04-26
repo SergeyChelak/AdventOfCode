@@ -3,8 +3,6 @@ use std::{
     str::FromStr,
 };
 
-use crate::utils::DirectionTuple;
-
 use super::Direction;
 
 #[derive(Debug)]
@@ -108,10 +106,28 @@ where
     }
 }
 
+pub trait CheckedOps {
+    fn checked_add(self, rhs: Self) -> Option<Self>
+    where
+        Self: Sized;
+    fn checked_sub(self, rhs: Self) -> Option<Self>
+    where
+        Self: Sized;
+}
+
 impl<T> Point2d<T>
 where
-    T: Copy + std::ops::Add<Output = T> + std::ops::Sub<Output = T> + From<i8>,
+    T: Copy + std::ops::Add<Output = T> + std::ops::Sub<Output = T> + From<u8>,
 {
+    pub fn moved_by(&self, direction: &Direction) -> Self {
+        match *direction {
+            Direction::Up => self.up(),
+            Direction::Down => self.down(),
+            Direction::Left => self.left(),
+            Direction::Right => self.right(),
+        }
+    }
+
     pub fn up(&self) -> Self {
         Self::new(self.x, self.y - T::from(1))
     }
@@ -127,29 +143,6 @@ where
     pub fn right(&self) -> Self {
         Self::new(self.x + T::from(1), self.y)
     }
-
-    pub fn moved_by(&self, direction: &Direction) -> Self {
-        let (dx, dy) = DirectionTuple::from(*direction);
-        Self {
-            x: self.x + T::from(dx),
-            y: self.y + T::from(dy),
-        }
-    }
-
-    // pub fn moving_by(&mut self, direction: &Direction) {
-    //     let (dx, dy) = DirectionTuple::from(*direction);
-    //     self.x = self.x + T::from(dx);
-    //     self.y = self.y + T::from(dy);
-    // }
-}
-
-pub trait CheckedOps {
-    fn checked_add(self, rhs: Self) -> Option<Self>
-    where
-        Self: Sized;
-    fn checked_sub(self, rhs: Self) -> Option<Self>
-    where
-        Self: Sized;
 }
 
 macro_rules! impl_checked_ops {
@@ -168,14 +161,36 @@ macro_rules! impl_checked_ops {
 }
 
 impl_checked_ops!(i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize);
+
 impl<T> Point2d<T>
 where
-    T: Copy + std::ops::Add<Output = T> + std::ops::Sub<Output = T> + CheckedOps + From<i8>,
+    T: Copy + std::ops::Add<Output = T> + std::ops::Sub<Output = T> + CheckedOps + From<u8>,
 {
-    pub fn _safe_up(&self) -> Option<Self> {
+    pub fn safe_up(&self) -> Option<Self> {
         Some(Self {
             x: self.x,
             y: self.y.checked_sub(T::from(1))?,
+        })
+    }
+
+    pub fn safe_down(&self) -> Option<Self> {
+        Some(Self {
+            x: self.x,
+            y: self.y.checked_add(T::from(1))?,
+        })
+    }
+
+    pub fn safe_right(&self) -> Option<Self> {
+        Some(Self {
+            x: self.x.checked_add(T::from(1))?,
+            y: self.y,
+        })
+    }
+
+    pub fn safe_left(&self) -> Option<Self> {
+        Some(Self {
+            x: self.x.checked_sub(T::from(1))?,
+            y: self.y,
         })
     }
 }

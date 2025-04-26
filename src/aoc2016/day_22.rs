@@ -29,44 +29,6 @@ impl StorageInfo {
 
 type Coordinate = Point2d<usize>;
 
-impl Coordinate {
-    fn safe_left(&self) -> Option<Self> {
-        if self.x > 0 {
-            Some(Self {
-                x: self.x - 1,
-                y: self.y,
-            })
-        } else {
-            None
-        }
-    }
-
-    fn safe_right(&self) -> Option<Self> {
-        Some(Self {
-            x: self.x + 1,
-            y: self.y,
-        })
-    }
-
-    fn safe_up(&self) -> Option<Self> {
-        if self.y > 0 {
-            Some(Self {
-                x: self.x,
-                y: self.y - 1,
-            })
-        } else {
-            None
-        }
-    }
-
-    fn safe_down(&self) -> Option<Self> {
-        Some(Self {
-            x: self.x,
-            y: self.y + 1,
-        })
-    }
-}
-
 #[derive(Copy, Clone, Hash, Eq, PartialEq)]
 struct SearchState {
     empty: Coordinate,

@@ -74,7 +74,7 @@ fn adjacent_pt1(map: &[Vec<Int>], node: Node) -> Vec<Node> {
     let mut adj = Vec::new();
     let stripe = node.stripe;
     for (direction, point) in valid_points(node.point, rows, cols) {
-        if direction.is_reverse(&node.direction) {
+        if direction.is_reversed(&node.direction) {
             continue;
         }
         if direction != node.direction {
@@ -92,7 +92,7 @@ fn adjacent_pt2(map: &[Vec<Int>], node: Node) -> Vec<Node> {
     let mut adj = Vec::new();
     let stripe = node.stripe;
     for (direction, point) in valid_points(node.point, rows, cols) {
-        if direction.is_reverse(&node.direction) {
+        if direction.is_reversed(&node.direction) {
             continue;
         }
         if direction != node.direction && stripe >= 4 {
