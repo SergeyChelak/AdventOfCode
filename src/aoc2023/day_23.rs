@@ -4,7 +4,7 @@ use crate::utils::*;
 use std::collections::{HashMap, HashSet};
 use std::io;
 
-type Position = Position2<usize>;
+type Position = Point2d<usize>;
 
 const MAP_PATH: char = '.';
 const MAP_FOREST: char = '#';
@@ -94,7 +94,7 @@ impl AoC2023_23 {
     }
 
     fn adjacent(&self, pos: Position, provider: &DirectionProvider) -> Vec<Position> {
-        let Position { row, col } = pos;
+        let Position { y: row, x: col } = pos;
         let rows = self.maze.len();
         let cols = self.maze[rows - 1].len();
         let mut possible: HashMap<Direction, Position> = HashMap::new();
@@ -113,7 +113,7 @@ impl AoC2023_23 {
         provider(self.maze[row][col])
             .iter()
             .filter_map(|dir| possible.get(dir))
-            .filter(|Position { row: r, col: c }| self.maze[*r][*c] != MAP_FOREST)
+            .filter(|Position { y: r, x: c }| self.maze[*r][*c] != MAP_FOREST)
             .copied()
             .collect::<Vec<_>>()
     }

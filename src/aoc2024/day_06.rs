@@ -4,7 +4,7 @@ use crate::utils::*;
 use std::collections::HashSet;
 use std::io;
 
-type Position = Position2<usize>;
+type Position = Point2d<usize>;
 
 pub struct AoC2024_06 {
     input: Vec2<char>,
@@ -24,7 +24,7 @@ impl AoC2024_06 {
         for (row, s) in arr.iter().enumerate() {
             let chars = s.as_ref().chars().collect::<Vec<_>>();
             if let Some(col) = chars.iter().position(|x| *x == '^') {
-                start = Some(Position { row, col });
+                start = Some(Position { y: row, x: col });
             }
             input.push(chars);
         }
@@ -46,7 +46,7 @@ impl Solution for AoC2024_06 {
             let Some(next) = next_position(&self.input, position, direction) else {
                 break;
             };
-            if self.input[next.row][next.col] == '#' {
+            if self.input[next.y][next.x] == '#' {
                 direction = direction.turn_right();
                 continue;
             }
@@ -92,7 +92,7 @@ fn is_stuck(matrix: &[Vec<char>], mut position: Position, mut direction: Directi
         let Some(next) = next_position(matrix, position, direction) else {
             return false;
         };
-        if matrix[next.row][next.col] == '#' {
+        if matrix[next.y][next.x] == '#' {
             direction = direction.turn_right();
             continue;
         }
@@ -111,7 +111,7 @@ fn next_position(
     position: Position,
     direction: Direction,
 ) -> Option<Position> {
-    let Position { row, col } = position;
+    let Position { y: row, x: col } = position;
     let next = match direction {
         Direction::Up if row > 0 => Position::new(row - 1, col),
         Direction::Down if row < matrix.len() - 1 => Position::new(row + 1, col),

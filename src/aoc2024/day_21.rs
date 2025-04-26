@@ -4,7 +4,7 @@ use crate::utils::*;
 use std::collections::{HashMap, VecDeque};
 use std::{io, iter};
 
-type Position = Position2<isize>;
+type Position = Point2d<isize>;
 type KeyMap = HashMap<Position, char>;
 
 const NUMPAD: [[char; 3]; 4] = [
@@ -174,7 +174,7 @@ fn find_paths(map: &KeyMap, from: Position, to: Position) -> Vec<String> {
         let len = paths.first().map(|x| x.len()).expect("Bug (2)");
 
         for (dr, dc, ch) in [(0, 1, '>'), (0, -1, '<'), (1, 0, 'v'), (-1, 0, '^')] {
-            let next = Position::new(elem.row + dr, elem.col + dc);
+            let next = Position::new(elem.y + dr, elem.x + dc);
             if !map.contains_key(&next) {
                 continue;
             }

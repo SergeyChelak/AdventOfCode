@@ -4,7 +4,7 @@ use crate::utils::*;
 use std::collections::HashSet;
 use std::io;
 
-type Position = Position2<usize>;
+type Position = Point2d<usize>;
 
 type Grid = Vec<Vec<char>>;
 
@@ -17,22 +17,22 @@ fn bfs_path_len(grid: &Grid, start: &Position, finish: &Position) -> usize {
         steps += 1;
         let mut next = Vec::new();
         for pos in positions {
-            let (row, col) = (pos.row, pos.col);
+            let (row, col) = (pos.y, pos.x);
             let mut adj = Vec::new();
             if row > 0 {
-                adj.push(Position { row: row - 1, col })
+                adj.push(Position { y: row - 1, x: col })
             }
             if row < grid.len() - 1 {
-                adj.push(Position { row: row + 1, col })
+                adj.push(Position { y: row + 1, x: col })
             }
             if col > 0 {
-                adj.push(Position { row, col: col - 1 })
+                adj.push(Position { y: row, x: col - 1 })
             }
             if col < grid[row].len() - 1 {
-                adj.push(Position { row, col: col + 1 })
+                adj.push(Position { y: row, x: col + 1 })
             }
             for p in adj {
-                if grid[p.row][p.col] == '#' || visited.contains(&p) {
+                if grid[p.y][p.x] == '#' || visited.contains(&p) {
                     continue;
                 }
                 if p == *finish {
@@ -67,7 +67,7 @@ impl AoC2016_24 {
             for (col, ch) in chars.iter().enumerate() {
                 if ch.is_numeric() {
                     let number = ch.to_digit(10).expect("Numeric char expected");
-                    let pos = Position { row, col };
+                    let pos = Position { y: row, x: col };
                     points.push((number as usize, pos));
                 }
             }

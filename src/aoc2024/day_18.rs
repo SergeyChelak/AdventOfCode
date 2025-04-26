@@ -5,7 +5,7 @@ use std::collections::HashSet;
 use std::io;
 
 type Int = isize;
-type Position = Position2<Int>;
+type Position = Point2d<Int>;
 
 pub struct AoC2024_18 {
     coordinates: Vec<Position>,
@@ -29,7 +29,7 @@ impl AoC2024_18 {
             .map(|(r, c)| {
                 let row = r.parse::<Int>().expect("Invalid row value");
                 let col = c.parse::<Int>().expect("Invalid col value");
-                Position { row, col }
+                Position { y: row, x: col }
             })
             .collect::<Vec<_>>();
         Self {
@@ -43,8 +43,8 @@ impl AoC2024_18 {
         build_map(
             &self.coordinates,
             limit,
-            self.target.row + 1,
-            self.target.col + 1,
+            self.target.y + 1,
+            self.target.x + 1,
         )
     }
 }
@@ -71,7 +71,7 @@ impl Solution for AoC2024_18 {
         }
 
         let p = self.coordinates[left - 1];
-        format!("{},{}", p.row, p.col)
+        format!("{},{}", p.y, p.x)
     }
 
     fn description(&self) -> String {
@@ -86,7 +86,7 @@ fn build_map(positions: &[Position], limit: usize, rows: Int, cols: Int) -> Vec2
     for row in 0..rows {
         let mut arr = Vec::new();
         for col in 0..cols {
-            let p = Position { row, col };
+            let p = Position { y: row, x: col };
             arr.push(set.contains(&p));
         }
         map.push(arr);
@@ -109,12 +109,12 @@ fn dfs(map: &[Vec<bool>], target: Position) -> Option<usize> {
                 continue;
             }
             visited.insert(pos);
-            let cols = map[pos.row as usize].len() as isize;
+            let cols = map[pos.y as usize].len() as isize;
             [(1, 0), (-1, 0), (0, 1), (0, -1)]
                 .iter()
-                .map(|(dr, dc)| Position::new(pos.row + *dr, pos.col + *dc))
-                .filter(|&p| p.row >= 0 && p.col >= 0 && p.row < rows && p.col < cols)
-                .filter(|p| !map[p.row as usize][p.col as usize])
+                .map(|(dr, dc)| Position::new(pos.y + *dr, pos.x + *dc))
+                .filter(|&p| p.y >= 0 && p.x >= 0 && p.y < rows && p.x < cols)
+                .filter(|p| !map[p.y as usize][p.x as usize])
                 .for_each(|p| {
                     next.push(p);
                 });

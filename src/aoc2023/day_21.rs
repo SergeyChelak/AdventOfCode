@@ -4,7 +4,7 @@ use crate::utils::*;
 use std::collections::{HashSet, VecDeque};
 use std::io;
 
-type Position = Position2<usize>;
+type Position = Point2d<usize>;
 
 enum MapElement {
     Plot,
@@ -23,7 +23,7 @@ impl AoC2023_21 {
     }
 
     fn with_lines(lines: &[String]) -> Self {
-        let mut start = Position { row: 0, col: 0 };
+        let mut start = Position { y: 0, x: 0 };
         let mut map = Vec::new();
         for (r, line) in lines.iter().enumerate() {
             let mut row = Vec::new();
@@ -32,7 +32,7 @@ impl AoC2023_21 {
                     row.push(MapElement::Rock);
                 } else {
                     if ch == 'S' {
-                        start = Position { row: r, col: c };
+                        start = Position { y: r, x: c };
                     }
                     row.push(MapElement::Plot);
                 }
@@ -53,22 +53,22 @@ impl AoC2023_21 {
             if step % 2 == 0 {
                 ans.insert(item);
             }
-            let Position { row, col } = item;
+            let Position { y: row, x: col } = item;
             let mut adjacent = Vec::new();
             if row > 0 {
-                adjacent.push(Position { row: row - 1, col });
+                adjacent.push(Position { y: row - 1, x: col });
             }
             if row < self.map.len() - 1 {
-                adjacent.push(Position { row: row + 1, col });
+                adjacent.push(Position { y: row + 1, x: col });
             }
             if col > 0 {
-                adjacent.push(Position { row, col: col - 1 });
+                adjacent.push(Position { y: row, x: col - 1 });
             }
             if col < self.map[row].len() - 1 {
-                adjacent.push(Position { row, col: col + 1 });
+                adjacent.push(Position { y: row, x: col + 1 });
             }
             for adj in adjacent {
-                if matches!(self.map[adj.row][adj.col], MapElement::Rock) || seen.contains(&adj) {
+                if matches!(self.map[adj.y][adj.x], MapElement::Rock) || seen.contains(&adj) {
                     continue;
                 }
                 seen.insert(adj);

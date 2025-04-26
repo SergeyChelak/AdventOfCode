@@ -4,7 +4,7 @@ use crate::utils::*;
 use std::collections::{HashMap, HashSet};
 use std::io;
 
-type Coordinate = Position2<isize>;
+type Coordinate = Point2d<isize>;
 
 type CoordinateSet = HashSet<Coordinate>;
 type CharCoordinateMap = HashMap<char, Vec<Coordinate>>;
@@ -41,11 +41,11 @@ impl Solution for AoC2024_08 {
             for (i, a) in arr.iter().enumerate() {
                 let cols = self.input[i].len() as isize;
                 for b in arr.iter().skip(i + 1) {
-                    let d_row = b.row - a.row;
-                    let d_col = b.col - a.col;
+                    let d_row = b.y - a.y;
+                    let d_col = b.x - a.x;
                     [
-                        Coordinate::new(a.row - d_row, a.col - d_col),
-                        Coordinate::new(b.row + d_row, b.col + d_col),
+                        Coordinate::new(a.y - d_row, a.x - d_col),
+                        Coordinate::new(b.y + d_row, b.x + d_col),
                     ]
                     .iter()
                     .filter(|coord| is_valid(coord, rows, cols))
@@ -72,7 +72,7 @@ impl Solution for AoC2024_08 {
                 let cols = self.input[i].len() as isize;
                 let mut append_from_line = |coord: &Coordinate, d_row: isize, d_col: isize| {
                     for k in 0.. {
-                        let coord = Coordinate::new(coord.row - k * d_row, coord.col - k * d_col);
+                        let coord = Coordinate::new(coord.y - k * d_row, coord.x - k * d_col);
                         if !is_valid(&coord, rows, cols) {
                             break;
                         }
@@ -80,8 +80,8 @@ impl Solution for AoC2024_08 {
                     }
                 };
                 for b in arr.iter().skip(i + 1) {
-                    let d_row = b.row - a.row;
-                    let d_col = b.col - a.col;
+                    let d_row = b.y - a.y;
+                    let d_col = b.x - a.x;
                     append_from_line(a, -d_row, -d_col);
                     append_from_line(b, d_row, d_col);
                 }
@@ -110,7 +110,7 @@ fn make_char_coordinate_map(input: &[Vec<char>]) -> CharCoordinateMap {
 }
 
 fn is_valid(coord: &Coordinate, rows: isize, cols: isize) -> bool {
-    coord.row >= 0 && coord.row < rows && coord.col >= 0 && coord.col < cols
+    coord.y >= 0 && coord.y < rows && coord.x >= 0 && coord.x < cols
 }
 
 #[cfg(test)]

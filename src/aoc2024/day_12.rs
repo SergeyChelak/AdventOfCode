@@ -47,7 +47,7 @@ impl Solution for AoC2024_12 {
     }
 }
 
-type Position = Position2<usize>;
+type Position = Point2d<usize>;
 
 fn calculate(
     region: &[Vec<char>],
@@ -70,7 +70,7 @@ fn calculate(
 fn find_sides(area: &HashSet<Position>) -> usize {
     let area = area
         .iter()
-        .map(|p| (p.row as isize * 10, p.col as isize * 10))
+        .map(|p| (p.y as isize * 10, p.x as isize * 10))
         .collect::<HashSet<_>>();
     let mut all_corners = HashSet::new();
     let offsets = [(-5, -5), (5, -5), (5, 5), (-5, 5)];
@@ -106,7 +106,7 @@ fn find_sides(area: &HashSet<Position>) -> usize {
 fn find_perimeter(area: &HashSet<Position>) -> usize {
     let mut perimeter = 0;
     for pos in area {
-        let Position { row, col } = *pos;
+        let Position { y: row, x: col } = *pos;
         perimeter += 4;
         for dir in Direction::all() {
             let other = match dir {
@@ -130,7 +130,7 @@ fn find_area(
     visited: &mut HashSet<Position>,
 ) -> HashSet<Position> {
     let mut area = HashSet::new();
-    let plot_id = region[from.row][from.col];
+    let plot_id = region[from.y][from.x];
     let mut queue = vec![from];
     let rows = region.len();
     while let Some(pos) = queue.pop() {
@@ -139,7 +139,7 @@ fn find_area(
         }
         visited.insert(pos);
         area.insert(pos);
-        let Position { row, col } = pos;
+        let Position { y: row, x: col } = pos;
         let cols = region[row].len();
         for dir in Direction::all() {
             let adj = match dir {
@@ -149,7 +149,7 @@ fn find_area(
                 Direction::Right if col < cols - 1 => Position::new(row, col + 1),
                 _ => continue,
             };
-            if region[adj.row][adj.col] != plot_id || visited.contains(&adj) {
+            if region[adj.y][adj.x] != plot_id || visited.contains(&adj) {
                 continue;
             }
             queue.push(adj);

@@ -76,7 +76,7 @@ const END: char = 'E';
 const STEP_COST: usize = 1;
 const TURN_COST: usize = 1000;
 
-type Position = Position2<usize>;
+type Position = Point2d<usize>;
 type Node = (Position, Direction);
 
 fn calc_lower_cost(
@@ -105,15 +105,15 @@ fn calc_lower_cost(
             let mut next = p;
             use Direction::*;
             match dir {
-                Up => next.row -= 1,
-                Down => next.row += 1,
-                Left => next.col -= 1,
-                Right => next.col += 1,
+                Up => next.y -= 1,
+                Down => next.y += 1,
+                Left => next.x -= 1,
+                Right => next.x += 1,
             }
             (next, *dir)
         }) {
             let (n_pos, n_dir) = next;
-            if map[n_pos.row][n_pos.col] == WALL {
+            if map[n_pos.y][n_pos.x] == WALL {
                 continue;
             }
             let next_cost = cost

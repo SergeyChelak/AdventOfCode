@@ -28,9 +28,6 @@ pub use math::*;
 pub mod directions;
 pub use directions::*;
 
-pub mod position;
-pub use position::*;
-
 pub mod plain_interval;
 pub use plain_interval::*;
 

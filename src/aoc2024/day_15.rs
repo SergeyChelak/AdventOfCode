@@ -1,11 +1,11 @@
 use crate::solution::Solution;
-use crate::utils::{Direction, Position2, Vec2};
+use crate::utils::{Direction, Point2d, Vec2};
 
 use std::collections::HashMap;
 use std::fs::read_to_string;
 use std::io;
 
-type Position = Position2<usize>;
+type Position = Point2d<usize>;
 
 const ROBOT: char = '@';
 const WALL: char = '#';
@@ -52,7 +52,7 @@ impl Solution for AoC2024_15 {
     fn part_one(&self) -> String {
         let mut map = self.map.clone();
         let mut pos = get_robot_position(&map).expect("robot position not found");
-        map[pos.row][pos.col] = EMPTY;
+        map[pos.y][pos.x] = EMPTY;
         for dir in &self.path {
             simple_move(&mut map, &mut pos, *dir);
         }
@@ -117,10 +117,10 @@ fn get_robot_position(map: &[Vec<char>]) -> Option<Position> {
 fn next_position(p: Position, direction: Direction) -> Position {
     use Direction::*;
     match direction {
-        Left => Position::new(p.row, p.col - 1),
-        Right => Position::new(p.row, p.col + 1),
-        Up => Position::new(p.row - 1, p.col),
-        Down => Position::new(p.row + 1, p.col),
+        Left => Position::new(p.y, p.x - 1),
+        Right => Position::new(p.y, p.x + 1),
+        Up => Position::new(p.y - 1, p.x),
+        Down => Position::new(p.y + 1, p.x),
     }
 }
 
@@ -129,7 +129,7 @@ fn simple_move(map: &mut [Vec<char>], pos: &mut Position, direction: Direction) 
     let mut box_position: Option<Position> = None;
     loop {
         current = next_position(current, direction);
-        match map[current.row][current.col] {
+        match map[current.y][current.x] {
             WALL => {
                 return;
             }
@@ -144,14 +144,14 @@ fn simple_move(map: &mut [Vec<char>], pos: &mut Position, direction: Direction) 
             _ => unreachable!("???"),
         }
     }
-    map[pos.row][pos.col] = EMPTY;
+    map[pos.y][pos.x] = EMPTY;
     if let Some(bp) = box_position {
         *pos = bp;
-        map[current.row][current.col] = BOX;
+        map[current.y][current.x] = BOX;
     } else {
         *pos = current;
     }
-    map[pos.row][pos.col] = EMPTY;
+    map[pos.y][pos.x] = EMPTY;
 }
 
 fn wide_move(map: &mut [Vec<char>], robot_position: &mut Position, direction: Direction) {
@@ -163,7 +163,7 @@ fn wide_move(map: &mut [Vec<char>], robot_position: &mut Position, direction: Di
         let mut cells = Vec::new();
         for pos in layer {
             let next = next_position(*pos, direction);
-            match map[next.row][next.col] {
+            match map[next.y][next.x] {
                 WALL => return,
                 BOX => panic!("Only wide boxes are expected"),
                 BOX_L => {
@@ -192,7 +192,7 @@ fn wide_move(map: &mut [Vec<char>], robot_position: &mut Position, direction: Di
     let preserved_values = {
         let mut store = HashMap::new();
         for p in layers.iter().flatten() {
-            let val = map[p.row][p.col];
+            let val = map[p.y][p.x];
             store.insert(*p, val);
         }
         store
@@ -202,8 +202,8 @@ fn wide_move(map: &mut [Vec<char>], robot_position: &mut Position, direction: Di
         for p in layer {
             let val = preserved_values.get(&p).expect("Preserved value not found");
             let next = next_position(p, direction);
-            map[next.row][next.col] = *val;
-            map[p.row][p.col] = EMPTY;
+            map[next.y][next.x] = *val;
+            map[p.y][p.x] = EMPTY;
         }
     }
     *robot_position = next_position(*robot_position, direction);

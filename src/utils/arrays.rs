@@ -1,12 +1,12 @@
-use super::Position2;
+use super::Point2d;
 
 pub type Vec2<T> = Vec<Vec<T>>;
 
-pub fn get_first_position<T: Eq>(map: &[Vec<T>], element: T) -> Option<Position2<usize>> {
+pub fn get_first_position<T: Eq>(map: &[Vec<T>], element: T) -> Option<Point2d<usize>> {
     for (row, arr) in map.iter().enumerate() {
         for (col, val) in arr.iter().enumerate() {
             if *val == element {
-                return Some(Position2 { row, col });
+                return Some(Point2d { y: row, x: col });
             }
         }
     }

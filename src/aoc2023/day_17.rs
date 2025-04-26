@@ -6,7 +6,7 @@ use std::collections::{BinaryHeap, HashMap};
 use std::io;
 
 type Int = u32;
-type Point = Position2<usize>;
+type Point = Point2d<usize>;
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 struct Node {
@@ -52,7 +52,7 @@ impl PartialOrd for QueueItem {
 
 fn valid_points(point: Point, rows: usize, cols: usize) -> HashMap<Direction, Point> {
     let mut adj = HashMap::new();
-    let Point { row: r, col: c } = point;
+    let Point { y: r, x: c } = point;
     if r > 0 {
         adj.insert(Direction::Up, Point::new(r - 1, c));
     }
@@ -129,7 +129,7 @@ fn dijkstra(map: &[Vec<Int>], start: Point, target: Point, adjacent: &Adjacent) 
             return Some(weight);
         }
         for adj in adjacent(map, node) {
-            let new_weight = weight + map[adj.point.row][adj.point.col];
+            let new_weight = weight + map[adj.point.y][adj.point.x];
             if let Some(old_weight) = weights.get(&adj) {
                 if new_weight >= *old_weight {
                     continue;

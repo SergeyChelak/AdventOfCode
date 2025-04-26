@@ -5,7 +5,7 @@ use std::collections::{HashMap, VecDeque};
 use std::io;
 
 type Int = usize;
-type Position = Position2<Int>;
+type Position = Point2d<Int>;
 const WALL: char = '#';
 
 pub struct AoC2024_20 {
@@ -55,7 +55,7 @@ impl Solution for AoC2024_20 {
                 positions.push(Position::new(r + 1, c + 1));
                 positions.push(Position::new(r - 1, c + 1));
                 for p in positions {
-                    if self.map[p.row][p.col] == WALL {
+                    if self.map[p.y][p.x] == WALL {
                         continue;
                     }
                     let val = *distances.get(&p).expect("Bug in code (3)");
@@ -77,7 +77,7 @@ impl Solution for AoC2024_20 {
                 if pos1 == pos2 {
                     continue;
                 }
-                let val = pos1.row.abs_diff(pos2.row) + pos1.col.abs_diff(pos2.col);
+                let val = pos1.y.abs_diff(pos2.y) + pos1.x.abs_diff(pos2.x);
                 if val > 20 {
                     continue;
                 }
@@ -108,13 +108,13 @@ fn distances_with_bfs(map: &[Vec<char>], start: Position) -> HashMap<Position, u
         let dist = *distances.get(&elem).expect("check code (1)");
         for dir in Direction::all() {
             let next = match dir {
-                Direction::Up if elem.row > 0 => Position::new(elem.row - 1, elem.col),
-                Direction::Down if elem.row < rows - 1 => Position::new(elem.row + 1, elem.col),
-                Direction::Left if elem.col > 0 => Position::new(elem.row, elem.col - 1),
-                Direction::Right if elem.col < cols - 1 => Position::new(elem.row, elem.col + 1),
+                Direction::Up if elem.y > 0 => Position::new(elem.y - 1, elem.x),
+                Direction::Down if elem.y < rows - 1 => Position::new(elem.y + 1, elem.x),
+                Direction::Left if elem.x > 0 => Position::new(elem.y, elem.x - 1),
+                Direction::Right if elem.x < cols - 1 => Position::new(elem.y, elem.x + 1),
                 _ => continue,
             };
-            if map[next.row][next.col] == WALL {
+            if map[next.y][next.x] == WALL {
                 continue;
             }
             if distances.contains_key(&next) {

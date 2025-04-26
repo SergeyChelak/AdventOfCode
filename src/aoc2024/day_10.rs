@@ -56,7 +56,7 @@ impl Solution for AoC2024_10 {
     }
 }
 
-type Coordinate = Position2<usize>;
+type Coordinate = Point2d<usize>;
 
 fn find_trailheads(map: &[Vec<u8>]) -> Vec<Coordinate> {
     let mut result = Vec::new();
@@ -76,7 +76,7 @@ enum SearchMode {
 }
 
 fn trailhead_value(map: &[Vec<u8>], start: Coordinate, mode: SearchMode) -> usize {
-    assert!(map[start.row][start.col] == 0);
+    assert!(map[start.y][start.x] == 0);
     let mut stack = vec![start];
     let mut visited: HashSet<Coordinate> = HashSet::new();
     let mut count = 0;
@@ -84,7 +84,7 @@ fn trailhead_value(map: &[Vec<u8>], start: Coordinate, mode: SearchMode) -> usiz
         if matches!(mode, SearchMode::Score) {
             visited.insert(coordinate);
         }
-        let Coordinate { row, col } = coordinate;
+        let Coordinate { y: row, x: col } = coordinate;
         if map[row][col] == 9 {
             count += 1;
             continue;
@@ -103,7 +103,7 @@ fn trailhead_value(map: &[Vec<u8>], start: Coordinate, mode: SearchMode) -> usiz
 }
 
 fn get_adjacent(map: &[Vec<u8>], coordinate: Coordinate) -> Vec<Coordinate> {
-    let Coordinate { row, col } = coordinate;
+    let Coordinate { y: row, x: col } = coordinate;
     let rows = map.len();
     let cols = map[row].len();
     let expected_value = map[row][col] + 1;
@@ -119,7 +119,7 @@ fn get_adjacent(map: &[Vec<u8>], coordinate: Coordinate) -> Vec<Coordinate> {
                 _ => coordinate,
             }
         })
-        .filter(|c| map[c.row][c.col] == expected_value)
+        .filter(|c| map[c.y][c.x] == expected_value)
         .collect::<Vec<_>>()
 }
 
