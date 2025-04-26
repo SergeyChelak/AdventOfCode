@@ -27,9 +27,9 @@ impl AoC2024_18 {
             .filter(|s| !s.is_empty())
             .map(|s| s.split_once(',').expect("Invalid input format"))
             .map(|(r, c)| {
-                let row = r.parse::<Int>().expect("Invalid row value");
-                let col = c.parse::<Int>().expect("Invalid col value");
-                Position { y: row, x: col }
+                let y = r.parse::<Int>().expect("Invalid row value");
+                let x = c.parse::<Int>().expect("Invalid col value");
+                Position { y, x }
             })
             .collect::<Vec<_>>();
         Self {
@@ -110,10 +110,10 @@ fn dfs(map: &[Vec<bool>], target: Position) -> Option<usize> {
             }
             visited.insert(pos);
             let cols = map[pos.y as usize].len() as isize;
-            [(1, 0), (-1, 0), (0, 1), (0, -1)]
+            Direction::all()
                 .iter()
-                .map(|(dr, dc)| Position::new(pos.y + *dr, pos.x + *dc))
-                .filter(|&p| p.y >= 0 && p.x >= 0 && p.y < rows && p.x < cols)
+                .map(|dir| pos.moved_by(dir))
+                .filter(|p| (0..rows).contains(&p.y) && (0..cols).contains(&p.x))
                 .filter(|p| !map[p.y as usize][p.x as usize])
                 .for_each(|p| {
                     next.push(p);
