@@ -38,7 +38,7 @@ impl AoC2019_10 {
     }
 
     fn monitoring_location(&self) -> (Point, usize) {
-        let mut result = (Point::new(0, 0), 0);
+        let mut result = (Point::zero(), 0);
         for first in self.points.iter() {
             let mut slope = HashSet::<(Int, Int)>::new();
             for second in self.points.iter() {

@@ -42,6 +42,10 @@ impl Direction {
             Self::Left => Self::Right,
         }
     }
+
+    pub fn is_reverse(&self, other: &Self) -> bool {
+        self.reverse() == *other
+    }
 }
 
 pub type DirectionTuple = (i8, i8);

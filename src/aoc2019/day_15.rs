@@ -82,7 +82,7 @@ fn traverse_environment(input: &[Int]) -> Environment {
     let mut computer = IntcodeComputer::with_size(10 * 1024);
     computer.load_program(input);
 
-    let mut position = Position::new(0, 0);
+    let mut position = Position::zero();
     let mut path: Vec<Direction> = Vec::new();
 
     let mut oxygen_position: Option<Position> = None;

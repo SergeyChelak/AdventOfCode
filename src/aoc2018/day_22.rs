@@ -162,7 +162,7 @@ impl PartialOrd for QueueItem {
 fn find(erosion_map: &ErosionMap, target: Coordinate) -> Option<usize> {
     let mut weights = HashMap::<State, usize>::new();
     let start = State {
-        coordinate: Coordinate::new(0, 0),
+        coordinate: Coordinate::zero(),
         equipment: Equipment::Torch,
     };
     weights.insert(start, 0);

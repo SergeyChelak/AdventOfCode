@@ -6,34 +6,7 @@ use std::collections::{BinaryHeap, HashMap};
 use std::io;
 
 type Int = u32;
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
-struct Point {
-    row: usize,
-    col: usize,
-}
-
-impl Direction {
-    fn opposite(&self) -> Self {
-        use Direction::*;
-        match self {
-            Up => Down,
-            Down => Up,
-            Left => Right,
-            Right => Left,
-        }
-    }
-
-    fn is_opposite(&self, other: &Self) -> bool {
-        self.opposite() == *other
-    }
-}
-
-impl Point {
-    fn new(row: usize, col: usize) -> Self {
-        Self { row, col }
-    }
-}
+type Point = Position2<usize>;
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 struct Node {
@@ -101,7 +74,7 @@ fn adjacent_pt1(map: &[Vec<Int>], node: Node) -> Vec<Node> {
     let mut adj = Vec::new();
     let stripe = node.stripe;
     for (direction, point) in valid_points(node.point, rows, cols) {
-        if direction.is_opposite(&node.direction) {
+        if direction.is_reverse(&node.direction) {
             continue;
         }
         if direction != node.direction {
@@ -119,7 +92,7 @@ fn adjacent_pt2(map: &[Vec<Int>], node: Node) -> Vec<Node> {
     let mut adj = Vec::new();
     let stripe = node.stripe;
     for (direction, point) in valid_points(node.point, rows, cols) {
-        if direction.is_opposite(&node.direction) {
+        if direction.is_reverse(&node.direction) {
             continue;
         }
         if direction != node.direction && stripe >= 4 {

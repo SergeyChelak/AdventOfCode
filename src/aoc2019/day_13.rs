@@ -121,8 +121,8 @@ fn blocks_amount(display: &PixelDisplay) -> usize {
 }
 
 fn sprites_position(display: &PixelDisplay) -> (Pixel, Pixel) {
-    let mut ball = Pixel::new(0, 0);
-    let mut paddle = Pixel::new(0, 0);
+    let mut ball = Pixel::zero();
+    let mut paddle = Pixel::zero();
     display
         .iter()
         .filter(|(_, v)| **v == TILE_PADDLE || **v == TILE_BALL)

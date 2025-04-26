@@ -1,6 +1,6 @@
 use super::Point2d;
 
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Position2<T> {
     pub row: T,
     pub col: T,

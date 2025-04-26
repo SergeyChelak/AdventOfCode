@@ -246,7 +246,7 @@ fn build_map(input: &[Int]) -> ScaffoldMap {
 
 fn convert_map(output: &[Int]) -> ScaffoldMap {
     let mut result = ScaffoldMap::new();
-    let mut point = Point::new(0, 0);
+    let mut point = Point::zero();
     for val in output {
         match *val {
             46 => {}

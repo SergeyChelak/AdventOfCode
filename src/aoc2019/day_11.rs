@@ -29,7 +29,7 @@ impl AoC2019_11 {
         computer.load_program(&self.input);
 
         let mut panels: HashMap<Position, Int> = HashMap::new();
-        let mut position = Position::new(0, 0);
+        let mut position = Position::zero();
         if let Some(color) = initial_color {
             panels.insert(position, color);
         }

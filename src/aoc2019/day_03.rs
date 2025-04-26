@@ -42,7 +42,7 @@ type Wire = Vec<WireNode>;
 
 fn wire_positions(wire: &Wire) -> WirePositions {
     let mut positions = WirePositions::new();
-    let mut position = Position::new(0, 0);
+    let mut position = Position::zero();
     let mut steps = 0;
     for node in wire {
         let times = node.value;

@@ -101,6 +101,15 @@ where
 
 impl<T> Point2d<T>
 where
+    T: From<u8>,
+{
+    pub fn zero() -> Self {
+        Self::new(T::from(0), T::from(0))
+    }
+}
+
+impl<T> Point2d<T>
+where
     T: Copy + std::ops::Add<Output = T> + std::ops::Sub<Output = T> + From<i8>,
 {
     pub fn left(&self) -> Self {

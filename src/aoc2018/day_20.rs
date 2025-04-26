@@ -35,7 +35,7 @@ impl Solution for AoC2018_20 {
 }
 
 fn build_map(regex: &Expression) -> HashMap<Coordinate, usize> {
-    let mut current = Coordinate::new(0, 0);
+    let mut current = Coordinate::zero();
     let mut map = HashMap::<Coordinate, usize>::new();
     map.insert(current, 0);
     let mut stack = Vec::<Coordinate>::new();
