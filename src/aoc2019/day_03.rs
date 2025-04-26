@@ -47,12 +47,7 @@ fn wire_positions(wire: &Wire) -> WirePositions {
     for node in wire {
         let times = node.value;
         for _ in 0..times {
-            position = match node.direction {
-                Direction::Up => position.up(),
-                Direction::Down => position.down(),
-                Direction::Left => position.left(),
-                Direction::Right => position.right(),
-            };
+            position = position.moved_by(&node.direction);
             steps += 1;
             if positions.contains_key(&position) {
                 continue;

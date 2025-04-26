@@ -49,12 +49,7 @@ impl AoC2019_11 {
                 1 => direction.turn_right(),
                 _ => panic!("Unexpected movement value {movement}"),
             };
-            position = match direction {
-                Direction::Up => position.up(),
-                Direction::Down => position.down(),
-                Direction::Left => position.left(),
-                Direction::Right => position.right(),
-            }
+            position = position.moved_by(&direction);
         }
         panels
     }

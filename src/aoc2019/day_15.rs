@@ -48,19 +48,6 @@ impl Solution for AoC2019_15 {
 
 type Position = Point2d<isize>;
 
-impl Position {
-    fn move_by(&self, direction: &Direction) -> Self {
-        let x = self.x;
-        let y = self.y;
-        match direction {
-            Direction::Up => Position::new(x, y - 1),
-            Direction::Down => Position::new(x, y + 1),
-            Direction::Left => Position::new(x - 1, y),
-            Direction::Right => Position::new(x + 1, y),
-        }
-    }
-}
-
 const DIRECTION_NORTH: Int = 1;
 const DIRECTION_SOUTH: Int = 2;
 const DIRECTION_WEST: Int = 3;
@@ -108,7 +95,7 @@ fn traverse_environment(input: &[Int]) -> Environment {
         let mut is_backtracking = false;
         // has adjacent?
         if let Some(dir) = Direction::all().iter().find(|dir| {
-            let p = position.move_by(dir);
+            let p = position.moved_by(dir);
             let distance = distance_map.get(&p).unwrap_or(&Int::MAX);
             *distance > path.len() as Int + 1
         }) {
@@ -128,7 +115,7 @@ fn traverse_environment(input: &[Int]) -> Environment {
             panic!("Empty output")
         };
 
-        let next = position.move_by(&dir);
+        let next = position.moved_by(&dir);
         map.insert(next, output);
         if output != TILE_WALL {
             position = next;
@@ -159,7 +146,7 @@ fn fill(map: &mut TileMap, start: Position) -> usize {
         for p in positions.iter() {
             Direction::all()
                 .iter()
-                .map(|dir| p.move_by(dir))
+                .map(|dir| p.moved_by(dir))
                 .filter(|p| {
                     let tile = map.get(p).unwrap_or(&TILE_UNDEFINED);
                     *tile == TILE_FREE
