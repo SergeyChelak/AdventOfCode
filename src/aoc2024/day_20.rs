@@ -43,17 +43,17 @@ impl Solution for AoC2024_20 {
                     continue;
                 }
                 let dist = *distances
-                    .get(&Position::new(r, c))
+                    .get(&Position::new(c, r))
                     .expect("Bug in code (2)");
                 let mut positions = Vec::new();
                 if r < rows - 2 {
-                    positions.push(Position::new(r + 2, c));
+                    positions.push(Position::new(c, r + 2));
                 }
                 if c < cols - 2 {
-                    positions.push(Position::new(r, c + 2));
+                    positions.push(Position::new(c + 2, r));
                 }
-                positions.push(Position::new(r + 1, c + 1));
-                positions.push(Position::new(r - 1, c + 1));
+                positions.push(Position::new(c + 1, r + 1));
+                positions.push(Position::new(c + 1, r - 1));
                 for p in positions {
                     if self.map[p.y][p.x] == WALL {
                         continue;
@@ -106,14 +106,11 @@ fn distances_with_bfs(map: &[Vec<char>], start: Position) -> HashMap<Position, u
 
     while let Some(elem) = queue.pop_front() {
         let dist = *distances.get(&elem).expect("check code (1)");
-        for dir in Direction::all() {
-            let next = match dir {
-                Direction::Up if elem.y > 0 => Position::new(elem.y - 1, elem.x),
-                Direction::Down if elem.y < rows - 1 => Position::new(elem.y + 1, elem.x),
-                Direction::Left if elem.x > 0 => Position::new(elem.y, elem.x - 1),
-                Direction::Right if elem.x < cols - 1 => Position::new(elem.y, elem.x + 1),
-                _ => continue,
-            };
+        for next in Direction::all()
+            .iter()
+            .filter_map(|dir| elem.safe_moved_by(dir))
+            .filter(|p| p.x < cols && p.y < rows)
+        {
             if map[next.y][next.x] == WALL {
                 continue;
             }
