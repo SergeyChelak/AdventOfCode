@@ -24,7 +24,7 @@ impl AoC2024_06 {
         for (row, s) in arr.iter().enumerate() {
             let chars = s.as_ref().chars().collect::<Vec<_>>();
             if let Some(col) = chars.iter().position(|x| *x == '^') {
-                start = Some(Position { y: row, x: col });
+                start = Some(Position::new(col, row));
             }
             input.push(chars);
         }
@@ -111,15 +111,11 @@ fn next_position(
     position: Position,
     direction: Direction,
 ) -> Option<Position> {
-    let Position { y: row, x: col } = position;
-    let next = match direction {
-        Direction::Up if row > 0 => Position::new(row - 1, col),
-        Direction::Down if row < matrix.len() - 1 => Position::new(row + 1, col),
-        Direction::Left if col > 0 => Position::new(row, col - 1),
-        Direction::Right if col < matrix[row].len() - 1 => Position::new(row, col + 1),
-        _ => return None,
-    };
-    Some(next)
+    let result = position.safe_moved_by(&direction)?;
+    if result.y < matrix.len() && result.x < matrix[position.y].len() {
+        return Some(result);
+    }
+    None
 }
 
 #[cfg(test)]
