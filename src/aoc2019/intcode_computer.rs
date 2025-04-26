@@ -55,7 +55,7 @@ impl From<Int> for Mode {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ExecutionStatus {
     Halted,
     WaitForInput,
