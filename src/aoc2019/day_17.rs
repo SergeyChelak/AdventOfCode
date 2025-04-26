@@ -31,15 +31,11 @@ impl Solution for AoC2019_17 {
         let map = build_map(&self.input);
         map.keys()
             .filter(|p| {
-                [
-                    Point::new(p.x, p.y - 1),
-                    Point::new(p.x, p.y + 1),
-                    Point::new(p.x - 1, p.y),
-                    Point::new(p.x + 1, p.y),
-                ]
-                .iter()
-                .map(|adj| map.contains_key(adj) as u8)
-                .sum::<u8>()
+                Direction::all()
+                    .iter()
+                    .map(|dir| p.moved_by(dir))
+                    .map(|adj| map.contains_key(&adj) as u8)
+                    .sum::<u8>()
                     > 2
             })
             .map(|p| p.x * p.y)
