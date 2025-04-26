@@ -3,6 +3,10 @@ use std::{
     str::FromStr,
 };
 
+use crate::utils::DirectionTuple;
+
+use super::Direction;
+
 #[derive(Debug)]
 pub enum PointParseError {
     InvalidFormat,
@@ -136,20 +140,31 @@ where
     }
 }
 
-impl Point2d<i32> {
+impl<T> Point2d<T>
+where
+    T: Copy + std::ops::Add<Output = T> + std::ops::Sub<Output = T> + From<i8>,
+{
     pub fn left(&self) -> Self {
-        Self::new(self.x, self.y - 1)
+        Self::new(self.x, self.y - T::from(1))
     }
 
     pub fn right(&self) -> Self {
-        Self::new(self.x, self.y + 1)
+        Self::new(self.x, self.y + T::from(1))
     }
 
     pub fn up(&self) -> Self {
-        Self::new(self.x - 1, self.y)
+        Self::new(self.x - T::from(1), self.y)
     }
 
     pub fn down(&self) -> Self {
-        Self::new(self.x + 1, self.y)
+        Self::new(self.x + T::from(1), self.y)
+    }
+
+    pub fn moved_by(&self, direction: &Direction) -> Self {
+        let (dx, dy) = DirectionTuple::from(*direction);
+        Self {
+            x: self.x + T::from(dx),
+            y: self.y + T::from(dy),
+        }
     }
 }

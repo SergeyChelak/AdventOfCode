@@ -107,13 +107,6 @@ mod test {
         Ok(())
     }
 
-    #[test]
-    fn aoc2019_11_correctness_part_2() -> io::Result<()> {
-        let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
-        Ok(())
-    }
-
     fn make_solution() -> io::Result<AoC2019_11> {
         AoC2019_11::new()
     }

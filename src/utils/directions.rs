@@ -43,3 +43,16 @@ impl Direction {
         }
     }
 }
+
+pub type DirectionTuple = (i8, i8);
+
+impl From<Direction> for DirectionTuple {
+    fn from(value: Direction) -> Self {
+        match value {
+            Direction::Up => (0, -1),
+            Direction::Down => (0, 1),
+            Direction::Right => (1, 0),
+            Direction::Left => (-1, 0),
+        }
+    }
+}

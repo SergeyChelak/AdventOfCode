@@ -234,17 +234,6 @@ fn is_door(ch: &char) -> bool {
     ch.is_ascii_uppercase()
 }
 
-impl Point {
-    fn moved_by(&self, direction: &Direction) -> Self {
-        match *direction {
-            Direction::Up => Point::new(self.x, self.y - 1),
-            Direction::Down => Point::new(self.x, self.y + 1),
-            Direction::Left => Point::new(self.x - 1, self.y),
-            Direction::Right => Point::new(self.x + 1, self.y),
-        }
-    }
-}
-
 #[cfg(test)]
 mod test {
     use super::*;

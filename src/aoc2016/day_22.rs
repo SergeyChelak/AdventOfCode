@@ -30,7 +30,7 @@ impl StorageInfo {
 type Coordinate = Point2d<usize>;
 
 impl Coordinate {
-    fn left(&self) -> Option<Self> {
+    fn safe_left(&self) -> Option<Self> {
         if self.x > 0 {
             Some(Self {
                 x: self.x - 1,
@@ -41,14 +41,14 @@ impl Coordinate {
         }
     }
 
-    fn right(&self) -> Option<Self> {
+    fn safe_right(&self) -> Option<Self> {
         Some(Self {
             x: self.x + 1,
             y: self.y,
         })
     }
 
-    fn up(&self) -> Option<Self> {
+    fn safe_up(&self) -> Option<Self> {
         if self.y > 0 {
             Some(Self {
                 x: self.x,
@@ -59,7 +59,7 @@ impl Coordinate {
         }
     }
 
-    fn down(&self) -> Option<Self> {
+    fn safe_down(&self) -> Option<Self> {
         Some(Self {
             x: self.x,
             y: self.y + 1,
@@ -138,10 +138,10 @@ fn bfs_fewest_steps(grid: &Grid) -> usize {
 
 fn adjacent_nodes(grid: &Grid, position: &Coordinate) -> Vec<Coordinate> {
     vec![
-        position.left(),
-        position.right(),
-        position.up(),
-        position.down(),
+        position.safe_left(),
+        position.safe_right(),
+        position.safe_up(),
+        position.safe_down(),
     ]
     .into_iter()
     .filter_map(|opt| {

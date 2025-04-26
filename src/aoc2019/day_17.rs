@@ -185,7 +185,7 @@ fn build_path(
         // get adjacent
         let adjacent = Direction::all()
             .iter()
-            .map(|dir| (*dir, node.position.move_by(*dir)))
+            .map(|dir| (*dir, node.position.moved_by(dir)))
             .filter(|(_, p)| map.get(p).is_some())
             .collect::<HashMap<_, _>>();
 
@@ -265,17 +265,6 @@ fn convert_map(output: &[Int]) -> ScaffoldMap {
         point = Point::new(point.x + 1, point.y);
     }
     result
-}
-
-impl Point {
-    fn move_by(&self, direction: Direction) -> Self {
-        match direction {
-            Direction::Up => Point::new(self.x, self.y - 1),
-            Direction::Down => Point::new(self.x, self.y + 1),
-            Direction::Left => Point::new(self.x - 1, self.y),
-            Direction::Right => Point::new(self.x + 1, self.y),
-        }
-    }
 }
 
 impl From<Int> for Direction {
