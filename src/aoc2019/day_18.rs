@@ -92,9 +92,9 @@ impl Solution for AoC2019_18 {
 
 type Keys = [bool; 26];
 type PointData = (Point, usize);
-type PointDataSet = HashSet<PointData>;
+type PointDataCollection = Vec<PointData>;
 type MemoKey = (Point, Keys);
-type Memo = HashMap<MemoKey, PointDataSet>;
+type Memo = HashMap<MemoKey, PointDataCollection>;
 
 #[derive(Clone)]
 struct StackElement {
@@ -178,8 +178,8 @@ fn shortest_path_len(map: &Maze, start: &[Point]) -> usize {
     min_distance
 }
 
-fn get_available_points(map: &Maze, start: Point, keys: &Keys) -> PointDataSet {
-    let mut result = PointDataSet::new();
+fn get_available_points(map: &Maze, start: Point, keys: &Keys) -> PointDataCollection {
+    let mut result = PointDataCollection::new();
     let mut current = vec![start];
     let mut seen = HashSet::new();
     let mut step = 0;
@@ -200,7 +200,8 @@ fn get_available_points(map: &Maze, start: Point, keys: &Keys) -> PointDataSet {
                     continue;
                 }
                 if is_key(ch) && !keys[char_to_index(*ch)] {
-                    result.insert((adjacent, step));
+                    seen.insert(adjacent);
+                    result.push((adjacent, step));
                     continue;
                 }
                 if is_door(ch) && !keys[char_to_index(ch.to_ascii_lowercase())] {
