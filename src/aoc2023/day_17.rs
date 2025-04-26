@@ -51,21 +51,14 @@ impl PartialOrd for QueueItem {
 }
 
 fn valid_points(point: Point, rows: usize, cols: usize) -> HashMap<Direction, Point> {
-    let mut adj = HashMap::new();
-    let Point { y: r, x: c } = point;
-    if r > 0 {
-        adj.insert(Direction::Up, Point::new(r - 1, c));
-    }
-    if r < rows - 1 {
-        adj.insert(Direction::Down, Point::new(r + 1, c));
-    }
-    if c > 0 {
-        adj.insert(Direction::Left, Point::new(r, c - 1));
-    }
-    if c < cols - 1 {
-        adj.insert(Direction::Right, Point::new(r, c + 1));
-    }
-    adj
+    Direction::all()
+        .iter()
+        .filter_map(|dir| {
+            let p = point.safe_moved_by(dir)?;
+            Some((*dir, p))
+        })
+        .filter(|(_, p)| p.y < rows && p.x < cols)
+        .collect()
 }
 
 fn adjacent_pt1(map: &[Vec<Int>], node: Node) -> Vec<Node> {
