@@ -46,11 +46,44 @@ impl AoC2019_18 {
 
 impl Solution for AoC2019_18 {
     fn part_one(&self) -> String {
-        shortest_path_len(&self.maze, self.start).to_string()
+        shortest_path_len(&self.maze, &[self.start]).to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let adjacent = Direction::all()
+            .iter()
+            .map(|dir| self.start.moved_by(dir))
+            .collect::<Vec<_>>();
+        let start_points = [
+            self.start
+                .moved_by(&Direction::Up)
+                .moved_by(&Direction::Left),
+            self.start
+                .moved_by(&Direction::Up)
+                .moved_by(&Direction::Right),
+            self.start
+                .moved_by(&Direction::Down)
+                .moved_by(&Direction::Left),
+            self.start
+                .moved_by(&Direction::Down)
+                .moved_by(&Direction::Right),
+        ];
+
+        let is_valid_area = adjacent.iter().chain(start_points.iter()).all(|p| {
+            let Some(ch) = self.maze.get(p) else {
+                return false;
+            };
+            *ch != TILE_WALL
+        });
+        assert!(is_valid_area);
+
+        let mut maze = self.maze.clone();
+        adjacent.iter().for_each(|p| {
+            maze.insert(*p, TILE_WALL);
+        });
+
+        shortest_path_len(&maze, &start_points).to_string()
+    }
 
     fn description(&self) -> String {
         "Day 18: Many-Worlds Interpretation".to_string()
@@ -63,20 +96,25 @@ type PointDataSet = HashSet<PointData>;
 type MemoKey = (Point, Keys);
 type Memo = HashMap<MemoKey, PointDataSet>;
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 struct StackElement {
-    position: Point,
+    positions: Vec<Point>,
     keys: Keys,
     distance: usize,
 }
 
-fn shortest_path_len(map: &Maze, start: Point) -> usize {
-    let mut stack = Vec::new();
-    stack.push(StackElement {
-        position: start,
-        keys: [false; 26],
-        distance: 0,
-    });
+impl StackElement {
+    fn with_points(points: &[Point]) -> Self {
+        Self {
+            positions: points.to_owned(),
+            keys: [false; 26],
+            distance: 0,
+        }
+    }
+}
+
+fn shortest_path_len(map: &Maze, start: &[Point]) -> usize {
+    let mut stack = vec![StackElement::with_points(start)];
 
     let mut min_distance = usize::MAX;
     let mut distances = HashMap::new();
@@ -85,39 +123,51 @@ fn shortest_path_len(map: &Maze, start: Point) -> usize {
     let mut memo = Memo::new();
 
     while !stack.is_empty() {
-        let data = *stack.last().unwrap();
-        let memo_key = (data.position, data.keys);
-        let points = memo
-            .entry(memo_key)
-            .or_insert_with(|| get_available_points(map, data.position, &data.keys));
+        let data = stack.last().unwrap().clone();
+
+        let mut vault_points = Vec::new();
+        let mut available_keys_count = 0;
+        for memo_key in data.positions.iter().map(|p| (*p, data.keys)) {
+            let available = memo
+                .entry(memo_key)
+                .or_insert_with(|| get_available_points(map, memo_key.0, &memo_key.1));
+            available_keys_count += available.len();
+            vault_points.push(available.clone());
+        }
 
         let mut has_next = false;
-        if points.is_empty() {
+        if available_keys_count == 0 {
             min_distance = min_distance.min(data.distance);
         } else {
-            for (point, dist) in points.iter() {
-                let acc_distance = dist + data.distance;
-                if acc_distance >= min_distance {
-                    continue;
-                }
+            for (vault, points) in vault_points.iter().enumerate() {
+                for (point, dist) in points.iter() {
+                    let acc_distance = dist + data.distance;
+                    if acc_distance >= min_distance {
+                        continue;
+                    }
 
-                let distance_key = (*point, data.keys);
-                let existing_distance = distances.get(&distance_key).unwrap_or(&usize::MAX);
-                if *existing_distance <= acc_distance {
-                    continue;
-                }
-                distances.insert(distance_key, acc_distance);
-                let mut keys = data.keys;
-                let index = key_index(map, *point).expect("Missing value");
-                keys[index] = true;
+                    let distance_key = (*point, data.keys);
+                    let existing_distance = distances.get(&distance_key).unwrap_or(&usize::MAX);
+                    if *existing_distance <= acc_distance {
+                        continue;
+                    }
+                    distances.insert(distance_key, acc_distance);
 
-                let elem = StackElement {
-                    position: *point,
-                    keys,
-                    distance: acc_distance,
-                };
-                stack.push(elem);
-                has_next = true;
+                    let mut keys = data.keys;
+                    let index = key_index(map, *point).expect("Missing value");
+                    keys[index] = true;
+
+                    let mut positions = data.positions.clone();
+                    positions[vault] = *point;
+
+                    let elem = StackElement {
+                        positions,
+                        keys,
+                        distance: acc_distance,
+                    };
+                    stack.push(elem);
+                    has_next = true;
+                }
             }
         }
         if !has_next {
@@ -265,16 +315,32 @@ mod test {
     }
 
     #[test]
+    fn aoc2019_18_case_pt2_1() {
+        #[rustfmt::skip]
+        let input = [
+            "#######",
+            "#a.#Cd#",
+            "##...##",
+            "##.@.##",
+            "##...##",
+            "#cB#Ab#",
+            "#######",
+        ];
+        let puzzle = AoC2019_18::with_lines(&input);
+        assert_eq!(puzzle.part_two(), "8");
+    }
+
+    #[test]
     fn aoc2019_18_correctness_part_1() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "3866");
         Ok(())
     }
 
     #[test]
     fn aoc2019_18_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "1842");
         Ok(())
     }
 
