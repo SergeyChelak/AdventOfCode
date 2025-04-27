@@ -100,6 +100,7 @@ pub struct IntcodeComputer {
     output: Vec<Int>,
     pc: usize,
     relative_base: Int,
+    reset_memory: Memory,
 }
 
 impl IntcodeComputer {
@@ -110,11 +111,12 @@ impl IntcodeComputer {
             output: Vec::new(),
             pc: 0,
             relative_base: 0,
+            reset_memory: Vec::new(),
         }
     }
 
     pub fn with_memory(memory: &[Int]) -> Self {
-        let mut instance = Self::with_size(memory.len());
+        let mut instance = Self::with_size(2 * memory.len());
         instance.load_program(memory);
         instance
     }
@@ -126,11 +128,13 @@ impl IntcodeComputer {
     }
 
     pub fn load_program(&mut self, data: &[Int]) {
+        self.reset_memory = data.to_vec();
         self.reset();
-        self.memory[..data.len()].clone_from_slice(data);
     }
 
     pub fn reset(&mut self) {
+        self.memory.iter_mut().for_each(|x| *x = 0);
+        self.memory[..self.reset_memory.len()].clone_from_slice(&self.reset_memory);
         self.pc = 0;
         self.relative_base = 0;
         self.input.clear();
