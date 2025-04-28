@@ -190,29 +190,12 @@ impl Maze {
                         .filter(|val| **val != pos)
                         .last()
                         .expect("Unreachable (3)");
-                    // println!(">> {}", name);
                     let is_next_inner = self.is_inner(next_pos);
-                    // if !is_next_inner && level == 0 {
-                    //     continue;
-                    // }
                     let next_level = if is_next_inner { level - 1 } else { level + 1 };
                     if seen.contains(&(*next_pos, next_level)) {
                         continue;
                     }
                     queue.push_back((*next_pos, next_level, next_steps));
-
-                    // {
-                    //     let kind = if is_next_inner { "dive" } else { "return" };
-                    //     println!(
-                    //         "{} to {} (x:{}, y:{}) at {} level with {} steps",
-                    //         kind,
-                    //         name,
-                    //         next_pos.x + 3,
-                    //         next_pos.y + 3,
-                    //         next_level,
-                    //         next_steps
-                    //     );
-                    // }
                 }
             }
         }
@@ -315,7 +298,7 @@ mod test {
     #[test]
     fn aoc2019_20_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "6706");
         Ok(())
     }
 
