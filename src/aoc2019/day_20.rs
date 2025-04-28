@@ -81,9 +81,9 @@ impl Maze {
             .last()
     }
 
-    fn shortest_distance_portals(&self, start: &str, target: &str) -> Option<usize> {
-        let start = self.portal_to_position(start)?;
-        let target = self.portal_to_position(target)?;
+    fn shortest_distance_portals(&self) -> Option<usize> {
+        let start = self.portal_to_position(PORTAL_IN)?;
+        let target = self.portal_to_position(PORTAL_OUT)?;
         self.shortest_distance(*start, *target)
     }
 
@@ -95,7 +95,6 @@ impl Maze {
             steps += 1;
             let mut next = HashSet::new();
             for point in points.iter() {
-                // println!("{:?} @ {steps}", point);
                 if seen.contains(point) {
                     continue;
                 }
@@ -167,7 +166,7 @@ impl AoC2019_20 {
 impl Solution for AoC2019_20 {
     fn part_one(&self) -> String {
         self.maze
-            .shortest_distance_portals(PORTAL_IN, PORTAL_OUT)
+            .shortest_distance_portals()
             .expect("Not found")
             .to_string()
     }
@@ -219,10 +218,7 @@ mod test {
             "             Z       ",
         ];
         let maze = Maze::parse(&input);
-        assert_eq!(
-            maze.shortest_distance_portals(PORTAL_IN, PORTAL_OUT),
-            Some(23)
-        );
+        assert_eq!(maze.shortest_distance_portals(), Some(23));
     }
 
     #[test]
