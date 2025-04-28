@@ -82,67 +82,43 @@ impl Maze {
     }
 
     fn shortest_distance_portals(&self) -> Option<usize> {
-        let start = *self.portal_to_position(PORTAL_IN)?;
-        let target = *self.portal_to_position(PORTAL_OUT)?;
-        let mut steps = 0;
-        let mut points = vec![start];
-        let mut seen = HashSet::new();
-        while !points.is_empty() {
-            steps += 1;
-            let mut next = HashSet::new();
-            for point in points.iter() {
-                if seen.contains(point) {
-                    continue;
-                }
-                seen.insert(*point);
-                let portals = self.adjacent_portal_points(point).unwrap_or_default();
-                for p in Direction::all()
-                    .iter()
-                    .map(|dir| point.moved_by(dir))
-                    .chain(portals.into_iter())
-                    .filter(|p| self.points.contains_key(p))
-                    .filter(|p| !seen.contains(p))
-                {
-                    if p == target {
-                        return Some(steps);
-                    }
-                    next.insert(p);
-                }
-            }
-            points = next.into_iter().collect::<Vec<_>>();
-        }
-        None
-    }
-
-    fn adjacent_portal_points(&self, point: &Point) -> Option<Vec<Point>> {
-        let elem = self.points.get(point)?;
-        let MazeElement::Portal(portal) = elem else {
-            return None;
-        };
-        let result = self
-            .portals
-            .get(portal)?
-            .iter()
-            .filter(|p| **p != *point)
-            .copied()
-            .collect::<Vec<_>>();
-        Some(result)
-    }
-
-    fn portal_to_position(&self, portal_name: &str) -> Option<&Point> {
-        let array = self.portals.get(portal_name)?;
-        assert_eq!(array.len(), 1);
-        array.last()
+        let element_filter = |_p: &Point, _elem: &MazeElement, _level: usize| -> bool { true };
+        let level_calculator = |_p: &Point, _level: usize| 0;
+        self.search(element_filter, level_calculator)
     }
 
     fn shortest_distance_recursive(&self) -> Option<usize> {
+        let element_filter = |p: &Point, elem: &MazeElement, level: usize| -> bool {
+            match elem {
+                MazeElement::Portal(name) if name == PORTAL_OUT => level == 0,
+                MazeElement::Portal(name) if name == PORTAL_IN => level == 0,
+                MazeElement::Portal(_) if level == 0 => self.is_inner(p),
+                _ => true,
+            }
+        };
+
+        let level_calculator = |p: &Point, level: usize| {
+            if self.is_inner(p) {
+                level - 1
+            } else {
+                level + 1
+            }
+        };
+        self.search(element_filter, level_calculator)
+    }
+
+    fn search<EF, LC>(&self, element_filter: EF, level_calculator: LC) -> Option<usize>
+    where
+        EF: Fn(&Point, &MazeElement, usize) -> bool,
+        LC: Fn(&Point, usize) -> usize,
+    {
         let target = *self.portal_to_position(PORTAL_OUT)?;
-        type TrackSet = HashSet<(Point, usize)>;
-        let mut queue = VecDeque::new();
         let start = self.portal_to_position(PORTAL_IN)?;
+
+        let mut queue = VecDeque::new();
         queue.push_back((*start, 0, 0));
 
-        let mut seen = TrackSet::new();
+        let mut seen = HashSet::new();
 
         while let Some((pos, level, steps)) = queue.pop_front() {
             seen.insert((pos, level));
@@ -152,15 +128,10 @@ impl Maze {
                 .iter()
                 .map(|dir| pos.moved_by(dir))
                 .filter(|p| {
-                    let Some(elem) = self.points.get(&p) else {
+                    let Some(elem) = self.points.get(p) else {
                         return false;
                     };
-                    match elem {
-                        MazeElement::Portal(name) if name == PORTAL_OUT => level == 0,
-                        MazeElement::Portal(name) if name == PORTAL_IN => level == 0,
-                        MazeElement::Portal(_) if level == 0 => self.is_inner(p),
-                        _ => true,
-                    }
+                    element_filter(p, elem, level)
                 })
                 .filter(|p| !seen.contains(&(*p, level)))
             {
@@ -190,8 +161,7 @@ impl Maze {
                         .filter(|val| **val != pos)
                         .last()
                         .expect("Unreachable (3)");
-                    let is_next_inner = self.is_inner(next_pos);
-                    let next_level = if is_next_inner { level - 1 } else { level + 1 };
+                    let next_level = level_calculator(next_pos, level);
                     if seen.contains(&(*next_pos, next_level)) {
                         continue;
                     }
@@ -206,6 +176,12 @@ impl Maze {
         let offset = 3;
         (offset..self.rows - offset).contains(&point.y)
             && (offset..self.cols - offset).contains(&point.x)
+    }
+
+    fn portal_to_position(&self, portal_name: &str) -> Option<&Point> {
+        let array = self.portals.get(portal_name)?;
+        assert_eq!(array.len(), 1);
+        array.last()
     }
 }
 
