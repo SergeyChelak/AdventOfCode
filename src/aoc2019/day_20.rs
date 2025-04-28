@@ -1,7 +1,7 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::io;
 
 const PORTAL_IN: &str = "AA";
@@ -82,12 +82,8 @@ impl Maze {
     }
 
     fn shortest_distance_portals(&self) -> Option<usize> {
-        let start = self.portal_to_position(PORTAL_IN)?;
-        let target = self.portal_to_position(PORTAL_OUT)?;
-        self.shortest_distance(*start, *target)
-    }
-
-    fn shortest_distance(&self, start: Point, target: Point) -> Option<usize> {
+        let start = *self.portal_to_position(PORTAL_IN)?;
+        let target = *self.portal_to_position(PORTAL_OUT)?;
         let mut steps = 0;
         let mut points = vec![start];
         let mut seen = HashSet::new();
@@ -139,7 +135,91 @@ impl Maze {
         array.last()
     }
 
-    fn _is_inner(&self, point: &Point) -> bool {
+    fn shortest_distance_recursive(&self) -> Option<usize> {
+        let target = *self.portal_to_position(PORTAL_OUT)?;
+        type TrackSet = HashSet<(Point, usize)>;
+        let mut queue = VecDeque::new();
+        let start = self.portal_to_position(PORTAL_IN)?;
+        queue.push_back((*start, 0, 0));
+
+        let mut seen = TrackSet::new();
+
+        while let Some((pos, level, steps)) = queue.pop_front() {
+            seen.insert((pos, level));
+
+            let next_steps = steps + 1;
+            for p in Direction::all()
+                .iter()
+                .map(|dir| pos.moved_by(dir))
+                .filter(|p| {
+                    let Some(elem) = self.points.get(&p) else {
+                        return false;
+                    };
+                    match elem {
+                        MazeElement::Portal(name) if name == PORTAL_OUT => level == 0,
+                        MazeElement::Portal(name) if name == PORTAL_IN => level == 0,
+                        MazeElement::Portal(_) if level == 0 => self.is_inner(p),
+                        _ => true,
+                    }
+                })
+                .filter(|p| !seen.contains(&(*p, level)))
+            {
+                if p == target {
+                    return Some(next_steps);
+                }
+                queue.push_back((p, level, next_steps));
+            }
+
+            match self.points.get(&pos).expect("Unreachable (1)") {
+                MazeElement::Open => {
+                    continue;
+                }
+                MazeElement::Portal(name) if name == PORTAL_IN => {
+                    continue;
+                }
+                MazeElement::Portal(name) if name == PORTAL_OUT => {
+                    assert!(level > 0);
+                    continue;
+                }
+                MazeElement::Portal(name) => {
+                    let next_pos = self
+                        .portals
+                        .get(name)
+                        .expect("Unreachable (2)")
+                        .iter()
+                        .filter(|val| **val != pos)
+                        .last()
+                        .expect("Unreachable (3)");
+                    // println!(">> {}", name);
+                    let is_next_inner = self.is_inner(next_pos);
+                    // if !is_next_inner && level == 0 {
+                    //     continue;
+                    // }
+                    let next_level = if is_next_inner { level - 1 } else { level + 1 };
+                    if seen.contains(&(*next_pos, next_level)) {
+                        continue;
+                    }
+                    queue.push_back((*next_pos, next_level, next_steps));
+
+                    // {
+                    //     let kind = if is_next_inner { "dive" } else { "return" };
+                    //     println!(
+                    //         "{} to {} (x:{}, y:{}) at {} level with {} steps",
+                    //         kind,
+                    //         name,
+                    //         next_pos.x + 3,
+                    //         next_pos.y + 3,
+                    //         next_level,
+                    //         next_steps
+                    //     );
+                    // }
+                }
+            }
+        }
+        None
+    }
+
+    fn is_inner(&self, point: &Point) -> bool {
         let offset = 3;
         (offset..self.rows - offset).contains(&point.y)
             && (offset..self.cols - offset).contains(&point.x)
@@ -171,8 +251,12 @@ impl Solution for AoC2019_20 {
             .to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        self.maze
+            .shortest_distance_recursive()
+            .expect("Not found")
+            .to_string()
+    }
 
     fn description(&self) -> String {
         "Day 20: Donut Maze".to_string()
@@ -237,5 +321,54 @@ mod test {
 
     fn make_solution() -> io::Result<AoC2019_20> {
         AoC2019_20::new()
+    }
+
+    #[test]
+    fn aoc2019_20_case_2() {
+        let puzzle = AoC2019_20::with_lines(&make_test_input());
+        assert_eq!(puzzle.part_two(), "396")
+    }
+
+    fn make_test_input() -> Vec<&'static str> {
+        [
+            "             Z L X W       C                 ",
+            "             Z P Q B       K                 ",
+            "  ###########.#.#.#.#######.###############  ",
+            "  #...#.......#.#.......#.#.......#.#.#...#  ",
+            "  ###.#.#.#.#.#.#.#.###.#.#.#######.#.#.###  ",
+            "  #.#...#.#.#...#.#.#...#...#...#.#.......#  ",
+            "  #.###.#######.###.###.#.###.###.#.#######  ",
+            "  #...#.......#.#...#...#.............#...#  ",
+            "  #.#########.#######.#.#######.#######.###  ",
+            "  #...#.#    F       R I       Z    #.#.#.#  ",
+            "  #.###.#    D       E C       H    #.#.#.#  ",
+            "  #.#...#                           #...#.#  ",
+            "  #.###.#                           #.###.#  ",
+            "  #.#....OA                       WB..#.#..ZH",
+            "  #.###.#                           #.#.#.#  ",
+            "CJ......#                           #.....#  ",
+            "  #######                           #######  ",
+            "  #.#....CK                         #......IC",
+            "  #.###.#                           #.###.#  ",
+            "  #.....#                           #...#.#  ",
+            "  ###.###                           #.#.#.#  ",
+            "XF....#.#                         RF..#.#.#  ",
+            "  #####.#                           #######  ",
+            "  #......CJ                       NM..#...#  ",
+            "  ###.#.#                           #.###.#  ",
+            "RE....#.#                           #......RF",
+            "  ###.###        X   X       L      #.#.#.#  ",
+            "  #.....#        F   Q       P      #.#.#.#  ",
+            "  ###.###########.###.#######.#########.###  ",
+            "  #.....#...#.....#.......#...#.....#.#...#  ",
+            "  #####.#.###.#######.#######.###.###.#.#.#  ",
+            "  #.......#.......#.#.#.#.#...#...#...#.#.#  ",
+            "  #####.###.#####.#.#.#.#.###.###.#.###.###  ",
+            "  #.......#.....#.#...#...............#...#  ",
+            "  #############.#.#.###.###################  ",
+            "               A O F   N                     ",
+            "               A A D   M                     ",
+        ]
+        .to_vec()
     }
 }
