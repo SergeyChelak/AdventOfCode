@@ -53,9 +53,16 @@ impl AoC2019_21 {
 
 impl Solution for AoC2019_21 {
     fn part_one(&self) -> String {
+        #[rustfmt::skip]
         let Some(result) = self.run_code(
             &[
-                "NOT A J", "NOT B T", "OR T J", "NOT C T", "OR T J", "AND D J", "WALK",
+                "NOT A J",
+                "NOT B T",
+                "OR T J",
+                "NOT C T",
+                "OR T J",
+                "AND D J",
+                "WALK",
             ],
             true,
         ) else {
@@ -64,8 +71,27 @@ impl Solution for AoC2019_21 {
         result.to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        #[rustfmt::skip]
+        let Some(result) = self.run_code(
+            &[
+                "NOT A J", 
+                "NOT B T", 
+                "OR T J", 
+                "NOT C T", 
+                "OR T J", 
+                "AND D J",
+                "AND E T",
+                "OR H T",
+                "AND T J",
+                "RUN",
+            ],
+            true,
+        ) else {
+            return "Not found".to_string();
+        };
+        result.to_string()
+    }
 
     fn description(&self) -> String {
         "Day 21: Springdroid Adventure".to_string()
@@ -93,7 +119,7 @@ mod test {
     #[test]
     fn aoc2019_21_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "1141857182");
         Ok(())
     }
 
