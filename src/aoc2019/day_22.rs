@@ -1,7 +1,6 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::collections::VecDeque;
 use std::io;
 
 type Int = isize;
@@ -54,17 +53,7 @@ impl AoC2019_22 {
 
 impl Solution for AoC2019_22 {
     fn part_one(&self) -> String {
-        let mut card_deck = VecDeque::new();
-        for i in 0..10007 {
-            card_deck.push_back(i);
-        }
-        shuffle(&self.input, &card_deck)
-            .iter()
-            .enumerate()
-            .find(|(_, val)| **val == 2019)
-            .expect("Not found")
-            .0
-            .to_string()
+        shuffle(&self.input, 2019, 10007).to_string()
     }
 
     // fn part_two(&self) -> String {
@@ -75,43 +64,19 @@ impl Solution for AoC2019_22 {
     }
 }
 
-type CardDeck = VecDeque<Int>;
-
-fn shuffle(rules: &[Shuffle], input: &CardDeck) -> CardDeck {
-    rules.iter().fold(input.clone(), |acc, val| match *val {
-        Shuffle::NewStack => new_stack(&acc),
-        Shuffle::Cut(n) => cut(&acc, n),
-        Shuffle::Increment(n) => increment(&acc, n),
-    })
-}
-
-fn new_stack(input: &CardDeck) -> CardDeck {
-    input.iter().rev().copied().collect()
-}
-
-fn cut(input: &CardDeck, n: Int) -> CardDeck {
-    let mut result = input.clone();
-    for _ in 0..n.abs() {
-        if n > 0 {
-            let x = result.pop_front().expect("Failed to pop front");
-            result.push_back(x);
-        } else {
-            let x = result.pop_back().expect("Failed to pop back");
-            result.push_front(x);
+fn shuffle(rules: &[Shuffle], input: Int, total: Int) -> Int {
+    rules.iter().fold(input, |acc, val| match *val {
+        Shuffle::NewStack => total - acc - 1,
+        Shuffle::Cut(n) => {
+            let tmp = acc - n;
+            if tmp < 0 {
+                tmp + total
+            } else {
+                tmp % total
+            }
         }
-    }
-    result
-}
-
-fn increment(input: &CardDeck, n: Int) -> CardDeck {
-    let n = n as usize;
-    let len = input.len();
-    let mut result = vec![0; len].into_iter().collect::<VecDeque<_>>();
-    for (i, val) in input.iter().enumerate() {
-        let pos = (i * n) % len;
-        result[pos] = *val;
-    }
-    result
+        Shuffle::Increment(n) => (acc * n) % total,
+    })
 }
 
 #[cfg(test)]
