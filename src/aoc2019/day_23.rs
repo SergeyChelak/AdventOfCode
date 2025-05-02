@@ -6,6 +6,8 @@ use std::io;
 
 use super::intcode_computer::*;
 
+const IDLE_THRESHOLD: usize = 5_000;
+
 pub struct AoC2019_23 {
     program: Memory,
 }
@@ -26,69 +28,126 @@ impl AoC2019_23 {
 impl Solution for AoC2019_23 {
     fn part_one(&self) -> String {
         let count: usize = 50;
-        let mut computers = (0..count)
-            .map(|addr| {
-                let mut comp = IntcodeComputer::with_memory(&self.program);
-                comp.push_input(addr as Int);
-                comp
-            })
-            .map(|comp| Computer::with_computer(comp))
-            .collect::<Vec<_>>();
-        let mut nic = NetworkInterfaceController::new(count);
-        while nic.addr255.is_none() {
+        let mut computers = setup_network(count, &self.program);
+        let mut nic = NetworkInterfaceController::new(count, false);
+        while nic.nat_data.is_none() {
             computers.iter_mut().for_each(|comp| {
                 assert!(comp.is_alive());
                 comp.execute_step();
             });
-            nic.send(&mut computers);
-            nic.receive(&mut computers);
+            _ = nic.process(&mut computers);
         }
-        nic.addr255
+        nic.nat_data
             .map(|(_, val)| val.to_string())
             .unwrap_or("Not found".to_string())
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let count: usize = 50;
+        let mut computers = setup_network(count, &self.program);
+        let mut nic = NetworkInterfaceController::new(count, true);
+
+        let mut prev_data: Option<PackageData> = None;
+        loop {
+            computers.iter_mut().for_each(|comp| {
+                assert!(comp.is_alive());
+                comp.execute_step();
+            });
+            let status = nic.process(&mut computers);
+            if matches!(status, NicStatus::Normal) {
+                continue;
+            }
+            match (nic.nat_data, prev_data) {
+                (Some(data), Some(prev_data)) if data.1 == prev_data.1 => break data.1,
+                _ => {}
+            };
+            prev_data = nic.nat_data;
+        }
+        .to_string()
+    }
 
     fn description(&self) -> String {
         "Day 23: Category Six".to_string()
     }
 }
 
+fn setup_network(count: usize, program: &[Int]) -> Vec<Computer> {
+    (0..count)
+        .map(|addr| {
+            let mut comp = IntcodeComputer::with_memory(program);
+            comp.push_input(addr as Int);
+            comp
+        })
+        .map(Computer::with_computer)
+        .collect::<Vec<_>>()
+}
+
+enum NicStatus {
+    Normal,
+    Resumed,
+}
+
 struct NetworkInterfaceController {
     message_queue: Vec<VecDeque<Int>>,
-    addr255: Option<PackageData>,
+    nat_enabled: bool,
+    nat_data: Option<PackageData>,
+    idle_counter: usize,
 }
 
 impl NetworkInterfaceController {
-    fn new(computers: usize) -> Self {
+    fn new(computers: usize, nat_enabled: bool) -> Self {
         let message_queue = vec![VecDeque::new(); computers];
         Self {
             message_queue,
-            addr255: None,
+            nat_data: None,
+            nat_enabled,
+            idle_counter: 0,
         }
     }
 
-    fn send(&mut self, computers: &mut [Computer]) {
+    fn process(&mut self, computers: &mut [Computer]) -> NicStatus {
+        self.receive(computers);
+        self.send(computers)
+    }
+
+    fn send(&mut self, computers: &mut [Computer]) -> NicStatus {
+        let mut status = NicStatus::Normal;
         let mut packages = Vec::<Package>::new();
         for queue in self.message_queue.iter_mut() {
             if queue.len() < 3 {
                 continue;
             }
             let addr = queue.pop_front().expect("Failed pop address");
-            let x = queue.pop_front().expect("Failed pop X value");
-            let y = queue.pop_front().expect("Failed pop Y value");
-            let package = Package { addr, data: (x, y) };
+            let data = (
+                queue.pop_front().expect("Failed pop X value"),
+                queue.pop_front().expect("Failed pop Y value"),
+            );
+
+            if addr == 255 {
+                self.nat_data = Some(data);
+                continue;
+            }
+
+            let package = Package { addr, data };
             packages.push(package);
+        }
+
+        if self.nat_enabled && packages.is_empty() {
+            self.idle_counter += 1;
+            let is_idle = self.idle_counter > IDLE_THRESHOLD && computers[0].is_waiting_input();
+
+            if let Some(data) = self
+                .nat_data
+                .and_then(|data| if is_idle { Some(data) } else { None })
+            {
+                packages.push(Package { data, addr: 0 });
+                status = NicStatus::Resumed;
+            }
         }
 
         let mut no_input_addresses = (0..computers.len()).collect::<HashSet<_>>();
         for package in packages {
-            if package.addr == 255 {
-                self.addr255 = Some(package.data);
-                continue;
-            }
+            self.idle_counter = 0;
             let addr = package.addr as usize;
             no_input_addresses.remove(&addr);
             computers[addr].send_package(package.data);
@@ -100,6 +159,7 @@ impl NetworkInterfaceController {
             }
             computers[addr].send(-1);
         }
+        status
     }
 
     fn receive(&mut self, computers: &mut [Computer]) {
@@ -201,7 +261,7 @@ mod test {
     #[test]
     fn aoc2019_23_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "13286");
         Ok(())
     }
 
