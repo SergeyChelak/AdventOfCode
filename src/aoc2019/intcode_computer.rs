@@ -160,11 +160,17 @@ impl IntcodeComputer {
         &self.output
     }
 
-    #[allow(dead_code)]
     pub fn sink_outputs(&mut self) -> Vec<Int> {
         let mut val = Vec::new();
         swap(&mut self.output, &mut val);
         val
+    }
+
+    pub fn sink_outputs_as_string(&mut self) -> String {
+        self.sink_outputs()
+            .iter()
+            .map(|val| *val as u8 as char)
+            .collect::<String>()
     }
 
     pub fn run(&mut self) -> ExecutionStatus {
