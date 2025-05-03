@@ -14,14 +14,6 @@ pub struct AoC2019_24 {
 impl AoC2019_24 {
     pub fn new() -> io::Result<Self> {
         let lines = read_file_as_lines("input/aoc2019_24")?;
-        // #[rustfmt::skip]
-        // let lines = [
-        //     "....#",
-        //     "#..#.",
-        //     "#..##",
-        //     "..#..",
-        //     "#....",
-        // ];
         Ok(Self::with_lines(&lines))
     }
 
