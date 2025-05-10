@@ -19,7 +19,7 @@ impl From<&str> for Shuffle {
         }
         let number = value
             .split(' ')
-            .last()
+            .next_back()
             .and_then(|x| x.parse::<Int>().ok())
             .expect("Failed to parse number");
         if value.starts_with("deal with increment") {

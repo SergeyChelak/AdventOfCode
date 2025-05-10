@@ -78,7 +78,7 @@ impl Maze {
                 }
                 None
             })
-            .last()
+            .next_back()
     }
 
     fn shortest_distance_portals(&self) -> Option<usize> {
@@ -159,7 +159,7 @@ impl Maze {
                         .expect("Unreachable (2)")
                         .iter()
                         .filter(|val| **val != pos)
-                        .last()
+                        .next_back()
                         .expect("Unreachable (3)");
                     let next_level = level_calculator(next_pos, level);
                     if seen.contains(&(*next_pos, next_level)) {
