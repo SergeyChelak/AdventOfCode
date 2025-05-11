@@ -14,11 +14,8 @@ impl<T> PlainInterval<T>
 where
     T: Copy + Ord,
 {
-    pub fn _with_disordered(begin: T, end: T) -> Self {
-        Self {
-            begin: begin.min(end),
-            end: end.max(begin),
-        }
+    pub fn has_intersection(self, other: &Self) -> bool {
+        self.begin.max(other.begin) <= self.end.min(other.end)
     }
 
     pub fn intersection(&self, other: &Self) -> Option<Self> {

@@ -1,7 +1,7 @@
-#![allow(dead_code)]
 use crate::solution::Solution;
 use crate::utils::*;
 
+use std::collections::{HashMap, HashSet};
 use std::io;
 
 type Int = i32;
@@ -34,6 +34,47 @@ impl Point3d {
 #[derive(Debug, Clone)]
 struct Brick(Point3d, Point3d);
 
+impl Brick {
+    fn altitude_add(&mut self, value: Int) {
+        self.0.z += value;
+        self.1.z += value;
+    }
+
+    fn lowest_altitude(&self) -> Int {
+        let altitude = self.0.z;
+        assert!(altitude <= self.1.z);
+        altitude
+    }
+
+    fn highest_altitude(&self) -> Int {
+        let altitude = self.1.z;
+        assert!(altitude >= self.0.z);
+        altitude
+    }
+
+    fn is_touching(&self, other: &Self) -> bool {
+        self.lowest_altitude() == 1 + other.highest_altitude()
+            && self.x_interval().has_intersection(&other.x_interval())
+            && self.y_interval().has_intersection(&other.y_interval())
+    }
+
+    fn x_interval(&self) -> PlainInterval<Int> {
+        assert!(self.0.x <= self.1.x);
+        PlainInterval::new(self.0.x, self.1.x)
+    }
+
+    fn y_interval(&self) -> PlainInterval<Int> {
+        assert!(self.0.y <= self.1.y);
+        PlainInterval::new(self.0.y, self.1.y)
+    }
+}
+
+#[derive(Default)]
+struct Strut {
+    top: HashSet<usize>,
+    bottom: HashSet<usize>,
+}
+
 pub struct AoC2023_22 {
     bricks: Vec<Brick>,
 }
@@ -55,8 +96,61 @@ impl AoC2023_22 {
 }
 
 impl Solution for AoC2023_22 {
-    // fn part_one(&self) -> String {
-    // }
+    fn part_one(&self) -> String {
+        let mut bricks = self.bricks.clone();
+        bricks.sort_by_key(|a| a.lowest_altitude());
+
+        let mut max_height = 0;
+        let mut stacked: Vec<Brick> = Vec::new();
+        let mut struts: HashMap<usize, Strut> = HashMap::new();
+        for mut brick in bricks.into_iter() {
+            let steps = max_height + 1 - brick.lowest_altitude();
+            if steps < 0 {
+                brick.altitude_add(steps);
+            }
+            while brick.lowest_altitude() > 0 {
+                brick.altitude_add(-1);
+                let top_idx = stacked.len();
+                let mut touched = false;
+                for (bottom_idx, other) in stacked.iter().enumerate() {
+                    if !brick.is_touching(other) {
+                        continue;
+                    }
+                    // update upper strut set for bottom_idx
+                    struts.entry(bottom_idx).or_default().top.insert(top_idx);
+                    // update strut for current brick
+                    struts.entry(top_idx).or_default().bottom.insert(bottom_idx);
+                    touched = true;
+                }
+                if touched {
+                    break;
+                }
+            }
+            max_height = max_height.max(1 + brick.highest_altitude());
+            stacked.push(brick);
+        }
+
+        let mut count = 0;
+        for idx in 0..stacked.len() {
+            let Some(strut) = struts.get(&idx) else {
+                count += 1;
+                continue;
+            };
+            if strut.top.is_empty() {
+                count += 1;
+                continue;
+            }
+            let can_disintegrate = strut
+                .top
+                .iter()
+                .filter_map(|idx| struts.get(idx))
+                .all(|s| s.bottom.len() > 1);
+            if can_disintegrate {
+                count += 1;
+            }
+        }
+        count.to_string()
+    }
 
     // fn part_two(&self) -> String {
     // }
@@ -74,6 +168,7 @@ mod test {
     fn aoc2023_22_input_load_test() -> io::Result<()> {
         let sol = AoC2023_22::new()?;
         assert!(!sol.bricks.is_empty());
+        assert_eq!(sol.bricks.len(), 1485);
         Ok(())
     }
 
