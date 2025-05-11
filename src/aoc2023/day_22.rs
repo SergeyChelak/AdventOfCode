@@ -193,7 +193,7 @@ mod test {
     #[test]
     fn aoc2023_22_correctness() -> io::Result<()> {
         let sol = AoC2023_22::new()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "495");
         assert_eq!(sol.part_two(), "");
         Ok(())
     }
