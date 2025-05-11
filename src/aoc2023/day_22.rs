@@ -69,12 +69,6 @@ impl Brick {
     }
 }
 
-#[derive(Default)]
-struct Strut {
-    top: HashSet<usize>,
-    bottom: HashSet<usize>,
-}
-
 pub struct AoC2023_22 {
     bricks: Vec<Brick>,
 }
@@ -97,42 +91,11 @@ impl AoC2023_22 {
 
 impl Solution for AoC2023_22 {
     fn part_one(&self) -> String {
-        let mut bricks = self.bricks.clone();
-        bricks.sort_by_key(|a| a.lowest_altitude());
-
-        let mut max_height = 0;
-        let mut stacked: Vec<Brick> = Vec::new();
-        let mut struts: HashMap<usize, Strut> = HashMap::new();
-        for mut brick in bricks.into_iter() {
-            let steps = max_height + 1 - brick.lowest_altitude();
-            if steps < 0 {
-                brick.altitude_add(steps);
-            }
-            while brick.lowest_altitude() > 0 {
-                brick.altitude_add(-1);
-                let top_idx = stacked.len();
-                let mut touched = false;
-                for (bottom_idx, other) in stacked.iter().enumerate() {
-                    if !brick.is_touching(other) {
-                        continue;
-                    }
-                    // update upper strut set for bottom_idx
-                    struts.entry(bottom_idx).or_default().top.insert(top_idx);
-                    // update strut for current brick
-                    struts.entry(top_idx).or_default().bottom.insert(bottom_idx);
-                    touched = true;
-                }
-                if touched {
-                    break;
-                }
-            }
-            max_height = max_height.max(1 + brick.highest_altitude());
-            stacked.push(brick);
-        }
+        let data = simulate_falling_down(&self.bricks);
 
         let mut count = 0;
-        for idx in 0..stacked.len() {
-            let Some(strut) = struts.get(&idx) else {
+        for idx in 0..data.bricks.len() {
+            let Some(strut) = data.struts_map.get(&idx) else {
                 count += 1;
                 continue;
             };
@@ -143,7 +106,7 @@ impl Solution for AoC2023_22 {
             let can_disintegrate = strut
                 .top
                 .iter()
-                .filter_map(|idx| struts.get(idx))
+                .filter_map(|idx| data.struts_map.get(idx))
                 .all(|s| s.bottom.len() > 1);
             if can_disintegrate {
                 count += 1;
@@ -157,6 +120,66 @@ impl Solution for AoC2023_22 {
 
     fn description(&self) -> String {
         "AoC 2023/Day 22: Sand Slabs".to_string()
+    }
+}
+
+#[derive(Default)]
+struct Strut {
+    top: HashSet<usize>,
+    bottom: HashSet<usize>,
+}
+
+type StrutsMap = HashMap<usize, Strut>;
+
+struct SimulationData {
+    bricks: Vec<Brick>,
+    struts_map: StrutsMap,
+}
+
+fn simulate_falling_down(input: &[Brick]) -> SimulationData {
+    let mut bricks = input.to_vec().clone();
+    bricks.sort_by_key(|a| a.lowest_altitude());
+
+    let mut max_height = 0;
+    let mut stacked: Vec<Brick> = Vec::new();
+    let mut struts_map = StrutsMap::new();
+    for mut brick in bricks.into_iter() {
+        let steps = max_height + 1 - brick.lowest_altitude();
+        if steps < 0 {
+            brick.altitude_add(steps);
+        }
+        while brick.lowest_altitude() > 0 {
+            brick.altitude_add(-1);
+            let top_idx = stacked.len();
+            let mut touched = false;
+            for (bottom_idx, other) in stacked.iter().enumerate() {
+                if !brick.is_touching(other) {
+                    continue;
+                }
+                // update upper strut set for bottom_idx
+                struts_map
+                    .entry(bottom_idx)
+                    .or_default()
+                    .top
+                    .insert(top_idx);
+                // update strut for current brick
+                struts_map
+                    .entry(top_idx)
+                    .or_default()
+                    .bottom
+                    .insert(bottom_idx);
+                touched = true;
+            }
+            if touched {
+                break;
+            }
+        }
+        max_height = max_height.max(1 + brick.highest_altitude());
+        stacked.push(brick);
+    }
+    SimulationData {
+        bricks: stacked,
+        struts_map,
     }
 }
 
