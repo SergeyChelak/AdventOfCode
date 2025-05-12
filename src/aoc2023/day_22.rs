@@ -122,28 +122,29 @@ impl Solution for AoC2023_22 {
         for strut in data.struts_map.values() {
             let mut dequeue = VecDeque::new();
             let mut fall = HashSet::new();
-            for i in strut.top.iter() {
+            strut.top.iter().for_each(|i| {
                 if data.struts_map.get(i).expect("(1)").bottom.len() == 1 {
                     dequeue.push_back(*i);
                     fall.insert(*i);
                 }
-            }
+            });
             while let Some(idx) = dequeue.pop_front() {
-                for i in data
-                    .struts_map
+                data.struts_map
                     .get(&idx)
                     .expect("(2)")
                     .top
                     .difference(&fall)
+                    .filter(|i| {
+                        let bottom = &data.struts_map.get(i).expect("(3)").bottom;
+                        fall.is_superset(bottom)
+                    })
                     .copied()
                     .collect::<HashSet<_>>()
-                {
-                    let bottom = &data.struts_map.get(&i).expect("(3)").bottom;
-                    if fall.is_superset(bottom) {
+                    .into_iter()
+                    .for_each(|i| {
                         dequeue.push_back(i);
                         fall.insert(i);
-                    }
-                }
+                    });
             }
             total += fall.len()
         }
