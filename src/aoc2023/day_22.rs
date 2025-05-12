@@ -1,7 +1,7 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::io;
 
 type Int = i32;
@@ -115,8 +115,40 @@ impl Solution for AoC2023_22 {
         count.to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let data = simulate_falling_down(&self.bricks);
+
+        let mut total = 0;
+        for strut in data.struts_map.values() {
+            let mut dequeue = VecDeque::new();
+            let mut fall = HashSet::new();
+            for i in strut.top.iter() {
+                if data.struts_map.get(i).expect("(1)").bottom.len() == 1 {
+                    dequeue.push_back(*i);
+                    fall.insert(*i);
+                }
+            }
+            while let Some(idx) = dequeue.pop_front() {
+                for i in data
+                    .struts_map
+                    .get(&idx)
+                    .expect("(2)")
+                    .top
+                    .difference(&fall)
+                    .copied()
+                    .collect::<HashSet<_>>()
+                {
+                    let bottom = &data.struts_map.get(&i).expect("(3)").bottom;
+                    if fall.is_superset(bottom) {
+                        dequeue.push_back(i);
+                        fall.insert(i);
+                    }
+                }
+            }
+            total += fall.len()
+        }
+        total.to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2023/Day 22: Sand Slabs".to_string()
@@ -197,6 +229,17 @@ mod test {
 
     #[test]
     fn aoc2023_22_ex1() {
+        let puzzle = make_puzzle();
+        assert_eq!(puzzle.part_one(), "5");
+    }
+
+    #[test]
+    fn aoc2023_22_ex2() {
+        let puzzle = make_puzzle();
+        assert_eq!(puzzle.part_two(), "7");
+    }
+
+    fn make_puzzle() -> AoC2023_22 {
         let input = [
             "1,0,1~1,2,1",
             "0,0,2~2,0,2",
@@ -209,15 +252,14 @@ mod test {
         .iter()
         .map(|s| s.to_string())
         .collect::<Vec<_>>();
-        let puzzle = AoC2023_22::with_lines(&input);
-        assert_eq!(puzzle.part_one(), "5");
+        AoC2023_22::with_lines(&input)
     }
 
     #[test]
     fn aoc2023_22_correctness() -> io::Result<()> {
         let sol = AoC2023_22::new()?;
         assert_eq!(sol.part_one(), "495");
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "76158");
         Ok(())
     }
 }
