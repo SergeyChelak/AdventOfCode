@@ -1,7 +1,6 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::fmt::Display;
 use std::io;
 
 type Number = f64;
@@ -12,6 +11,52 @@ struct Vector3d {
     x: Number,
     y: Number,
     z: Number,
+}
+
+impl Vector3d {
+    fn sum(&self, other: &Self) -> Self {
+        Self {
+            x: self.x + other.x,
+            y: self.y + other.y,
+            z: self.z + other.z,
+        }
+    }
+
+    fn diff(&self, other: &Self) -> Self {
+        Self {
+            x: self.x - other.x,
+            y: self.y - other.y,
+            z: self.z - other.z,
+        }
+    }
+
+    fn scalar_mul(&self, scalar: Number) -> Self {
+        Self {
+            x: self.x * scalar,
+            y: self.y * scalar,
+            z: self.z * scalar,
+        }
+    }
+
+    fn scalar_div(&self, scalar: Number) -> Self {
+        Self {
+            x: self.x / scalar,
+            y: self.y / scalar,
+            z: self.z / scalar,
+        }
+    }
+
+    fn dot_product(&self, other: &Self) -> Number {
+        self.x * other.x + self.y * other.y + self.z * other.z
+    }
+
+    fn cross_product(&self, other: &Self) -> Vector3d {
+        Self {
+            x: self.y * other.z - self.z * other.y,
+            y: self.z * other.x - self.x * other.z,
+            z: self.x * other.y - self.y * other.x,
+        }
+    }
 }
 
 impl From<&str> for Vector3d {
@@ -33,12 +78,6 @@ impl From<&str> for Vector3d {
     }
 }
 
-impl Display for Vector3d {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}, {}, {}", self.x, self.y, self.z)
-    }
-}
-
 struct Hailstone {
     position: Vector3d,
     velocity: Vector3d,
@@ -56,18 +95,9 @@ impl From<&str> for Hailstone {
     }
 }
 
-impl Display for Hailstone {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} @ {}", self.position, self.velocity)
-    }
-}
-
 impl Hailstone {
     fn position(&self, time: Number) -> Vector3d {
-        let x = self.position.x + time * self.velocity.x;
-        let y = self.position.y + time * self.velocity.y;
-        let z = self.position.z + time * self.velocity.z;
-        Vector3d { x, y, z }
+        self.position.sum(&self.velocity.scalar_mul(time))
     }
 }
 
@@ -116,8 +146,31 @@ impl Solution for AoC2023_24 {
             .to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        // https://www.reddit.com/r/adventofcode/comments/18pnycy/2023_day_24_solutions/
+        assert!(self.input.len() > 2);
+        let relative = |a: usize, b: usize| -> (Vector3d, Vector3d) {
+            let p = self.input[a].position.diff(&self.input[b].position);
+            let v = self.input[a].velocity.diff(&self.input[b].velocity);
+            (p, v)
+        };
+        let (p1, v1) = relative(1, 0);
+        let (p2, v2) = relative(2, 0);
+        // t1 = -((p1 x p2) * v2) / ((v1 x p2) * v2)
+        let t1 = -p1.cross_product(&p2).dot_product(&v2) / (v1.cross_product(&p2).dot_product(&v2));
+        // t2 = -((p1 x p2) * v1) / ((p1 x v2) * v1)
+        let t2 = -p1.cross_product(&p2).dot_product(&v1) / (p1.cross_product(&v2).dot_product(&v1));
+        // c1 = position_1 + t1 * velocity_1
+        let c1 = self.input[1].position(t1);
+        // c2 = position_2 + t2 * velocity_2
+        let c2 = self.input[2].position(t2);
+        // v = (c2 - c1) / (t2 - t1)
+        let v = c2.diff(&c1).scalar_div(t2 - t1);
+        // p = c1 - t1 * v
+        let p = c1.diff(&v.scalar_mul(t1));
+
+        (p.x + p.y + p.z).to_string()
+    }
 
     fn description(&self) -> String {
         "AoC 2023/Day 24: Never Tell Me The Odds".to_string()
