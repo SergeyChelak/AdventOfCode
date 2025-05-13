@@ -1,7 +1,7 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::io;
 
 type Graph = HashMap<String, HashSet<String>>;
@@ -40,30 +40,26 @@ impl AoC2023_25 {
 
 impl Solution for AoC2023_25 {
     fn part_one(&self) -> String {
-        let mut timer = 0;
-        let mut time_in = HashMap::new();
-        let mut time_back = HashMap::new();
+        let mut frequency = EdgeFrequency::new();
 
-        for vertex in self.graph.keys() {
-            if time_in.contains_key(vertex) {
-                continue;
-            }
-            dfs(
-                &self.graph,
-                vertex,
-                None,
-                &mut timer,
-                &mut time_in,
-                &mut time_back,
-            );
+        for vertex in self.graph.keys().take(self.graph.len() / 10) {
+            bfs(&self.graph, vertex, &mut frequency);
         }
-        todo!()
-    }
 
-    fn part_two(&self) -> String {
-        // read here
-        // https://blog.thomasjungblut.com/graph/mincut/mincut/
-        "".to_string()
+        let mut arr = frequency.into_iter().collect::<Vec<_>>();
+        arr.sort_by_key(|x| x.1);
+        arr = arr.into_iter().rev().take(3).collect::<Vec<_>>();
+
+        let mut graph = self.graph.clone();
+        arr.iter().for_each(|(edge, _)| {
+            graph.get_mut(&edge.0).unwrap().remove(&edge.1);
+            graph.get_mut(&edge.1).unwrap().remove(&edge.0);
+        });
+
+        let any = &arr.first().unwrap().0;
+        let len = bfs(&graph, &any.0, &mut HashMap::new());
+
+        (len * (self.graph.len() - len)).to_string()
     }
 
     fn description(&self) -> String {
@@ -71,46 +67,33 @@ impl Solution for AoC2023_25 {
     }
 }
 
-type TimeMap = HashMap<String, usize>;
+type EdgeFrequency = HashMap<(String, String), usize>;
 
-fn dfs(
-    graph: &Graph,
-    vertex: &str,
-    parent: Option<&str>,
-    timer: &mut usize,
-    time_in: &mut TimeMap,
-    time_back: &mut TimeMap,
-) {
-    *timer += 1;
-    time_in.insert(vertex.to_string(), *timer);
-    time_back.insert(vertex.to_string(), *timer);
-    let Some(adjacent) = graph.get(vertex) else {
-        panic!("Not expected case");
-    };
-    for next in adjacent {
-        if parent
-            .and_then(|p| if p == next { Some(p) } else { None })
-            .is_some()
-        {
-            continue;
-        }
-        if let Some(next_in) = time_in.get(next) {
-            let v_back = time_back.get(vertex).expect("Vertex should be visited (3)");
-            time_back.insert(vertex.to_string(), *v_back.min(next_in));
-        } else {
-            dfs(graph, next, Some(vertex), timer, time_in, time_back);
-
-            let next_back = time_back.get(next).expect("Next should be visited");
-            let v_in = time_in.get(vertex).expect("Vertex should be visited (2)");
-            if next_back > v_in {
-                println!("Bridge {vertex} - {next}");
-            } else {
-                println!("{vertex} {next_back} - {next} {v_in}");
+fn bfs(graph: &Graph, initial: &str, edge_frequency: &mut EdgeFrequency) -> usize {
+    let mut dequeue = VecDeque::new();
+    dequeue.push_back(initial);
+    let mut seen = HashSet::new();
+    seen.insert(initial);
+    let mut length = 0;
+    while let Some(vertex) = dequeue.pop_front() {
+        length += 1;
+        for other in graph.get(vertex).expect("(1)").iter() {
+            if seen.contains(other.as_str()) {
+                continue;
             }
-            let v_back = time_back.get(vertex).expect("Vertex should be visited (1)");
-            time_back.insert(vertex.to_string(), *v_back.min(next_back));
+            seen.insert(other);
+            dequeue.push_back(other);
+
+            let edge = if matches!(vertex.cmp(other), std::cmp::Ordering::Less) {
+                (vertex.to_string(), other.to_string())
+            } else {
+                (other.to_string(), vertex.to_string())
+            };
+            let count = edge_frequency.entry(edge).or_default();
+            *count += 1;
         }
     }
+    length
 }
 
 #[cfg(test)]
@@ -156,7 +139,6 @@ mod test {
     fn aoc2023_25_correctness() -> io::Result<()> {
         let sol = AoC2023_25::new()?;
         assert_eq!(sol.part_one(), "562772");
-        assert_eq!(sol.part_two(), "");
         Ok(())
     }
 }
