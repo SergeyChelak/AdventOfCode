@@ -35,3 +35,6 @@ pub mod bounds;
 pub use bounds::*;
 
 pub mod checked_ops;
+
+pub mod algorithm;
+pub use algorithm::*;
