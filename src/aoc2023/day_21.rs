@@ -85,7 +85,7 @@ impl Solution for AoC2023_21 {
 
         let grid_width = steps / size - 1;
         let odd = (grid_width / 2 * 2 + 1).pow(2);
-        let even = ((grid_width + 1) / 2 * 2).pow(2);
+        let even = (grid_width.div_ceil(2) * 2).pow(2);
 
         let odd_points = self.search(self.start, size * 2 + 1);
         let even_points = self.search(self.start, size * 2);
