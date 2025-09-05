@@ -186,7 +186,7 @@ impl Solution for AoC2019_12 {
 
         let mut axes = [0usize; 3];
 
-        while axes.iter().any(|x| *x == 0) {
+        while axes.contains(&0) {
             simulation.step_simulate();
             step += 1;
             let mut x_count = 0;

@@ -74,7 +74,7 @@ fn any_double(arr: &[u8]) -> bool {
 }
 
 fn exact_double(arr: &[u8]) -> bool {
-    arr.iter().any(|x| *x == 2)
+    arr.contains(&2)
 }
 
 #[cfg(test)]

@@ -40,8 +40,8 @@ type Grid = HashMap<Coordinate, StorageInfo>;
 fn make_search_state(grid: &Grid) -> SearchState {
     let target = {
         let max_x = grid
-            .iter()
-            .map(|(pos, _)| *pos)
+            .keys()
+            .copied()
             .max_by(|&a, &b| a.x.cmp(&b.x))
             .expect("Max X should be computable")
             .x;

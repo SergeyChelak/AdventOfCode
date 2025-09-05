@@ -56,11 +56,11 @@ impl<T: Copy> Iterator for CombinationIterator<'_, T> {
 }
 
 pub trait Combinable<T> {
-    fn combination_iter(&self, k: usize) -> CombinationIterator<T>;
+    fn combination_iter(&self, k: usize) -> CombinationIterator<'_, T>;
 }
 
 impl<T: Copy> Combinable<T> for Vec<T> {
-    fn combination_iter(&self, k: usize) -> CombinationIterator<T> {
+    fn combination_iter(&self, k: usize) -> CombinationIterator<'_, T> {
         CombinationIterator::from_vector(self, k)
     }
 }

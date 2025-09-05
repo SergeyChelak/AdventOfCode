@@ -14,7 +14,7 @@ impl AoC2018_21 {
     pub fn new() -> io::Result<Self> {
         let lines = read_file_as_lines("input/aoc2018_21")?;
         let input = MachineProgram::try_from(lines)
-            .map_err(|err| io::Error::new(io::ErrorKind::Other, format!("{:?}", err)))?;
+            .map_err(|err| io::Error::other(format!("{:?}", err)))?;
         Ok(Self { input })
     }
 }

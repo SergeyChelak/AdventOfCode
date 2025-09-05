@@ -185,8 +185,8 @@ pub struct AoC2018_13 {
 impl AoC2018_13 {
     pub fn new() -> io::Result<Self> {
         let input = read_file_as_lines("input/aoc2018_13")?;
-        let (track, carts) = Self::parse(&input)
-            .map_err(|err| io::Error::new(io::ErrorKind::Other, String::from(err)))?;
+        let (track, carts) =
+            Self::parse(&input).map_err(|err| io::Error::other(String::from(err)))?;
         Ok(Self { track, carts })
     }
 
@@ -321,8 +321,8 @@ mod test {
         .iter()
         .map(|s| s.to_string())
         .collect::<Vec<String>>();
-        let (track, carts) = AoC2018_13::parse(&input)
-            .map_err(|err| io::Error::new(io::ErrorKind::Other, String::from(err)))?;
+        let (track, carts) =
+            AoC2018_13::parse(&input).map_err(|err| io::Error::other(String::from(err)))?;
         let sol = AoC2018_13 { track, carts };
         assert_eq!(sol.part_one(), "7,3");
         Ok(())
@@ -336,8 +336,8 @@ mod test {
         .iter()
         .map(|s| s.to_string())
         .collect::<Vec<String>>();
-        let (track, carts) = AoC2018_13::parse(&input)
-            .map_err(|err| io::Error::new(io::ErrorKind::Other, String::from(err)))?;
+        let (track, carts) =
+            AoC2018_13::parse(&input).map_err(|err| io::Error::other(String::from(err)))?;
         let sol = AoC2018_13 { track, carts };
         assert_eq!(sol.part_two(), "6,4");
         Ok(())
