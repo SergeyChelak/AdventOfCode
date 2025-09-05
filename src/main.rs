@@ -6,19 +6,29 @@ mod solution;
 mod utils;
 
 mod aoc2015;
-mod aoc2016;
-mod aoc2017;
-mod aoc2018;
-mod aoc2019;
-mod aoc2023;
-mod aoc2024;
 use crate::aoc2015::puzzle_factory_2015;
+
+mod aoc2016;
 use crate::aoc2016::puzzle_factory_2016;
+
+mod aoc2017;
 use crate::aoc2017::puzzle_factory_2017;
+
+mod aoc2018;
 use crate::aoc2018::puzzle_factory_2018;
+
+mod aoc2019;
 use crate::aoc2019::puzzle_factory_2019;
+
+mod aoc2023;
 use crate::aoc2023::puzzle_factory_2023;
+
+mod aoc2024;
 use crate::aoc2024::puzzle_factory_2024;
+
+// MARKER: MOD_USE
+// Do not remove the line above
+
 use crate::solution::AggregatedFactory;
 use execute_mode::{get_execute_mode, ExecuteMode};
 use solution::Solution;
@@ -76,6 +86,7 @@ fn execute_puzzle(factory: &AggregatedFactory, year: usize, day: usize) {
 }
 
 fn create_factory() -> AggregatedFactory {
+    // Warning! Do not rename the instance
     let mut factory = AggregatedFactory::new();
     factory.add_factory(puzzle_factory_2015());
     factory.add_factory(puzzle_factory_2016());
@@ -84,6 +95,8 @@ fn create_factory() -> AggregatedFactory {
     factory.add_factory(puzzle_factory_2019());
     factory.add_factory(puzzle_factory_2023());
     factory.add_factory(puzzle_factory_2024());
+    // MARKER: ADD_FACTORY
+    // Do not remove the line above
     factory
 }
 
