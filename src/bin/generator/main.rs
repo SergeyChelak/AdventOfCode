@@ -2,7 +2,7 @@ mod genmod;
 use genmod::generate_module;
 
 mod genday;
-// use genday::
+use genday::generate_day;
 
 mod generror;
 use generror::{GenError, GenResult};
@@ -24,7 +24,7 @@ fn main() -> GenResult<()> {
 
     generate_module(&context)?;
 
-    Ok(())
+    generate_day(&context)
 }
 
 fn show_usage(error: GenError) {

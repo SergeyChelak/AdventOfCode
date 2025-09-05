@@ -10,7 +10,7 @@ pub struct Context {
 
 impl Context {
     pub fn create() -> Result<Context, GenError> {
-        let current_dir = std::env::current_dir().map_err(GenError::from)?;
+        let current_dir = std::env::current_dir()?;
         let mut year: Option<usize> = None;
         let mut day: Option<usize> = None;
         for arg in std::env::args() {
@@ -19,7 +19,7 @@ impl Context {
             if !(is_year || is_day) {
                 continue;
             }
-            let val = arg[2..].parse::<usize>().map_err(GenError::from)?;
+            let val = arg[2..].parse::<usize>()?;
             if is_year {
                 year = Some(val);
                 continue;
@@ -69,6 +69,28 @@ impl Context {
 
     pub fn main_file_path(&self) -> PathBuf {
         extend_path(&self.source_folder(), "main.rs")
+    }
+
+    pub fn day_file_path(&self) -> Option<PathBuf> {
+        let day = self.day?;
+        let file = format!("day_{:02}.rs", day);
+        let path = extend_path(&self.year_folder(), file);
+        Some(path)
+    }
+
+    pub fn day_struct_name(&self) -> Option<String> {
+        let day = self.day?;
+        Some(format!("AoC{}_{day:02}", self.year))
+    }
+
+    pub fn day_test_func_name_prefix(&self) -> Option<String> {
+        let prefix = self.day_struct_name()?;
+        Some(prefix.to_lowercase())
+    }
+
+    pub fn day_input_file_name(&self) -> Option<String> {
+        let day = self.day?;
+        Some(format!("input/aoc{}_{day:02}", self.year()))
     }
 }
 
