@@ -1,8 +1,9 @@
 use std::path::Path;
 
+use advent_of_code::file_to_string_array;
+
 use crate::{
     context::{Context, DayGenData},
-    file_to_string_array,
     generror::{GenError, GenResult},
     str_to_file, string_array_to_file,
 };

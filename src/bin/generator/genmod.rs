@@ -3,9 +3,10 @@ use std::{
     path::PathBuf,
 };
 
+use advent_of_code::file_to_string_array;
+
 use crate::{
     context::Context,
-    file_to_string_array,
     generror::{GenError, GenResult},
     string_array_to_file,
 };

@@ -1,17 +1,6 @@
 use std::num::ParseIntError;
 
-use serde_derive::Deserialize;
-
-#[derive(Deserialize)]
-struct AocConfig {
-    puzzle: PuzzleConfig,
-}
-
-#[derive(Deserialize)]
-struct PuzzleConfig {
-    year: Option<usize>,
-    day: Option<usize>,
-}
+use advent_of_code::{AocConfig, AOC_CONFIG_FILE};
 
 #[derive(Debug)]
 pub enum ExecuteMode {
@@ -64,7 +53,7 @@ fn get_execute_mode_from_config() -> std::io::Result<ExecuteMode> {
 }
 
 fn load_global_config() -> std::io::Result<AocConfig> {
-    let content = std::fs::read_to_string("aoc.toml")?;
+    let content = std::fs::read_to_string(AOC_CONFIG_FILE)?;
     let config = toml::from_str(&content)
         .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
     Ok(config)

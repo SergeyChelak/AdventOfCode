@@ -1,5 +1,4 @@
 mod genmod;
-use std::fs::read_to_string;
 
 use genmod::generate_module;
 
@@ -31,14 +30,6 @@ fn main() -> GenResult<()> {
 
 fn show_usage(error: GenError) {
     eprintln!("{}", error.message())
-}
-
-fn file_to_string_array(path: &std::path::Path) -> std::io::Result<Vec<String>> {
-    let arr = read_to_string(path)?
-        .split("\n")
-        .map(|x| x.to_string())
-        .collect::<Vec<_>>();
-    Ok(arr)
 }
 
 fn string_array_to_file(path: &std::path::Path, lines: &[String]) -> std::io::Result<()> {

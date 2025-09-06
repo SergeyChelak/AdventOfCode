@@ -1,5 +1,7 @@
-use std::fs::{read_to_string, File};
+use std::fs::File;
 use std::io::{self, Read};
+
+use advent_of_code::file_to_string_array;
 
 pub fn read_file_as_bytes(file_name: &str) -> io::Result<Vec<u8>> {
     let mut file = File::open(file_name)?;
@@ -16,9 +18,5 @@ pub fn read_file_as_chars(file_name: &str) -> io::Result<Vec<char>> {
 }
 
 pub fn read_file_as_lines(file_name: &str) -> io::Result<Vec<String>> {
-    let lines = read_to_string(file_name)?
-        .lines()
-        .map(|v| v.to_string())
-        .collect::<Vec<_>>();
-    Ok(lines)
+    file_to_string_array(file_name)
 }
