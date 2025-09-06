@@ -1,61 +1,83 @@
-use std::{io::Write, path::PathBuf};
+use std::path::Path;
 
 use crate::{
-    context::Context,
+    context::{Context, DayGenData},
+    file_to_string_array,
     generror::{GenError, GenResult},
+    str_to_file, string_array_to_file,
 };
 
 pub fn generate_day(context: &Context) -> GenResult<()> {
-    let (Some(day_file), Some(struct_name), Some(input_filename), Some(test_fn_prefix)) = (
-        context.day_file_path(),
-        context.day_struct_name(),
-        context.day_input_file_name(),
-        context.day_test_func_name_prefix(),
-    ) else {
+    let Some(day_data) = context.day_module_data() else {
         return Ok(());
     };
 
-    if day_file.exists() {
+    if day_data.module_file_path.exists() {
         return Err(GenError::new(
             "Cancelled creating day file because it's already exists",
         ));
     }
 
-    create_file(day_file, &struct_name, &input_filename, &test_fn_prefix)?;
-    patch_year_module();
+    create_file(&day_data)?;
+    patch_year_module(&context.year_mod_file_path(), &day_data)?;
     update_marker_file();
     Ok(())
 }
 
-fn create_file(
-    day_file_path: PathBuf,
-    struct_name: &str,
-    input_filename: &str,
-    test_fn_prefix: &str,
-) -> GenResult<()> {
+fn create_file(data: &DayGenData) -> std::io::Result<()> {
     let mut output = TEMPLATE_DAY_MODULE.to_string();
 
-    output = output.replace(PLACEHOLDER_STRUCT_NAME, struct_name);
-    output = output.replace(PLACEHOLDER_INPUT_FILENAME, input_filename);
-    output = output.replace(PLACEHOLDER_TEST_FUNC_PREFIX, test_fn_prefix);
+    output = output.replace(PLACEHOLDER_STRUCT_NAME, &data.struct_name);
+    output = output.replace(PLACEHOLDER_INPUT_FILENAME, &data.day_input_file_name);
+    output = output.replace(
+        PLACEHOLDER_TEST_FUNC_PREFIX,
+        &data.day_test_func_name_prefix,
+    );
 
-    let mut file = std::fs::File::create(day_file_path)?;
-    file.write_all(output.as_bytes())?;
-    file.flush()?;
-    Ok(())
+    str_to_file(&data.module_file_path, &output)
 }
 
-fn patch_year_module() {
-    todo!()
+fn patch_year_module(year_mod_file_path: &Path, data: &DayGenData) -> GenResult<()> {
+    let mut lines = file_to_string_array(year_mod_file_path)?;
+    let include_str = {
+        let value = TEMPLATE_INCLUDE_DAY.replace(PLACEHOLDER_MODULE_NAME, &data.module_name);
+        (MARKER_DAY_MOD_INCLUDE, value)
+    };
+    let register_str = {
+        let value = TEMPLATE_REGISTER_DAY.replace(PLACEHOLDER_STRUCT_NAME, &data.struct_name);
+        (MARKER_FACTORY_DAY, value)
+    };
+
+    for (marker, insertion) in [include_str, register_str] {
+        let Some(index) = lines.iter().position(|x| x.contains(marker)) else {
+            let message = format!("Marker '{marker}' not found year module file");
+            return Err(GenError::new(message));
+        };
+        lines.insert(index, insertion);
+    }
+
+    string_array_to_file(year_mod_file_path, &lines)?;
+    Ok(())
 }
 
 fn update_marker_file() {
     todo!()
 }
 
+const MARKER_DAY_MOD_INCLUDE: &str = "// GENERATOR_MARKER: DAY_MOD_USE";
+const MARKER_FACTORY_DAY: &str = "// GENERATOR_MARKER: FACTORY_DAY";
+
 const PLACEHOLDER_STRUCT_NAME: &str = "${STRUCT_NAME}";
 const PLACEHOLDER_INPUT_FILENAME: &str = "${INPUT_FILENAME}";
 const PLACEHOLDER_TEST_FUNC_PREFIX: &str = "${TEST_FUNC_PREFIX}";
+const PLACEHOLDER_MODULE_NAME: &str = "${MODULE_NAME}";
+
+const TEMPLATE_INCLUDE_DAY: &str = r#"mod ${MODULE_NAME};
+use ${MODULE_NAME}::*;
+
+"#;
+
+const TEMPLATE_REGISTER_DAY: &str = r#"        &|| Ok(Box::new(${STRUCT_NAME}::new()?)),"#;
 
 const TEMPLATE_DAY_MODULE: &str = r#"use crate::solution::Solution;
 use crate::utils::*;

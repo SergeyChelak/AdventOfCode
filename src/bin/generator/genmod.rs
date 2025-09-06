@@ -1,12 +1,13 @@
 use std::{
-    fs::read_to_string,
     io::{self, Write},
     path::PathBuf,
 };
 
 use crate::{
     context::Context,
+    file_to_string_array,
     generror::{GenError, GenResult},
+    string_array_to_file,
 };
 
 pub fn generate_module(context: &Context) -> GenResult<()> {
@@ -44,11 +45,8 @@ fn generate_mod_file(path: PathBuf, year: &str) -> io::Result<()> {
     file.flush()
 }
 
-fn patch_main_file(path: PathBuf, year: &str) -> io::Result<()> {
-    let mut lines = read_to_string(&path)?
-        .split("\n")
-        .map(|x| x.to_string())
-        .collect::<Vec<_>>();
+fn patch_main_file(path: PathBuf, year: &str) -> GenResult<()> {
+    let mut lines = file_to_string_array(&path)?;
 
     let replace = [
         (
@@ -65,16 +63,14 @@ fn patch_main_file(path: PathBuf, year: &str) -> io::Result<()> {
 
     for (marker, template, error) in replace {
         let Some(index) = lines.iter().position(|x| x.contains(marker)) else {
-            panic!("{error}");
+            return Err(GenError::new(error));
         };
         let s = template.replace(YEAR_PLACEHOLDER, year);
         lines.insert(index, s);
     }
 
-    let output = lines.join("\n");
-    let mut file = std::fs::File::create(&path)?;
-    file.write_all(output.as_bytes())?;
-    file.flush()
+    string_array_to_file(&path, &lines)?;
+    Ok(())
 }
 
 const MARKER_YEAR_MOD_INCLUDE: &str = "// GENERATOR_MARKER: MOD_USE";

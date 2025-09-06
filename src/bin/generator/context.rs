@@ -71,26 +71,28 @@ impl Context {
         extend_path(&self.source_folder(), "main.rs")
     }
 
-    pub fn day_file_path(&self) -> Option<PathBuf> {
+    pub fn day_module_data(&self) -> Option<DayGenData> {
         let day = self.day?;
-        let file = format!("day_{:02}.rs", day);
-        let path = extend_path(&self.year_folder(), file);
-        Some(path)
-    }
+        let module_name = format!("day_{:02}", day);
 
-    pub fn day_struct_name(&self) -> Option<String> {
-        let day = self.day?;
-        Some(format!("AoC{}_{day:02}", self.year))
-    }
+        let module_file_path = {
+            let file = format!("{module_name}.rs");
+            extend_path(&self.year_folder(), file)
+        };
 
-    pub fn day_test_func_name_prefix(&self) -> Option<String> {
-        let prefix = self.day_struct_name()?;
-        Some(prefix.to_lowercase())
-    }
+        let struct_name = format!("AoC{}_{day:02}", self.year);
 
-    pub fn day_input_file_name(&self) -> Option<String> {
-        let day = self.day?;
-        Some(format!("input/aoc{}_{day:02}", self.year()))
+        let day_input_file_name = format!("input/aoc{}_{day:02}", self.year());
+
+        let day_test_func_name_prefix = struct_name.to_lowercase();
+
+        Some(DayGenData {
+            module_name,
+            module_file_path,
+            struct_name,
+            day_input_file_name,
+            day_test_func_name_prefix,
+        })
     }
 }
 
@@ -98,4 +100,12 @@ fn extend_path<T: AsRef<str>>(root: &Path, elem: T) -> PathBuf {
     let mut path = root.to_path_buf();
     path.push(elem.as_ref());
     path
+}
+
+pub struct DayGenData {
+    pub module_name: String,
+    pub module_file_path: PathBuf,
+    pub struct_name: String,
+    pub day_input_file_name: String,
+    pub day_test_func_name_prefix: String,
 }
