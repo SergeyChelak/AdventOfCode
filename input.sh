@@ -27,3 +27,6 @@ curl https://adventofcode.com/$YEAR/day/$DAY/input --cookie "session=$AOC_SESSIO
 
 head $INPUT_FILE
 wc -l $INPUT_FILE
+
+cargo r --bin generator -- -y$YEAR -d$DAY
+echo "Ok"
