@@ -1,5 +1,6 @@
 mod genmod;
 
+use advent_of_code::str_to_file;
 use genmod::generate_module;
 
 mod genday;
@@ -29,16 +30,17 @@ fn main() -> GenResult<()> {
 }
 
 fn show_usage(error: GenError) {
-    eprintln!("{}", error.message())
+    eprintln!("{}", error.message());
+    println!("Boilerplate code generator for Advent of Code puzzles");
+    println!("Usage:\n");
+    println!("Generate new year module");
+    println!("\tcargo r --bin generator -- -y2077");
+    println!("Generate new year module (if not exists) and day module");
+    println!("\tcargo r --bin generator -- -y2077 -d1");
+    println!("\nNote: generator will not overwrite existing files");
 }
 
 fn string_array_to_file(path: &std::path::Path, lines: &[String]) -> std::io::Result<()> {
     let output = lines.join("\n");
     str_to_file(path, &output)
-}
-
-fn str_to_file(path: &std::path::Path, output: &str) -> std::io::Result<()> {
-    let mut file = std::fs::File::create(path)?;
-    std::io::Write::write_all(&mut file, output.as_bytes())?;
-    std::io::Write::flush(&mut file)
 }

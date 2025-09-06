@@ -1,6 +1,6 @@
 use std::num::ParseIntError;
 
-use advent_of_code::{AocConfig, AOC_CONFIG_FILE};
+use advent_of_code::load_aoc_config;
 
 #[derive(Debug)]
 pub enum ExecuteMode {
@@ -47,14 +47,7 @@ fn get_execute_mode_from_arguments() -> std::io::Result<ExecuteMode> {
 }
 
 fn get_execute_mode_from_config() -> std::io::Result<ExecuteMode> {
-    let puzzle_config = load_global_config()?.puzzle;
+    let puzzle_config = load_aoc_config()?.puzzle;
     let mode = ExecuteMode::with(puzzle_config.year, puzzle_config.day);
     Ok(mode)
-}
-
-fn load_global_config() -> std::io::Result<AocConfig> {
-    let content = std::fs::read_to_string(AOC_CONFIG_FILE)?;
-    let config = toml::from_str(&content)
-        .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
-    Ok(config)
 }

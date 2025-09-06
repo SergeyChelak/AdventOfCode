@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use advent_of_code::file_to_string_array;
+use advent_of_code::{file_to_string_array, write_aoc_config, AocConfig, PuzzleConfig};
 
 use crate::{
     context::{Context, DayGenData},
@@ -21,7 +21,7 @@ pub fn generate_day(context: &Context) -> GenResult<()> {
 
     create_file(&day_data)?;
     patch_year_module(&context.year_mod_file_path(), &day_data)?;
-    update_marker_file();
+    update_marker_file(context.year(), day_data.day)?;
     Ok(())
 }
 
@@ -61,8 +61,11 @@ fn patch_year_module(year_mod_file_path: &Path, data: &DayGenData) -> GenResult<
     Ok(())
 }
 
-fn update_marker_file() {
-    todo!()
+fn update_marker_file(year: usize, day: usize) -> GenResult<()> {
+    let puzzle = PuzzleConfig::with(year, day);
+    let config = AocConfig { puzzle };
+    write_aoc_config(config)?;
+    Ok(())
 }
 
 const MARKER_DAY_MOD_INCLUDE: &str = "// GENERATOR_MARKER: DAY_MOD_USE";
@@ -75,7 +78,6 @@ const PLACEHOLDER_MODULE_NAME: &str = "${MODULE_NAME}";
 
 const TEMPLATE_INCLUDE_DAY: &str = r#"mod ${MODULE_NAME};
 use ${MODULE_NAME}::*;
-
 "#;
 
 const TEMPLATE_REGISTER_DAY: &str = r#"        &|| Ok(Box::new(${STRUCT_NAME}::new()?)),"#;
@@ -91,8 +93,8 @@ pub struct ${STRUCT_NAME} {
 
 impl ${STRUCT_NAME} {
     pub fn new() -> io::Result<Self> {
-        let lines = read_file_as_lines("${INPUT_FILENAME}")?;
-        let input = std::fs::read_to_string("${INPUT_FILENAME}")?;
+        // let lines = read_file_as_lines("${INPUT_FILENAME}")?;
+        // let input = std::fs::read_to_string("${INPUT_FILENAME}")?;
         Ok(Self {
             // do init
         })

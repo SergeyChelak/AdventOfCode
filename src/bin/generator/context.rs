@@ -51,7 +51,7 @@ impl Context {
         self.marker_file_path().exists()
     }
 
-    fn marker_file_path(&self) -> PathBuf {
+    pub fn marker_file_path(&self) -> PathBuf {
         extend_path(&self.current_dir, "aoc.toml")
     }
 
@@ -92,6 +92,7 @@ impl Context {
             struct_name,
             day_input_file_name,
             day_test_func_name_prefix,
+            day,
         })
     }
 }
@@ -108,4 +109,5 @@ pub struct DayGenData {
     pub struct_name: String,
     pub day_input_file_name: String,
     pub day_test_func_name_prefix: String,
+    pub day: usize,
 }
