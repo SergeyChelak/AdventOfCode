@@ -16,12 +16,9 @@ pub fn read_file_as_chars(file_name: &str) -> io::Result<Vec<char>> {
 }
 
 pub fn read_file_as_lines(file_name: &str) -> io::Result<Vec<String>> {
-    let contents = read_to_string(file_name)?;
-    let lines = contents
+    let lines = read_to_string(file_name)?
         .lines()
-        .collect::<Vec<&str>>()
-        .iter()
         .map(|v| v.to_string())
-        .collect();
+        .collect::<Vec<_>>();
     Ok(lines)
 }
