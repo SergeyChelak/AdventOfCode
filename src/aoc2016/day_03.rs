@@ -36,7 +36,7 @@ impl Solution for AoC2016_03 {
 
     fn part_two(&self) -> String {
         let len = self.input.len();
-        if len % 3 == 0 {
+        if len.is_multiple_of(3) {
             let mut count = 0usize;
             for i in (0..len).step_by(3) {
                 let a = self.input[i];

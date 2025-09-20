@@ -52,7 +52,7 @@ fn transform(s: &str) -> String {
 
 fn checksum(s: &str) -> String {
     let mut data = s.to_string();
-    while data.len() % 2 == 0 {
+    while data.len().is_multiple_of(2) {
         data = data
             .chars()
             .collect::<Vec<char>>()

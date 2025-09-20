@@ -22,7 +22,7 @@ impl AoC2015_24 {
     fn accommodate_boxes(&self, trunks: usize) -> Option<usize> {
         let mut result: Option<usize> = None;
         let sum: usize = self.input.iter().sum();
-        if sum % trunks == 0 {
+        if sum.is_multiple_of(trunks) {
             let target = sum / trunks;
             for k in 1..=self.input.len() {
                 result = self

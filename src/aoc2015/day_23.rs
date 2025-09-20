@@ -93,7 +93,7 @@ impl Computer {
                 self.pc = (self.pc as isize + offset) as usize;
             }
             Instruction::Jie(reg, offset) => {
-                if self.register[reg] % 2 == 0 {
+                if self.register[reg].is_multiple_of(2) {
                     self.pc = (self.pc as isize + offset) as usize;
                 } else {
                     self.pc += 1;

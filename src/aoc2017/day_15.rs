@@ -34,7 +34,7 @@ impl Generator {
     fn next_filtered(&mut self) {
         loop {
             self.next();
-            if self.value % self.filter == 0 {
+            if self.value.is_multiple_of(self.filter) {
                 break;
             }
         }

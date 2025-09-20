@@ -155,7 +155,7 @@ impl AoC2015_16 {
         })
     }
 
-    fn find_best(&self, comparator: &(dyn Fn(&Profile, &Profile) -> i32)) -> String {
+    fn find_best(&self, comparator: &dyn Fn(&Profile, &Profile) -> i32) -> String {
         let mut min = i32::MAX;
         let mut best = String::from("");
         for profile in &self.profiles {

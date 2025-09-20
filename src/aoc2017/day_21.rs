@@ -80,9 +80,9 @@ impl AoC2017_21 {
 
     fn enhance_step(&self, matrix: &mut Matrix) {
         let len = matrix.len();
-        let step = if len % 2 == 0 {
+        let step = if len.is_multiple_of(2) {
             2
-        } else if len % 3 == 0 {
+        } else if len.is_multiple_of(3) {
             3
         } else {
             panic!("Unexpected step size")

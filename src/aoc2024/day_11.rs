@@ -60,7 +60,7 @@ fn count(value: Int, times: u8, memo: &mut HashMap<(Int, u8), usize>) -> usize {
         count(1, times - 1, memo)
     } else {
         let digits = digits_count(value);
-        if digits % 2 == 0 {
+        if digits.is_multiple_of(2) {
             let (a, b) = split(value, digits / 2);
             count(a, times - 1, memo) + count(b, times - 1, memo)
         } else {
