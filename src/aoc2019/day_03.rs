@@ -85,7 +85,7 @@ where
     let second = wire_positions(wire_2);
     resolver(&first, &second)
         .map(|x| x.to_string())
-        .unwrap_or("Not found".to_string())
+        .unwrap_or(not_found())
 }
 
 pub struct AoC2019_03 {

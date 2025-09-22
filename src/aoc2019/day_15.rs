@@ -1,5 +1,5 @@
 use crate::solution::Solution;
-use crate::utils::{Direction, Point2d};
+use crate::utils::{not_found, Direction, Point2d};
 
 use std::collections::{HashMap, HashSet};
 use std::fs::read_to_string;
@@ -28,7 +28,7 @@ impl Solution for AoC2019_15 {
     fn part_one(&self) -> String {
         let data = traverse_environment(&self.input);
         let Some(distance) = data.oxygen_position.and_then(|p| data.distance_map.get(&p)) else {
-            return "Not found".to_string();
+            return not_found();
         };
         distance.to_string()
     }
@@ -36,7 +36,7 @@ impl Solution for AoC2019_15 {
     fn part_two(&self) -> String {
         let mut data = traverse_environment(&self.input);
         let Some(start) = data.oxygen_position else {
-            return "Not found".to_string();
+            return not_found();
         };
         fill(&mut data.map, start).to_string()
     }

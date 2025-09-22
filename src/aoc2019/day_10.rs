@@ -127,7 +127,7 @@ impl Solution for AoC2019_10 {
             .get(199)
             .map(|p| p.x * 100 + p.y)
             .map(|x| x.to_string())
-            .unwrap_or("Not found".to_string())
+            .unwrap_or(not_found())
     }
 
     fn description(&self) -> String {
@@ -162,7 +162,7 @@ mod test {
             "#####",
             "....#",
             "...##",
-            
+
         ];
         let puzzle = AoC2019_10::from_lines(&lines);
         assert_eq!(puzzle.part_one(), "8")

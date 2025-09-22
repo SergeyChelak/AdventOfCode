@@ -1,7 +1,7 @@
 use crate::{
     aoc2019::intcode_computer::{ExecutionStatus, IntcodeComputer},
     solution::Solution,
-    utils::{Direction, Point2d},
+    utils::{not_found, Direction, Point2d},
 };
 
 use std::{collections::HashMap, fs::read_to_string};
@@ -68,7 +68,7 @@ impl Solution for AoC2019_17 {
         computer
             .pop_output()
             .map(|x| x.to_string())
-            .unwrap_or("Not found".to_string())
+            .unwrap_or(not_found())
     }
 
     fn description(&self) -> String {

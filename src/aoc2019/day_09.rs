@@ -1,4 +1,5 @@
 use crate::solution::Solution;
+use crate::utils::not_found;
 
 use std::fs::read_to_string;
 use std::io;
@@ -37,7 +38,7 @@ impl AoC2019_09 {
     fn solve(&self, input: Int) -> String {
         self.calculate(input)
             .map(|x| x.to_string())
-            .unwrap_or("Output is empty".to_string())
+            .unwrap_or(not_found())
     }
 }
 

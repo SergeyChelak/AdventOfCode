@@ -1,4 +1,5 @@
 use crate::solution::Solution;
+use crate::utils::not_found;
 
 use std::fs::read_to_string;
 use std::io;
@@ -75,11 +76,11 @@ impl Solution for AoC2019_21 {
         #[rustfmt::skip]
         let Some(result) = self.run_code(
             &[
-                "NOT A J", 
-                "NOT B T", 
-                "OR T J", 
-                "NOT C T", 
-                "OR T J", 
+                "NOT A J",
+                "NOT B T",
+                "OR T J",
+                "NOT C T",
+                "OR T J",
                 "AND D J",
                 "AND E T",
                 "OR H T",
@@ -88,7 +89,7 @@ impl Solution for AoC2019_21 {
             ],
             true,
         ) else {
-            return "Not found".to_string();
+            return not_found();
         };
         result.to_string()
     }

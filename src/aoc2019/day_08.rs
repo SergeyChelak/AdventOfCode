@@ -1,4 +1,4 @@
-use crate::solution::Solution;
+use crate::{solution::Solution, utils::not_found};
 
 use std::{fs::read_to_string, io};
 
@@ -66,7 +66,7 @@ impl Solution for AoC2019_08 {
             print!("{val}");
         }
 
-        "".to_string()
+        not_found()
     }
 
     fn description(&self) -> String {

@@ -1,4 +1,5 @@
 use crate::solution::Solution;
+use crate::utils::not_found;
 
 use std::collections::{HashSet, VecDeque};
 use std::fs::read_to_string;
@@ -39,7 +40,7 @@ impl Solution for AoC2019_23 {
         }
         nic.nat_data
             .map(|(_, val)| val.to_string())
-            .unwrap_or("Not found".to_string())
+            .unwrap_or(not_found())
     }
 
     fn part_two(&self) -> String {
