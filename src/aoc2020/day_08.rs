@@ -5,14 +5,14 @@ use std::io;
 
 type VmInt = isize;
 
-struct Vm {
+struct Vm<'l> {
     pc: VmInt,
-    memory: Vec<Instruction>,
+    memory: &'l [Instruction],
     value: VmInt,
 }
 
-impl Vm {
-    fn new(memory: Vec<Instruction>) -> Self {
+impl<'l> Vm<'l> {
+    fn new(memory: &'l [Instruction]) -> Self {
         Self {
             memory,
             pc: 0,
@@ -20,21 +20,21 @@ impl Vm {
         }
     }
 
-    fn run(&mut self) {
+    fn run(&mut self) -> Exit {
         let len = self.memory.len();
         let mut executed = vec![false; len];
         loop {
             if self.pc < 0 {
-                panic!("Invalid pc: {}", self.pc);
+                break Exit::Error;
             }
             let pc = self.pc as usize;
+            let Some(instr) = self.memory.get(pc) else {
+                break Exit::Normal;
+            };
             if executed[pc] {
-                break;
+                break Exit::Break;
             }
             executed[pc] = true;
-            let Some(instr) = self.memory.get(pc) else {
-                break;
-            };
             match instr {
                 Instruction::Acc(val) => self.value += *val,
                 Instruction::Nop(_) => {
@@ -48,6 +48,13 @@ impl Vm {
             self.pc += 1;
         }
     }
+}
+
+#[derive(Debug, Clone, Copy)]
+enum Exit {
+    Break,
+    Normal,
+    Error,
 }
 
 #[derive(Debug, Clone)]
@@ -93,13 +100,31 @@ impl AoC2020_08 {
 
 impl Solution for AoC2020_08 {
     fn part_one(&self) -> String {
-        let mut vm = Vm::new(self.input.clone());
-        vm.run();
+        let mut vm = Vm::new(&self.input);
+        let exit = vm.run();
+        assert!(matches!(exit, Exit::Break));
         vm.value.to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut memory = self.input.clone();
+        for i in 0..memory.len() {
+            let preserve = memory[i].clone();
+            let replace = match preserve {
+                Instruction::Acc(_) => continue,
+                Instruction::Jmp(val) => Instruction::Nop(val),
+                Instruction::Nop(val) => Instruction::Jmp(val),
+            };
+            memory[i] = replace;
+            let mut vm = Vm::new(&memory);
+            let exit = vm.run();
+            if matches!(exit, Exit::Normal) {
+                return vm.value.to_string();
+            }
+            memory[i] = preserve;
+        }
+        not_found()
+    }
 
     fn description(&self) -> String {
         "Day 8: Handheld Halting".to_string()
@@ -127,7 +152,7 @@ mod test {
     #[test]
     fn aoc2020_08_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "1688");
         Ok(())
     }
 
