@@ -88,7 +88,7 @@ use crate::utils::*;
 use std::io;
 
 pub struct ${STRUCT_NAME} {
-    //
+    // input: ...
 }
 
 impl ${STRUCT_NAME} {
@@ -120,6 +120,7 @@ mod test {
     #[test]
     fn ${TEST_FUNC_PREFIX}_input_load_test() -> io::Result<()> {
         let sol = make_solution()?;
+        // assert!(!sol.input.is_empty());
         Ok(())
     }
 
