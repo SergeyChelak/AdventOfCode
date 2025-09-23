@@ -26,7 +26,7 @@ impl AoC2020_01 {
 impl Solution for AoC2020_01 {
     fn part_one(&self) -> String {
         for (i, a) in self.input.iter().enumerate() {
-            for b in self.input.iter().skip(i) {
+            for b in self.input.iter().skip(i + 1) {
                 if *a + *b != 2020 {
                     continue;
                 }
@@ -38,8 +38,8 @@ impl Solution for AoC2020_01 {
 
     fn part_two(&self) -> String {
         for (i, a) in self.input.iter().enumerate() {
-            for (j, b) in self.input.iter().enumerate().skip(i) {
-                for c in self.input.iter().skip(j) {
+            for (j, b) in self.input.iter().enumerate().skip(i + 1) {
+                for c in self.input.iter().skip(j + 1) {
                     if *a + *b + *c != 2020 {
                         continue;
                     }

@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use super::Point2d;
 
 pub type Vec2<T> = Vec<Vec<T>>;
@@ -38,4 +40,8 @@ impl<T> ArraySpin for Vec<T> {
         seg.reverse();
         self.reverse();
     }
+}
+
+pub fn parse<I: AsRef<str>, O: FromStr>(input: &[I]) -> Result<Vec<O>, O::Err> {
+    input.iter().map(|x| x.as_ref().parse()).collect()
 }

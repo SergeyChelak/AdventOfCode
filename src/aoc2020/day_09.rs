@@ -16,11 +16,7 @@ impl AoC2020_09 {
     }
 
     fn parse<T: AsRef<str>>(lines: &[T]) -> Self {
-        let input = lines
-            .iter()
-            .map(|x| x.as_ref())
-            .map(|x| x.parse::<Int>().expect("Invalid input value"))
-            .collect::<Vec<_>>();
+        let input = parse(lines).expect("Invalid input value");
         Self { input }
     }
 }
@@ -52,7 +48,7 @@ fn first_invalid_number(numbers: &[Int], preamble: usize) -> Option<Int> {
         let target = window[preamble];
         let mut is_valid = false;
         'c: for (i, a) in window.iter().enumerate() {
-            for b in window.iter().skip(i) {
+            for b in window.iter().skip(i + 1) {
                 is_valid = *a + *b == target;
                 if is_valid {
                     break 'c;
