@@ -115,6 +115,14 @@ where
         }
     }
 
+    pub fn safe_moved_with_dirs(&self, directions: &[Direction]) -> Option<Self> {
+        let mut cur = *self;
+        for d in directions {
+            cur = cur.safe_moved_by(d)?;
+        }
+        Some(cur)
+    }
+
     pub fn safe_up(&self) -> Option<Self> {
         Some(Self {
             x: self.x,

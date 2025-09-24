@@ -12,6 +12,19 @@ impl Direction {
         [Up, Down, Left, Right]
     }
 
+    pub fn circular_directions() -> Vec<Vec<Direction>> {
+        vec![
+            vec![Self::Up],
+            vec![Self::Up, Self::Right],
+            vec![Self::Right],
+            vec![Self::Right, Self::Down],
+            vec![Self::Down],
+            vec![Self::Down, Self::Left],
+            vec![Self::Left],
+            vec![Self::Left, Self::Up],
+        ]
+    }
+
     pub fn is_vertical(&self) -> bool {
         matches!(self, Self::Down | Self::Up)
     }

@@ -95,10 +95,13 @@ impl ${STRUCT_NAME} {
     pub fn new() -> io::Result<Self> {
         // let lines = read_file_as_lines("${INPUT_FILENAME}")?;
         // let input = std::fs::read_to_string("${INPUT_FILENAME}")?;
-        Ok(Self {
-            // do init
-        })
+        Ok(Self {})
+        // Ok(Self::parse(&lines))
     }
+
+    // fn parse<T: AsRef<str>>(lines: &[T]) -> Self {
+    //     todo!()
+    // }
 }
 
 impl Solution for ${STRUCT_NAME} {
