@@ -3,7 +3,7 @@ use crate::utils::*;
 
 use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
-use std::io;
+use std::{io, mem};
 
 pub struct AoC2020_11 {
     input: Vec2<char>,
@@ -30,18 +30,24 @@ impl AoC2020_11 {
         tolerance: usize,
     ) -> String {
         let mut hashes = HashSet::new();
-        let mut matrix = self.input.clone();
+        let mut arr_in = self.input.clone();
+        let mut arr_out = self.input.clone();
+
+        let buf_in = &mut arr_in;
+        let buf_out = &mut arr_out;
+
         loop {
             let mut hasher = std::hash::DefaultHasher::new();
-            matrix.hash(&mut hasher);
+            buf_in.hash(&mut hasher);
             let hash = hasher.finish();
             if hashes.contains(&hash) {
                 break;
             }
             hashes.insert(hash);
-            matrix = next_generation(&matrix, &criteria, tolerance);
+            next_generation(buf_in, &criteria, tolerance, buf_out);
+            mem::swap(buf_in, buf_out);
         }
-        total_occupied_count(&matrix).to_string()
+        total_occupied_count(buf_in).to_string()
     }
 }
 
@@ -69,11 +75,12 @@ fn next_generation(
     matrix: &Vec2<char>,
     adj_count: &impl Fn(&Vec2<char>, Position) -> usize,
     tolerance: usize,
-) -> Vec2<char> {
-    let mut new = matrix.clone();
+    output: &mut Vec2<char>,
+) {
     for (i, row) in matrix.iter().enumerate() {
         for (j, val) in row.iter().enumerate() {
             if *val == POSITION_FLOOR {
+                output[i][j] = *val;
                 continue;
             }
             let pos = Position::new(j, i);
@@ -83,10 +90,9 @@ fn next_generation(
                 (POSITION_OCCUPIED, x) if x >= tolerance => POSITION_EMPTY,
                 (x, _) => x,
             };
-            new[i][j] = val_next;
+            output[i][j] = val_next;
         }
     }
-    new
 }
 
 fn close_adjacent_occupied(matrix: &Vec2<char>, pos: Position) -> usize {
