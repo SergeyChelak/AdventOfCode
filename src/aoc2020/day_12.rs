@@ -46,9 +46,34 @@ impl From<&str> for Instruction {
     }
 }
 
+trait Navigation {
+    fn movement(&mut self, instr: &Instruction);
+
+    fn position(&self) -> Position;
+}
+
 struct SimpleNavigation {
     dir: Direction,
     pos: Position,
+}
+
+impl Navigation for SimpleNavigation {
+    fn movement(&mut self, instr: &Instruction) {
+        let value = instr.param;
+        match instr.command {
+            Command::North => self.pos.y -= value,
+            Command::South => self.pos.y += value,
+            Command::East => self.pos.x += value,
+            Command::West => self.pos.x -= value,
+            Command::Left => self.rotate_direction(Direction::turn_left, value),
+            Command::Right => self.rotate_direction(Direction::turn_right, value),
+            Command::Forward => self.move_in_direction(value),
+        }
+    }
+
+    fn position(&self) -> Position {
+        self.pos
+    }
 }
 
 impl SimpleNavigation {
@@ -59,24 +84,8 @@ impl SimpleNavigation {
         }
     }
 
-    fn movement(&mut self, instr: &Instruction) {
-        let value = instr.param;
-        match instr.command {
-            Command::North => self.pos.y -= value,
-            Command::South => self.pos.y += value,
-            Command::East => self.pos.x += value,
-            Command::West => self.pos.x -= value,
-            Command::Left => self.turn_direction(Direction::turn_left, value),
-            Command::Right => self.turn_direction(Direction::turn_right, value),
-            Command::Forward => self.move_in_direction(value),
-        }
-    }
-
-    fn turn_direction(&mut self, turn: impl Fn(&Direction) -> Direction, value: isize) {
-        assert!(value % 90 == 0);
-        for _ in 0..(value / 90) {
-            self.dir = turn(&self.dir);
-        }
+    fn rotate_direction(&mut self, modifier: impl Fn(&Direction) -> Direction, value: Int) {
+        self.dir = rotate(self.dir, modifier, value);
     }
 
     fn move_in_direction(&mut self, value: Int) {
@@ -89,7 +98,64 @@ impl SimpleNavigation {
     }
 }
 
+struct WaypointNavigation {
+    pos: Position,
+    waypoint: Position,
+}
+
+impl Navigation for WaypointNavigation {
+    fn movement(&mut self, instr: &Instruction) {
+        let value = instr.param;
+        match instr.command {
+            Command::North => self.waypoint.y -= value,
+            Command::South => self.waypoint.y += value,
+            Command::East => self.waypoint.x += value,
+            Command::West => self.waypoint.x -= value,
+            Command::Left => self.rotate_waypoint(Position::rotate_left, value),
+            Command::Right => self.rotate_waypoint(Position::rotate_right, value),
+            Command::Forward => {
+                self.pos.x += value * self.waypoint.x;
+                self.pos.y += value * self.waypoint.y;
+            }
+        }
+    }
+
+    fn position(&self) -> Position {
+        self.pos
+    }
+}
+
+impl WaypointNavigation {
+    fn new() -> Self {
+        Self {
+            pos: Position::zero(),
+            waypoint: Position::new(10, -1),
+        }
+    }
+
+    fn rotate_waypoint(&mut self, modifier: impl Fn(&Position) -> Position, value: Int) {
+        self.waypoint = rotate(self.waypoint, modifier, value);
+    }
+}
+
+fn rotate<T>(initial: T, modifier: impl Fn(&T) -> T, value: Int) -> T {
+    assert!(value % 90 == 0);
+    let value = value % 360;
+    let mut output = initial;
+    for _ in 0..(value / 90) {
+        output = modifier(&output);
+    }
+    output
+}
 impl Position {
+    fn rotate_right(&self) -> Position {
+        Position::new(-self.y, self.x)
+    }
+
+    fn rotate_left(&self) -> Position {
+        Position::new(self.y, -self.x)
+    }
+
     fn manhattan_distance(&self) -> Int {
         self.x.abs() + self.y.abs()
     }
@@ -112,25 +178,24 @@ impl AoC2020_12 {
             .map(Instruction::from)
             .collect();
         Self { input }
-        //        wp (10, 1)  p (0, 0)
-        // f10        10, 1    100, 10
-        // n3         10, 4    100, 10
-        // f7         10, 4    170, 38
-        // r90        4, 10    170, 38
-        // f11        4, 10    214, 72
+    }
+
+    fn distance(&self, mut navigation: impl Navigation) -> String {
+        self.input
+            .iter()
+            .for_each(|instr| navigation.movement(instr));
+        navigation.position().manhattan_distance().to_string()
     }
 }
 
 impl Solution for AoC2020_12 {
     fn part_one(&self) -> String {
-        let mut ship = SimpleNavigation::new();
-        self.input.iter().for_each(|instr| ship.movement(instr));
-
-        ship.pos.manhattan_distance().to_string()
+        self.distance(SimpleNavigation::new())
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        self.distance(WaypointNavigation::new())
+    }
 
     fn description(&self) -> String {
         "Day 12: Rain Risk".to_string()
@@ -158,11 +223,18 @@ mod test {
     #[test]
     fn aoc2020_12_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "30761");
         Ok(())
     }
 
     fn make_solution() -> io::Result<AoC2020_12> {
         AoC2020_12::new()
+    }
+
+    #[test]
+    fn aoc2020_12_case2() {
+        let lines = ["F10", "N3", "F7", "R90", "F11"];
+        let sol = AoC2020_12::parse(&lines);
+        assert_eq!(sol.part_two(), "286")
     }
 }
