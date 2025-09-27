@@ -1,5 +1,6 @@
 use crate::solution::Solution;
 
+use std::collections::{HashMap, HashSet};
 use std::io;
 use std::ops::RangeInclusive;
 
@@ -72,35 +73,45 @@ impl Ticket {
     }
 }
 
-fn field_sequence<'l>(
-    fields: &'l [Field],
-    tickets: &[&Ticket],
-    col: usize,
-    sequence: &mut Vec<&'l str>,
-) -> bool {
-    if fields.len() == col {
-        return true;
-    }
-
-    'outer: for field in fields.iter() {
-        if sequence.contains(&field.name.as_str()) {
-            continue;
-        }
-
-        for ticket in tickets.iter() {
-            let val = ticket.data[col];
-            if !field.is_matches(val) {
-                continue 'outer;
+fn field_sequence_reduce<'l>(fields: &'l [Field], tickets: &[&Ticket]) -> HashMap<usize, &'l str> {
+    let mut aligned = HashMap::new();
+    let mut in_use = HashSet::new();
+    let positions = fields.len();
+    let mut alive = true;
+    while alive {
+        alive = false;
+        let mut candidate: Option<&str> = None;
+        for col in 0..positions {
+            if aligned.contains_key(&col) {
+                continue;
             }
+            'field: for field in fields.iter() {
+                let name = field.name.as_str();
+                if in_use.contains(&name) {
+                    continue;
+                }
+                for ticket in tickets.iter() {
+                    let val = ticket.data[col];
+                    if !field.is_matches(val) {
+                        continue 'field;
+                    }
+                }
+                if candidate.is_some() {
+                    candidate = None;
+                    break;
+                }
+                candidate = Some(name);
+            }
+            let Some(candidate) = candidate else {
+                continue;
+            };
+            in_use.insert(candidate);
+            aligned.insert(col, candidate);
+            alive = true;
+            break;
         }
-        sequence.push(&field.name);
-        if field_sequence(fields, tickets, col + 1, sequence) {
-            return true;
-        }
-        _ = sequence.pop();
     }
-
-    false
+    aligned
 }
 
 pub struct AoC2020_16 {
@@ -168,15 +179,11 @@ impl Solution for AoC2020_16 {
         valid_tickets.push(&self.my_ticket);
 
         assert_eq!(self.fields.len(), self.my_ticket.data.len());
+        let aligned = field_sequence_reduce(&self.fields, &valid_tickets);
 
-        let mut sequence: Vec<&str> = Vec::new();
-        field_sequence(&self.fields, &valid_tickets, 0, &mut sequence);
-        assert_eq!(sequence.len(), self.fields.len());
-
-        sequence
+        aligned
             .into_iter()
-            .enumerate()
-            .filter(|(_, name)| name.starts_with("departure"))
+            .filter(|(_, v)| v.starts_with("departure"))
             .map(|(idx, _)| self.my_ticket.data[idx])
             .product::<Int>()
             .to_string()
