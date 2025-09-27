@@ -93,29 +93,32 @@ impl AoC2020_14 {
             .collect::<Vec<_>>();
         Self { input }
     }
+
+    fn values_sum(&self, mem_fill: impl Fn(&Group, &mut HashMap<usize, Int>)) -> String {
+        let mut memory = HashMap::<usize, Int>::new();
+        for group in self.input.iter() {
+            mem_fill(group, &mut memory);
+        }
+        memory.values().sum::<usize>().to_string()
+    }
 }
 
 impl Solution for AoC2020_14 {
     fn part_one(&self) -> String {
-        let mut memory = HashMap::<usize, Int>::new();
-        for group in self.input.iter() {
+        self.values_sum(|group, memory| {
             for (key, val) in &group.collection {
                 memory.insert(*key, apply_bit_mask(&group.mask, *val));
             }
-        }
-
-        memory.values().sum::<usize>().to_string()
+        })
     }
 
     fn part_two(&self) -> String {
-        let mut memory = HashMap::<usize, Int>::new();
-        for group in self.input.iter() {
+        self.values_sum(|group, memory| {
             let mask = group.mask.chars().rev().collect::<Vec<_>>();
             for (idx, val) in group.collection.iter() {
-                fill(&mask, 0, *idx, *val, &mut memory);
+                fill(&mask, 0, *idx, *val, memory);
             }
-        }
-        memory.values().sum::<usize>().to_string()
+        })
     }
 
     fn description(&self) -> String {
