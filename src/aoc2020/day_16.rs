@@ -3,7 +3,7 @@ use crate::solution::Solution;
 use std::io;
 use std::ops::RangeInclusive;
 
-type Int = isize;
+type Int = usize;
 
 struct Field {
     name: String,
@@ -34,7 +34,7 @@ impl From<&str> for Field {
 }
 
 impl Field {
-    fn any_match(&self, value: Int) -> bool {
+    fn is_matches(&self, value: Int) -> bool {
         self.ranges.iter().any(|r| r.contains(&value))
     }
 }
@@ -61,9 +61,46 @@ impl Ticket {
     fn error_rate(&self, fields: &[Field]) -> Int {
         self.data
             .iter()
-            .filter(|val| !fields.iter().any(|f| f.any_match(**val)))
+            .filter(|val| !fields.iter().any(|f| f.is_matches(**val)))
             .sum()
     }
+
+    fn is_valid(&self, fields: &[Field]) -> bool {
+        self.data
+            .iter()
+            .all(|val| fields.iter().any(|f| f.is_matches(*val)))
+    }
+}
+
+fn field_sequence<'l>(
+    fields: &'l [Field],
+    tickets: &[&Ticket],
+    col: usize,
+    sequence: &mut Vec<&'l str>,
+) -> bool {
+    if fields.len() == col {
+        return true;
+    }
+
+    'outer: for field in fields.iter() {
+        if sequence.contains(&field.name.as_str()) {
+            continue;
+        }
+
+        for ticket in tickets.iter() {
+            let val = ticket.data[col];
+            if !field.is_matches(val) {
+                continue 'outer;
+            }
+        }
+        sequence.push(&field.name);
+        if field_sequence(fields, tickets, col + 1, sequence) {
+            return true;
+        }
+        _ = sequence.pop();
+    }
+
+    false
 }
 
 pub struct AoC2020_16 {
@@ -121,8 +158,29 @@ impl Solution for AoC2020_16 {
             .to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut valid_tickets = self
+            .nearby_tickets
+            .iter()
+            .filter(|t| t.is_valid(&self.fields))
+            .collect::<Vec<_>>();
+
+        valid_tickets.push(&self.my_ticket);
+
+        assert_eq!(self.fields.len(), self.my_ticket.data.len());
+
+        let mut sequence: Vec<&str> = Vec::new();
+        field_sequence(&self.fields, &valid_tickets, 0, &mut sequence);
+        assert_eq!(sequence.len(), self.fields.len());
+
+        sequence
+            .into_iter()
+            .enumerate()
+            .filter(|(_, name)| name.starts_with("departure"))
+            .map(|(idx, _)| self.my_ticket.data[idx])
+            .product::<Int>()
+            .to_string()
+    }
 
     fn description(&self) -> String {
         "Day 16: Ticket Translation".to_string()
@@ -151,7 +209,7 @@ mod test {
     #[test]
     fn aoc2020_16_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "3709435214239");
         Ok(())
     }
 
