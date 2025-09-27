@@ -4,7 +4,6 @@ use std::{collections::HashMap, io};
 
 type Int = usize;
 
-#[derive(Debug, Clone)]
 struct Turn {
     current: usize,
     previous: Option<usize>,
@@ -64,17 +63,13 @@ impl Store {
         self.turns += 1;
         self.last = value;
 
-        let Some(turn) = self.data.get(&value).cloned() else {
+        let Some(turn) = self.data.get_mut(&value) else {
             self.data.insert(value, Turn::initial(self.turns));
             return;
         };
 
-        let updated = Turn {
-            current: self.turns,
-            previous: Some(turn.current),
-        };
-
-        self.data.insert(value, updated);
+        turn.previous = Some(turn.current);
+        turn.current = self.turns;
     }
 }
 
@@ -96,19 +91,24 @@ impl AoC2020_15 {
             .collect();
         Self { input }
     }
-}
 
-impl Solution for AoC2020_15 {
-    fn part_one(&self) -> String {
+    fn spoken_number(&self, index: usize) -> String {
         let mut store = Store::new(&self.input);
-        while store.turns < 2020 {
+        while store.turns < index {
             store.next_turn();
         }
         store.last.to_string()
     }
+}
 
-    // fn part_two(&self) -> String {
-    // }
+impl Solution for AoC2020_15 {
+    fn part_one(&self) -> String {
+        self.spoken_number(2020)
+    }
+
+    fn part_two(&self) -> String {
+        self.spoken_number(30000000)
+    }
 
     fn description(&self) -> String {
         "Day 15: Rambunctious Recitation".to_string()
@@ -136,7 +136,7 @@ mod test {
     #[test]
     fn aoc2020_15_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "63644");
         Ok(())
     }
 
