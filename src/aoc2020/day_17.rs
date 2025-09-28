@@ -1,4 +1,5 @@
 use crate::solution::Solution;
+use crate::utils::cartesian::CartesianIter;
 use crate::utils::*;
 
 use std::collections::HashSet;
@@ -72,35 +73,12 @@ impl Point {
     }
 
     fn adjacent(&self) -> Vec<Point> {
-        let is_3d = self.dimension() == 3;
-        let is_4d = self.dimension() == 4;
-        assert!(is_3d || is_4d);
-        let cap = if is_3d { 26 } else { 80 };
-
-        let delta = [-1, 0, 1];
-        let mut result = Vec::with_capacity(cap);
-        for dx in delta.iter() {
-            for dy in delta.iter() {
-                for dz in delta.iter() {
-                    if is_3d {
-                        let direction: Point = vec![*dx, *dy, *dz].into();
-                        if !direction.is_zero() {
-                            result.push(self.add(&direction));
-                        }
-                        continue;
-                    }
-                    if is_4d {
-                        for dw in delta.iter() {
-                            let direction: Point = vec![*dx, *dy, *dz, *dw].into();
-                            if !direction.is_zero() {
-                                result.push(self.add(&direction));
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        result
+        [-1, 0, 1]
+            .cartesian_iter(self.dimension())
+            .map(Point::from)
+            .filter(|p| !p.is_zero())
+            .map(|delta| self.add(&delta))
+            .collect::<Vec<_>>()
     }
 }
 
@@ -113,7 +91,6 @@ pub struct AoC2020_17 {
 impl AoC2020_17 {
     pub fn new() -> io::Result<Self> {
         let lines = read_file_as_lines("input/aoc2020_17")?;
-        // let input = std::fs::read_to_string("input/aoc2020_17")?;
         Ok(Self::parse(&lines))
     }
 
