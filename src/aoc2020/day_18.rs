@@ -73,7 +73,6 @@ fn convert_to_rpn(tokens: &[Token], prec: &dyn Fn(&Token) -> u8) -> Vec<Token> {
     let mut rpn = Vec::new();
 
     for token in tokens {
-        let precedence = stack.last().map(prec).unwrap_or(0);
         let t = token.clone();
         match token {
             Token::Number(_) => rpn.push(t),
@@ -87,13 +86,13 @@ fn convert_to_rpn(tokens: &[Token], prec: &dyn Fn(&Token) -> u8) -> Vec<Token> {
                 }
             }
             Token::Plus | Token::Star => {
-                if prec(token) > precedence {
-                    stack.push(t);
-                } else {
-                    let top = stack.pop().expect("Broken stack");
-                    rpn.push(top);
-                    stack.push(t);
+                while stack.last().map(prec).unwrap_or(0) >= prec(token) {
+                    let Some(op) = stack.pop() else {
+                        break;
+                    };
+                    rpn.push(op);
                 }
+                stack.push(t);
             }
         }
     }
