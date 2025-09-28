@@ -2,90 +2,110 @@ use crate::solution::Solution;
 use crate::utils::*;
 
 use std::collections::HashSet;
-use std::fmt::Display;
 use std::io;
 use std::ops::{Add, Sub};
 
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
-struct Point3<T> {
-    x: T,
-    y: T,
-    z: T,
-}
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+struct HyperPoint<T>(Vec<T>);
 
-impl<T> Point3<T> {
-    pub fn new(x: T, y: T, z: T) -> Self {
-        Self { x, y, z }
+impl<T> HyperPoint<T> {
+    fn expand(&mut self, value: T) {
+        self.0.push(value);
+    }
+
+    fn dimension(&self) -> usize {
+        self.0.len()
     }
 }
 
-impl<T> Point3<T>
+impl<T> From<Vec<T>> for HyperPoint<T> {
+    fn from(value: Vec<T>) -> Self {
+        Self(value)
+    }
+}
+
+impl<T> HyperPoint<T>
 where
     T: Copy,
 {
-    pub fn modify_component(&self, operation: impl Fn(T, T) -> T, other: &Self) -> Self {
-        Self {
-            x: operation(self.x, other.x),
-            y: operation(self.y, other.y),
-            z: operation(self.z, other.z),
-        }
+    pub fn binary_operation(&self, operation: impl Fn(T, T) -> T, other: &Self) -> Self {
+        assert_eq!(self.dimension(), other.dimension());
+        Self(
+            self.0
+                .iter()
+                .zip(other.0.iter())
+                .map(|(a, b)| operation(*a, *b))
+                .collect(),
+        )
     }
 }
 
-impl<T> Point3<T>
+impl<T> HyperPoint<T>
 where
     T: Copy + Add<Output = T>,
 {
     pub fn add(&self, other: &Self) -> Self {
-        self.modify_component(|a, b| a + b, other)
+        self.binary_operation(|a, b| a + b, other)
     }
 }
 
-impl<T> Point3<T>
+impl<T> HyperPoint<T>
 where
     T: Copy + Sub<Output = T>,
 {
     pub fn subtract(&self, other: &Self) -> Self {
-        self.modify_component(|a, b| a - b, other)
-    }
-}
-
-impl<T: Display> Display for Point3<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{{x: {}, y: {}, z: {}}}", self.x, self.y, self.z)
+        self.binary_operation(|a, b| a - b, other)
     }
 }
 
 type Int = isize;
-type Point = Point3<Int>;
+type Point = HyperPoint<Int>;
+type Store = HashSet<Point>;
 
 impl Point {
-    fn zero() -> Self {
-        Self::new(0, 0, 0)
+    fn fill(value: Int, dim: usize) -> Self {
+        vec![value; dim].into()
+    }
+
+    fn is_zero(&self) -> bool {
+        self.0.iter().all(|x| *x == 0)
     }
 
     fn adjacent(&self) -> Vec<Point> {
+        let is_3d = self.dimension() == 3;
+        let is_4d = self.dimension() == 4;
+        assert!(is_3d || is_4d);
+        let cap = if is_3d { 26 } else { 80 };
+
         let delta = [-1, 0, 1];
-        let mut result = Vec::with_capacity(26);
+        let mut result = Vec::with_capacity(cap);
         for dx in delta.iter() {
             for dy in delta.iter() {
                 for dz in delta.iter() {
-                    if *dx == 0 && *dy == 0 && *dz == 0 {
+                    if is_3d {
+                        let direction: Point = vec![*dx, *dy, *dz].into();
+                        if !direction.is_zero() {
+                            result.push(self.add(&direction));
+                        }
                         continue;
                     }
-                    let delta = Point3::new(*dx, *dy, *dz);
-                    result.push(self.add(&delta));
+                    if is_4d {
+                        for dw in delta.iter() {
+                            let direction: Point = vec![*dx, *dy, *dz, *dw].into();
+                            if !direction.is_zero() {
+                                result.push(self.add(&direction));
+                            }
+                        }
+                    }
                 }
             }
         }
-        assert_eq!(26, result.len());
-        assert!(!result.contains(&self));
         result
     }
 }
 
 pub struct AoC2020_17 {
-    input: HashSet<Point>,
+    input: Store,
     from: Point,
     to: Point,
 }
@@ -98,51 +118,59 @@ impl AoC2020_17 {
     }
 
     fn parse<T: AsRef<str>>(lines: &[T]) -> Self {
-        let mut to = Point::zero();
+        let from = HyperPoint::fill(0, 2);
+        let mut to = from.clone();
         let mut input = HashSet::new();
         for (row, s) in lines.iter().map(|x| x.as_ref()).enumerate() {
             for (col, ch) in s.chars().enumerate() {
-                to = Point::new(col as isize, row as isize, 0);
+                to = Point::from(vec![col as isize, row as isize]);
                 if ch == '#' {
-                    input.insert(to);
+                    input.insert(to.clone());
                 }
             }
         }
-        Self {
-            input,
-            from: Point3::zero(),
-            to,
-        }
+        Self { input, from, to }
     }
-}
 
-impl Solution for AoC2020_17 {
-    fn part_one(&self) -> String {
-        let mut from = self.from;
-        let mut to = self.to;
+    fn simulate(&self, dimension: usize) -> String {
+        assert!(dimension == 3 || dimension == 4);
 
-        let mut store = self.input.clone();
+        let is_3d = dimension == 3;
+        let (mut store, mut from, mut to) = self.prepare_data(dimension);
+        let one = Point::fill(1, dimension);
 
-        let one = Point::new(1, 1, 1);
+        let process = |p: Point, current_store: &Store, new_store: &mut Store| {
+            let is_active = current_store.contains(&p);
+            let adj_count = p
+                .adjacent()
+                .iter()
+                .filter(|x| current_store.contains(*x))
+                .count();
+            match (is_active, adj_count) {
+                (true, 2) | (true, 3) | (false, 3) => {
+                    new_store.insert(p);
+                }
+                _ => {
+                    // no op
+                }
+            }
+        };
+
         for _ in 0..6 {
             let mut new_store = HashSet::new();
             from = from.subtract(&one);
             to = to.add(&one);
-            for x in from.x..=to.x {
-                for y in from.y..=to.y {
-                    for z in from.z..=to.z {
-                        let p = Point::new(x, y, z);
-                        let is_active = store.contains(&p);
-                        let adj_count = p.adjacent().iter().filter(|x| store.contains(*x)).count();
-                        match (is_active, adj_count) {
-                            (true, 2) | (true, 3) => {
-                                new_store.insert(p);
-                            }
-                            (false, 3) => {
-                                new_store.insert(p);
-                            }
-                            _ => {
-                                // no op
+
+            for x in from.0[0]..=to.0[0] {
+                for y in from.0[1]..=to.0[1] {
+                    for z in from.0[2]..=to.0[2] {
+                        if is_3d {
+                            let p: Point = vec![x, y, z].into();
+                            process(p, &store, &mut new_store);
+                        } else {
+                            for w in from.0[3]..=to.0[3] {
+                                let p: Point = vec![x, y, z, w].into();
+                                process(p, &store, &mut new_store);
                             }
                         }
                     }
@@ -150,12 +178,34 @@ impl Solution for AoC2020_17 {
             }
             store = new_store;
         }
-
         store.len().to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn prepare_data(&self, dim: usize) -> (Store, Point, Point) {
+        assert_eq!(self.from.dimension(), self.to.dimension());
+        assert!(self.from.dimension() < dim);
+        let mut from = self.from.clone();
+        let mut to = self.to.clone();
+        let mut store = self.input.iter().cloned().collect::<Vec<_>>();
+
+        while from.dimension() < dim {
+            from.expand(0);
+            to.expand(0);
+            store.iter_mut().for_each(|x| x.expand(0));
+        }
+
+        (store.into_iter().collect::<Store>(), from, to)
+    }
+}
+
+impl Solution for AoC2020_17 {
+    fn part_one(&self) -> String {
+        self.simulate(3)
+    }
+
+    fn part_two(&self) -> String {
+        self.simulate(4)
+    }
 
     fn description(&self) -> String {
         "Day 17: Conway Cubes".to_string()
@@ -170,7 +220,7 @@ mod test {
     fn aoc2020_17_input_load_test() -> io::Result<()> {
         let sol = make_solution()?;
         assert!(!sol.input.is_empty());
-        assert_ne!(sol.to, Point::zero());
+        assert!(!sol.to.is_zero());
         Ok(())
     }
 
@@ -184,7 +234,7 @@ mod test {
     #[test]
     fn aoc2020_17_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "2012");
         Ok(())
     }
 
