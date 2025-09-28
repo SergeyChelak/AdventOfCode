@@ -6,6 +6,18 @@ pub struct Cartesian<T> {
     is_first: bool,
 }
 
+impl<T> Cartesian<T> {
+    fn new(options: Vec2<T>) -> Self {
+        let count = options.len();
+        let indices = vec![0; count];
+        Self {
+            options,
+            indices,
+            is_first: true,
+        }
+    }
+}
+
 impl<T> Iterator for Cartesian<T>
 where
     T: Copy,
@@ -36,16 +48,6 @@ impl<T> Cartesian<T>
 where
     T: Copy,
 {
-    pub fn new(options: Vec2<T>) -> Self {
-        let count = options.len();
-        let indices = vec![0; count];
-        Self {
-            options,
-            indices,
-            is_first: true,
-        }
-    }
-
     fn reset_indices(&mut self, from: usize) {
         self.indices.iter_mut().skip(from).for_each(|x| *x = 0);
     }
