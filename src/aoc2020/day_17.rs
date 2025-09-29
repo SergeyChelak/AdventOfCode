@@ -1,5 +1,5 @@
 use crate::solution::Solution;
-use crate::utils::cartesian::CartesianIter;
+use crate::utils::cartesian::RepeativeCartesianIter;
 use crate::utils::*;
 
 use std::collections::HashSet;
