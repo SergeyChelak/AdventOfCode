@@ -1,89 +1,68 @@
-use crate::utils::Vec2;
+use std::marker::PhantomData;
 
-enum Store<'l, T> {
-    Reference(&'l [Vec<T>]),
-    Ownership(Vec2<T>),
+pub trait CartesianStore<T> {
+    fn len(&self) -> usize;
+    fn len_at(&self, index: usize) -> usize;
+    fn output(&self, indices: &[usize]) -> Vec<T>;
 }
 
-impl<'l, T> Store<'l, T> {
-    fn len(&self) -> usize {
-        self.options().len()
-    }
-
-    fn len_at(&self, index: usize) -> usize {
-        self.options()[index].len()
-    }
-
-    fn options(&self) -> &[Vec<T>] {
-        match self {
-            Store::Ownership(options) => options,
-            Store::Reference(options) => options,
-        }
-    }
-}
-
-pub struct Cartesian<'l, T> {
-    store: Store<'l, T>,
+pub struct Cartesian<T, S: CartesianStore<T>> {
+    store: S,
     indices: Vec<usize>,
     is_first: bool,
+    phantom: PhantomData<T>,
 }
 
-impl<'l, T> Cartesian<'l, T> {
-    fn with(store: Store<'l, T>) -> Self {
+impl<T, S> Cartesian<T, S>
+where
+    S: CartesianStore<T>,
+{
+    fn with(store: S) -> Self {
         let count = store.len();
         let indices = vec![0; count];
         Self {
             store,
             indices,
             is_first: true,
+            phantom: PhantomData,
         }
-    }
-
-    fn options(&self) -> &[Vec<T>] {
-        self.store.options()
     }
 }
 
-impl<'l, T> Iterator for Cartesian<'l, T>
+impl<T, S> Iterator for Cartesian<T, S>
 where
-    T: Copy,
+    T: Clone,
+    S: CartesianStore<T>,
 {
     type Item = Vec<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.is_first {
             self.is_first = false;
-            return Some(self.yeild());
+            return Some(self.yield_state());
         }
 
-        let mut index = self.indices.len() - 1;
-        loop {
-            if self.increment(index) {
-                return Some(self.yeild());
-            }
-            if index == 0 {
-                break;
-            }
+        let mut index = self.indices.len();
+        while index > 0 {
             index -= 1;
+            if self.increment(index) {
+                return Some(self.yield_state());
+            }
         }
         None
     }
 }
-
-impl<'l, T> Cartesian<'l, T>
+impl<T, S> Cartesian<T, S>
 where
-    T: Copy,
+    T: Clone,
+    S: CartesianStore<T>,
 {
     fn reset_indices(&mut self, from: usize) {
         self.indices.iter_mut().skip(from).for_each(|x| *x = 0);
     }
 
-    fn yeild(&self) -> Vec<T> {
-        self.indices
-            .iter()
-            .zip(self.options().iter())
-            .map(|(idx, arr)| arr[*idx])
-            .collect::<Vec<_>>()
+    fn yield_state(&self) -> Vec<T> {
+        self.store.output(&self.indices)
     }
 
     fn increment(&mut self, index: usize) -> bool {
@@ -97,44 +76,61 @@ where
     }
 }
 
-pub trait CartesianIter<T: Copy> {
-    fn cartesian_iter(&self) -> Cartesian<'_, T>;
+pub struct OwnedVecStore<T> {
+    options: crate::utils::Vec2<T>,
 }
 
-impl<T> CartesianIter<T> for &[Vec<T>]
-where
-    T: Copy,
-{
-    fn cartesian_iter(&self) -> Cartesian<'_, T> {
-        Cartesian::with(Store::Reference(self))
+impl<T> OwnedVecStore<T> {
+    fn new(options: crate::utils::Vec2<T>) -> Self {
+        Self { options }
     }
 }
 
-pub trait RepeativeCartesianIter<T: Copy> {
-    fn cartesian_iter(&self, times: usize) -> Cartesian<'_, T>;
+impl<T> CartesianStore<T> for OwnedVecStore<T>
+where
+    T: Clone,
+{
+    fn len(&self) -> usize {
+        self.options.len()
+    }
+
+    fn len_at(&self, index: usize) -> usize {
+        self.options[index].len()
+    }
+
+    fn output(&self, indices: &[usize]) -> Vec<T> {
+        indices
+            .iter()
+            .zip(self.options.iter())
+            .map(|(idx, arr)| arr[*idx].clone())
+            .collect::<Vec<_>>()
+    }
+}
+
+pub trait RepeativeCartesianIter<T>
+where
+    T: Clone,
+{
+    fn cartesian_iter(&self, times: usize) -> Cartesian<T, OwnedVecStore<T>>;
 }
 
 impl<T> RepeativeCartesianIter<T> for [T]
 where
-    T: Copy,
+    T: Clone,
 {
-    fn cartesian_iter(&self, times: usize) -> Cartesian<'_, T> {
+    fn cartesian_iter(&self, times: usize) -> Cartesian<T, OwnedVecStore<T>> {
         let mut v = Vec::new();
         for _ in 0..times {
             v.push(self.to_vec());
         }
-        Cartesian::with(Store::Ownership(v))
+        let store = OwnedVecStore::new(v);
+        Cartesian::with(store)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn cartesian_() {
-        //
-    }
 
     #[test]
     fn cartesian_owning() {
