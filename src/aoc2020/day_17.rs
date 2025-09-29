@@ -72,14 +72,17 @@ impl Point {
         self.0.iter().all(|x| *x == 0)
     }
 
-    fn adjacent(&self) -> Vec<Point> {
-        [-1, 0, 1]
-            .cartesian_iter(self.dimension())
-            .map(Point::from)
-            .filter(|p| !p.is_zero())
-            .map(|delta| self.add(&delta))
-            .collect::<Vec<_>>()
+    fn adjacent(&self, deltas: &[Point]) -> Vec<Point> {
+        deltas.iter().map(|hp| self.add(hp)).collect::<Vec<_>>()
     }
+}
+
+fn adjacent_deltas(dimension: usize) -> Vec<Point> {
+    [-1, 0, 1]
+        .cartesian_iter(dimension)
+        .map(Point::from)
+        .filter(|p| !p.is_zero())
+        .collect::<Vec<_>>()
 }
 
 pub struct AoC2020_17 {
@@ -116,10 +119,10 @@ impl AoC2020_17 {
         let (mut store, mut from, mut to) = self.prepare_data(dimension);
         let one = Point::fill(1, dimension);
 
-        let process = |p: Point, current_store: &Store, new_store: &mut Store| {
+        let process = |p: Point, deltas: &[Point], current_store: &Store, new_store: &mut Store| {
             let is_active = current_store.contains(&p);
             let adj_count = p
-                .adjacent()
+                .adjacent(deltas)
                 .iter()
                 .filter(|x| current_store.contains(*x))
                 .count();
@@ -133,6 +136,8 @@ impl AoC2020_17 {
             }
         };
 
+        let deltas = adjacent_deltas(dimension);
+
         for _ in 0..6 {
             let mut new_store = HashSet::new();
             from = from.subtract(&one);
@@ -143,11 +148,11 @@ impl AoC2020_17 {
                     for z in from.0[2]..=to.0[2] {
                         if is_3d {
                             let p: Point = vec![x, y, z].into();
-                            process(p, &store, &mut new_store);
+                            process(p, &deltas, &store, &mut new_store);
                         } else {
                             for w in from.0[3]..=to.0[3] {
                                 let p: Point = vec![x, y, z, w].into();
-                                process(p, &store, &mut new_store);
+                                process(p, &deltas, &store, &mut new_store);
                             }
                         }
                     }
