@@ -4,14 +4,16 @@ use crate::utils::*;
 
 use std::collections::HashSet;
 use std::io;
-use std::ops::{Add, Sub};
+use std::ops::Add;
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 struct HyperPoint<T>(Vec<T>);
 
 impl<T> HyperPoint<T> {
-    fn expand(&mut self, value: T) {
-        self.0.push(value);
+    fn expand(&mut self, values: Vec<T>) {
+        for v in values {
+            self.0.push(v);
+        }
     }
 
     fn dimension(&self) -> usize {
@@ -50,24 +52,11 @@ where
     }
 }
 
-impl<T> HyperPoint<T>
-where
-    T: Copy + Sub<Output = T>,
-{
-    pub fn subtract(&self, other: &Self) -> Self {
-        self.binary_operation(|a, b| a - b, other)
-    }
-}
-
 type Int = isize;
 type Point = HyperPoint<Int>;
 type Store = HashSet<Point>;
 
 impl Point {
-    fn fill(value: Int, dim: usize) -> Self {
-        vec![value; dim].into()
-    }
-
     fn is_zero(&self) -> bool {
         self.0.iter().all(|x| *x == 0)
     }
@@ -85,10 +74,39 @@ fn adjacent_deltas(dimension: usize) -> Vec<Point> {
         .collect::<Vec<_>>()
 }
 
+fn simulate(deltas: &[Point], store: &Store, new_store: &mut Store) {
+    let mut seen = HashSet::new();
+    let mut interested = store.clone();
+
+    while !interested.is_empty() {
+        let any = interested.iter().next().cloned().expect("Unreachable");
+        interested.remove(&any);
+        seen.insert(any.clone());
+
+        let is_active = store.contains(&any);
+        let mut count = 0usize;
+
+        for adj in any.adjacent(deltas) {
+            if store.contains(&adj) {
+                count += 1;
+            }
+            if is_active && !seen.contains(&adj) {
+                interested.insert(adj);
+            }
+        }
+        match (is_active, count) {
+            (true, 2) | (true, 3) | (false, 3) => {
+                new_store.insert(any);
+            }
+            _ => {
+                // no op
+            }
+        }
+    }
+}
+
 pub struct AoC2020_17 {
     input: Store,
-    from: Point,
-    to: Point,
 }
 
 impl AoC2020_17 {
@@ -98,85 +116,35 @@ impl AoC2020_17 {
     }
 
     fn parse<T: AsRef<str>>(lines: &[T]) -> Self {
-        let from = HyperPoint::fill(0, 2);
-        let mut to = from.clone();
         let mut input = HashSet::new();
         for (row, s) in lines.iter().map(|x| x.as_ref()).enumerate() {
             for (col, ch) in s.chars().enumerate() {
-                to = Point::from(vec![col as isize, row as isize]);
+                let point = Point::from(vec![col as isize, row as isize]);
                 if ch == '#' {
-                    input.insert(to.clone());
+                    input.insert(point);
                 }
             }
         }
-        Self { input, from, to }
+        Self { input }
     }
 
     fn simulate(&self, dimension: usize) -> String {
-        assert!(dimension == 3 || dimension == 4);
-
-        let is_3d = dimension == 3;
-        let (mut store, mut from, mut to) = self.prepare_data(dimension);
-        let one = Point::fill(1, dimension);
-
-        let process = |p: Point, deltas: &[Point], current_store: &Store, new_store: &mut Store| {
-            let is_active = current_store.contains(&p);
-            let adj_count = p
-                .adjacent(deltas)
-                .iter()
-                .filter(|x| current_store.contains(*x))
-                .count();
-            match (is_active, adj_count) {
-                (true, 2) | (true, 3) | (false, 3) => {
-                    new_store.insert(p);
-                }
-                _ => {
-                    // no op
-                }
-            }
-        };
-
+        assert!(dimension > 2);
+        let mut store = self.expand_store(vec![0; dimension - 2]);
         let deltas = adjacent_deltas(dimension);
 
         for _ in 0..6 {
             let mut new_store = HashSet::new();
-            from = from.subtract(&one);
-            to = to.add(&one);
-
-            for x in from.0[0]..=to.0[0] {
-                for y in from.0[1]..=to.0[1] {
-                    for z in from.0[2]..=to.0[2] {
-                        if is_3d {
-                            let p: Point = vec![x, y, z].into();
-                            process(p, &deltas, &store, &mut new_store);
-                        } else {
-                            for w in from.0[3]..=to.0[3] {
-                                let p: Point = vec![x, y, z, w].into();
-                                process(p, &deltas, &store, &mut new_store);
-                            }
-                        }
-                    }
-                }
-            }
+            simulate(&deltas, &store, &mut new_store);
             store = new_store;
         }
         store.len().to_string()
     }
 
-    fn prepare_data(&self, dim: usize) -> (Store, Point, Point) {
-        assert_eq!(self.from.dimension(), self.to.dimension());
-        assert!(self.from.dimension() < dim);
-        let mut from = self.from.clone();
-        let mut to = self.to.clone();
+    fn expand_store(&self, values: Vec<Int>) -> Store {
         let mut store = self.input.iter().cloned().collect::<Vec<_>>();
-
-        while from.dimension() < dim {
-            from.expand(0);
-            to.expand(0);
-            store.iter_mut().for_each(|x| x.expand(0));
-        }
-
-        (store.into_iter().collect::<Store>(), from, to)
+        store.iter_mut().for_each(|x| x.expand(values.clone()));
+        store.into_iter().collect::<Store>()
     }
 }
 
@@ -202,7 +170,6 @@ mod test {
     fn aoc2020_17_input_load_test() -> io::Result<()> {
         let sol = make_solution()?;
         assert!(!sol.input.is_empty());
-        assert!(!sol.to.is_zero());
         Ok(())
     }
 
