@@ -20,7 +20,7 @@ enum Rule {
 
 fn calculate_options<'l>(rules: &[Rule], index: usize, store: &'l mut Memo) -> &'l [String] {
     if !store[index].is_empty() {
-        return store[index].as_ref();
+        return &store[index];
     }
 
     match &rules[index] {
@@ -29,7 +29,7 @@ fn calculate_options<'l>(rules: &[Rule], index: usize, store: &'l mut Memo) -> &
         }
         Rule::Refer(arr) => {
             for group in arr {
-                let mut acc = vec!["".to_string()];
+                let mut acc = Vec::new();
                 for idx in group {
                     let nested = calculate_options(rules, *idx, store);
                     acc = merged_acc(&acc, nested);
@@ -39,10 +39,13 @@ fn calculate_options<'l>(rules: &[Rule], index: usize, store: &'l mut Memo) -> &
         }
     }
 
-    store[index].as_ref()
+    &store[index]
 }
 
 fn merged_acc(current: &[String], input: &[String]) -> Vec<String> {
+    if current.is_empty() {
+        return input.to_vec();
+    }
     let mut output = Vec::new();
     for cur in current {
         for inp in input {
