@@ -3,9 +3,7 @@ use crate::{
     utils::{remove_first_and_last, Vec2},
 };
 
-use std::{collections::HashSet, io};
-
-type Memo = Vec<Vec<String>>;
+use std::{collections::VecDeque, io};
 
 struct RawRule {
     index: usize,
@@ -18,57 +16,46 @@ enum Rule {
     Refer(Vec2<usize>),
 }
 
-fn calculate_options<'l>(rules: &[Rule], index: usize, store: &'l mut Memo) -> &'l [String] {
-    if !store[index].is_empty() {
-        return &store[index];
-    }
-
-    match &rules[index] {
-        Rule::Value(ch) => {
-            store[index] = vec![ch.to_string()];
-        }
-        Rule::Refer(arr) => {
-            for group in arr {
-                let mut acc = Vec::new();
-                for idx in group {
-                    let nested = calculate_options(rules, *idx, store);
-                    acc = merged_acc(&acc, nested);
-                }
-                store[index].append(&mut acc);
-            }
-        }
-    }
-
-    &store[index]
-}
-
-fn merged_acc(current: &[String], input: &[String]) -> Vec<String> {
-    if current.is_empty() {
-        return input.to_vec();
-    }
-    let mut output = Vec::new();
-    for cur in current {
-        for inp in input {
-            let mut s = String::new();
-            s.push_str(cur);
-            s.push_str(inp);
-            output.push(s);
-        }
-    }
-    output
-}
-
 fn calculate_valid_messages(rules: &[Rule], messages: &[String]) -> String {
-    let mut store = vec![Vec::new(); rules.len()];
-    let options = calculate_options(rules, 0, &mut store)
-        .iter()
-        .collect::<HashSet<_>>();
-
     messages
         .iter()
-        .filter(|m| options.contains(*m))
+        .map(|s| s.chars().collect::<Vec<_>>())
+        .filter(|m| is_match(m, rules))
         .count()
         .to_string()
+}
+
+fn is_match(message: &[char], rules: &[Rule]) -> bool {
+    let mut queue = VecDeque::new();
+
+    queue.push_back((message, vec![0usize]));
+
+    while let Some((msg, indices)) = queue.pop_front() {
+        if msg.is_empty() && indices.is_empty() {
+            return true;
+        }
+
+        if msg.is_empty() || indices.is_empty() || indices.len() > msg.len() {
+            continue;
+        }
+
+        let indices_rest = &indices[1..];
+        match &rules[indices[0]] {
+            Rule::Value(ch) if *ch == msg[0] => {
+                queue.push_back((&msg[1..], indices_rest.to_vec()));
+            }
+            Rule::Refer(subrules) => {
+                for subrule in subrules {
+                    let mut arr = subrule.clone();
+                    arr.append(&mut indices_rest.to_vec());
+                    queue.push_back((msg, arr));
+                }
+            }
+            _ => continue,
+        }
+    }
+
+    false
 }
 
 impl From<&str> for RawRule {
@@ -142,14 +129,8 @@ impl Solution for AoC2020_19 {
 
     fn part_two(&self) -> String {
         let mut rules = self.rules.clone();
-        rules[8] = {
-            let arr = vec![vec![42], vec![42, 8]];
-            Rule::Refer(arr)
-        };
-        rules[11] = {
-            let arr = vec![vec![42, 31], vec![42, 11, 31]];
-            Rule::Refer(arr)
-        };
+        rules[8] = RawRule::from("8: 42 | 42 8").content;
+        rules[11] = RawRule::from("11: 42 31 | 42 11 31").content;
         calculate_valid_messages(&rules, &self.messages)
     }
 
@@ -181,7 +162,7 @@ mod test {
     #[test]
     fn aoc2020_19_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "422");
         Ok(())
     }
 
@@ -216,5 +197,23 @@ mod test {
             Rule::Refer(r) => assert_eq!(r, arr),
             _ => panic!("Parse error"),
         }
+    }
+
+    #[test]
+    fn aoc2020_19_case_1() {
+        let input = r#"0: 4 1 5
+        1: 2 3 | 3 2
+        2: 4 4 | 5 5
+        3: 4 5 | 5 4
+        4: "a"
+        5: "b"
+
+        ababbb
+        bababa
+        abbbab
+        aaabbb
+        aaaabbb"#;
+        let sol = AoC2020_19::parse(input);
+        assert_eq!(sol.part_one(), "2");
     }
 }
