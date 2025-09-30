@@ -12,6 +12,7 @@ struct RawRule {
     content: Rule,
 }
 
+#[derive(Clone)]
 enum Rule {
     Value(char),
     Refer(Vec2<usize>),
@@ -52,6 +53,19 @@ fn merged_acc(current: &[String], input: &[String]) -> Vec<String> {
         }
     }
     output
+}
+
+fn calculate_valid_messages(rules: &[Rule], messages: &[String]) -> String {
+    let mut store = vec![Vec::new(); rules.len()];
+    let options = calculate_options(rules, 0, &mut store)
+        .iter()
+        .collect::<HashSet<_>>();
+
+    messages
+        .iter()
+        .filter(|m| options.contains(*m))
+        .count()
+        .to_string()
 }
 
 impl From<&str> for RawRule {
@@ -120,22 +134,21 @@ impl AoC2020_19 {
 
 impl Solution for AoC2020_19 {
     fn part_one(&self) -> String {
-        let mut store = vec![Vec::new(); self.rules.len()];
-        let options = calculate_options(&self.rules, 0, &mut store)
-            .iter()
-            .collect::<HashSet<_>>();
-
-        self.messages
-            .iter()
-            .filter(|m| options.contains(*m))
-            .count()
-            .to_string()
-
-        // options.len().to_string()
+        calculate_valid_messages(&self.rules, &self.messages)
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut rules = self.rules.clone();
+        rules[8] = {
+            let arr = vec![vec![42], vec![42, 8]];
+            Rule::Refer(arr)
+        };
+        rules[11] = {
+            let arr = vec![vec![42, 31], vec![42, 11, 31]];
+            Rule::Refer(arr)
+        };
+        calculate_valid_messages(&rules, &self.messages)
+    }
 
     fn description(&self) -> String {
         "Day 19: Monster Messages".to_string()
