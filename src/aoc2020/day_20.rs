@@ -273,14 +273,12 @@ impl Matrix {
 
 struct TileDataStore {
     edges: HashMap<usize, Vec<TileEdge>>,
-    // edges: Vec<(usize, Vec<TileEdge>)>,
 }
 
 impl TileDataStore {
     fn new() -> Self {
         TileDataStore {
             edges: HashMap::new(),
-            // edges: Vec::new(),
         }
     }
 
@@ -293,7 +291,6 @@ impl TileDataStore {
     fn fill_store(&mut self, raw_tiles: &[TileRaw]) {
         raw_tiles.iter().for_each(|raw| {
             self.edges.insert(raw.id, raw.edges());
-            // self.edges.push((raw.id, raw.edges()));
         });
     }
 
