@@ -42,7 +42,7 @@ impl TileRaw {
             for (k, v) in collection.iter() {
                 let x = TileRaw {
                     id: 0,
-                    data: transforms(&self.data, v),
+                    data: transform_series(&self.data, v),
                 };
                 let e = TileEdge::from(&x);
 
@@ -480,7 +480,7 @@ fn assemble_image(
             let pos = r * dim + c;
             let disp = layout.get(pos).expect("Can't be none");
             let trans = tile_store.transformations(disp);
-            let data = transforms(tile_store.data(disp.tile_id), trans)
+            let data = transform_series(tile_store.data(disp.tile_id), trans)
                 .diminished(1)
                 .expect("Failed to diminish data");
 
@@ -504,8 +504,8 @@ fn assemble_image(
     (image, pixels)
 }
 
-fn transforms<T: Clone>(data: &Vec2<T>, transformations: &[Transformation]) -> Vec2<T> {
-    transformations
+fn transform_series<T: Clone>(data: &Vec2<T>, series: &[Transformation]) -> Vec2<T> {
+    series
         .iter()
         .fold(data.clone(), |acc, t| transform(&acc, *t))
 }
