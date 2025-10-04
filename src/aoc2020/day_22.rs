@@ -2,13 +2,14 @@ use crate::solution::Solution;
 
 use std::{
     collections::{HashSet, VecDeque},
-    hash::{DefaultHasher, Hash, Hasher},
+    hash::Hash,
     io,
 };
 
 type Int = usize;
 type Queue = VecDeque<Int>;
 
+#[derive(Clone, Copy)]
 enum Outcome {
     FirstWin,
     SecondWin,
@@ -95,21 +96,71 @@ fn regular_combat(queue1: &mut Queue, queue2: &mut Queue) -> Outcome {
 }
 
 fn recursive_combat(queue1: &mut Queue, queue2: &mut Queue) -> Outcome {
-    let mut states = HashSet::new();
-    states.insert(queue_hash(queue1));
+    #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+    struct State {
+        h1: u64,
+        h2: u64,
+    }
 
-    // fn play() {
-    //     //
-    // }
+    impl State {
+        fn with(q1: &Queue, q2: &Queue) -> Self {
+            let queue_hash = |q: &Queue| -> u64 {
+                let mut h = std::hash::DefaultHasher::new();
+                q.iter().for_each(|val| val.hash(&mut h));
+                std::hash::Hasher::finish(&h)
+            };
 
-    // play();
-    todo!()
-}
+            Self {
+                h1: queue_hash(q1),
+                h2: queue_hash(q2),
+            }
+        }
+    }
 
-fn queue_hash(q: &Queue) -> u64 {
-    let mut h = DefaultHasher::new();
-    q.iter().for_each(|val| val.hash(&mut h));
-    h.finish()
+    fn queue_clone(q: &Queue, count: usize) -> Queue {
+        q.iter().take(count).cloned().collect::<Queue>()
+    }
+
+    fn simulate(q1: &mut Queue, q2: &mut Queue) -> Outcome {
+        let mut states: HashSet<State> = HashSet::new();
+        while !q1.is_empty() && !q2.is_empty() {
+            let state = State::with(q1, q2);
+            if states.contains(&state) {
+                return Outcome::FirstWin;
+            }
+            states.insert(state);
+
+            let card1 = q1.pop_front().expect("Unreachable: player1 queue is empty");
+            let card2 = q2.pop_front().expect("Unreachable: player2 queue is empty");
+            assert_ne!(card1, card2);
+
+            let winner = if card1 <= q1.len() && card2 <= q2.len() {
+                let mut sub_queue1 = queue_clone(q1, card1);
+                let mut sub_queue2 = queue_clone(q2, card2);
+                simulate(&mut sub_queue1, &mut sub_queue2)
+            } else if card1 > card2 {
+                Outcome::FirstWin
+            } else {
+                Outcome::SecondWin
+            };
+
+            if matches!(winner, Outcome::FirstWin) {
+                q1.push_back(card1);
+                q1.push_back(card2);
+            } else {
+                q2.push_back(card2);
+                q2.push_back(card1);
+            }
+        }
+
+        if q2.is_empty() {
+            Outcome::FirstWin
+        } else {
+            Outcome::SecondWin
+        }
+    }
+
+    simulate(queue1, queue2)
 }
 
 fn scores(queue: &Queue) -> Int {
@@ -144,7 +195,7 @@ mod test {
     #[test]
     fn aoc2020_22_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "31120");
         Ok(())
     }
 
