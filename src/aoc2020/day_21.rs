@@ -1,7 +1,7 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::io;
 
 type Component = String;
@@ -116,21 +116,23 @@ impl AoC2020_21 {
             .collect::<Vec<_>>();
         Self { input }
     }
-}
 
-impl Solution for AoC2020_21 {
-    fn part_one(&self) -> String {
-        let mut food = self
-            .input
+    fn simplified_input(&self) -> Vec<Food> {
+        self.input
             .iter()
             .map(|f| f.simplified())
-            .collect::<Vec<_>>();
+            .collect::<Vec<_>>()
+    }
+
+    fn solve(&self) -> (Vec<Food>, HashMap<Component, Component>) {
+        let mut allergens = HashMap::<String, String>::new();
+        let mut food = self.simplified_input();
 
         let unresolved = |all_food: &[Food], seen: &HashSet<usize>| -> Option<usize> {
             all_food
                 .iter()
                 .enumerate()
-                .find(|(idx, f)| !seen.contains(idx) && f.has_allergens() && f.has_allergens())
+                .find(|(idx, f)| !seen.contains(idx) && f.has_ingredients() && f.has_allergens())
                 .map(|x| x.0)
         };
 
@@ -165,19 +167,40 @@ impl Solution for AoC2020_21 {
                 continue;
             };
 
+            assert_eq!(1, candidate.1.len());
+            for allergen in &candidate.1 {
+                allergens.insert(candidate.0.clone(), allergen.clone());
+            }
+
             seen.clear();
             food.iter_mut()
                 .for_each(|elem| elem.remove(&candidate.0, &candidate.1));
         }
 
-        food.iter()
+        (food, allergens)
+    }
+}
+
+impl Solution for AoC2020_21 {
+    fn part_one(&self) -> String {
+        let (safe_food, _) = self.solve();
+        safe_food
+            .iter()
             .map(|f| f.ingredients.len())
             .sum::<usize>()
             .to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let (_, allergens) = self.solve();
+        let mut arr = allergens.iter().collect::<Vec<_>>();
+        arr.sort_by_key(|x| x.1);
+
+        arr.iter()
+            .map(|x| x.0.clone())
+            .collect::<Vec<_>>()
+            .join(",")
+    }
 
     fn description(&self) -> String {
         "Day 21: Allergen Assessment".to_string()
@@ -205,7 +228,10 @@ mod test {
     #[test]
     fn aoc2020_21_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(
+            sol.part_two(),
+            "fqfm,kxjttzg,ldm,mnzbc,zjmdst,ndvrq,fkjmz,kjkrm"
+        );
         Ok(())
     }
 
