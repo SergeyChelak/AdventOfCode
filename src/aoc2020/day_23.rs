@@ -1,9 +1,12 @@
 use crate::solution::Solution;
 
-use std::io;
+use std::{
+    collections::{HashSet, LinkedList},
+    io,
+};
 
-const CUPS_SIZE: usize = 9;
-type Cups = [u8; CUPS_SIZE];
+type Int = usize;
+type Cups = Vec<Int>;
 
 pub struct AoC2020_23 {
     input: Cups,
@@ -23,54 +26,31 @@ impl AoC2020_23 {
                 x.to_digit(10)
                     .expect("Input shouldn't contain non digit characters")
             })
-            .map(|x| x as u8)
+            .map(|x| x as Int)
             .collect::<Vec<_>>();
-        assert_eq!(v.len(), CUPS_SIZE);
-        Self {
-            input: v
-                .try_into()
-                .expect("Failed to convert input vector to array"),
-        }
+        Self { input: v }
     }
 }
 
 impl Solution for AoC2020_23 {
     fn part_one(&self) -> String {
-        let digits = (0..100).fold(self.input, |arr, _| simulate_step(&arr));
-
+        let mut game = CrabGame::with(&self.input);
+        game.perform(100);
+        let digits = game.dbg_vec();
         let start = digits
             .iter()
             .enumerate()
             .find(|(_, x)| **x == 1)
             .expect("Unreachable: 1 not found")
             .0;
-
-        (1..CUPS_SIZE)
-            .map(|idx| digits[(idx + start) % CUPS_SIZE])
-            .map(|x| (x + b'0') as char)
+        let size = digits.len();
+        (1..size)
+            .map(|idx| digits[(idx + start) % size])
+            .map(|x| x.to_string())
             .collect::<String>()
     }
 
     // fn part_two(&self) -> String {
-    //     let mut arr = self.input;
-    //     let mut store = HashSet::new();
-
-    //     for i in 0usize.. {
-    //         println!("digits: {:?}", arr);
-    //         let key = (0..CUPS_SIZE)
-    //             .map(|idx| arr[idx])
-    //             .map(|x| (x + b'0') as char)
-    //             .collect::<String>();
-    //         if store.contains(&key) {
-    //             println!("Loop found: {key} at {} step", i + 1);
-    //             break;
-    //         }
-    //         store.insert(key);
-
-    //         arr = simulate_step(&arr);
-    //     }
-
-    //     not_found()
     // }
 
     fn description(&self) -> String {
@@ -78,41 +58,84 @@ impl Solution for AoC2020_23 {
     }
 }
 
-fn simulate_step(input: &Cups) -> Cups {
-    let mut available = [true; CUPS_SIZE + 1];
-    (0..4).for_each(|i| available[input[i] as usize] = false);
+struct CrabGame {
+    list: LinkedList<Int>,
+}
 
-    let mut dest = input[0];
-    while !available[dest as usize] {
-        dest -= 1;
-        if dest == 0 {
-            dest = CUPS_SIZE as u8;
+impl CrabGame {
+    fn with(input: &Cups) -> Self {
+        let mut list = LinkedList::new();
+        for val in input {
+            list.push_back(*val);
+        }
+        Self { list }
+    }
+
+    fn expand(&mut self) {
+        todo!()
+    }
+
+    fn bounds(&self) -> (Int, Int) {
+        let min = *self.list.iter().min().expect("Min should be present");
+        let max = *self.list.iter().max().expect("Max should be present");
+        (min, max)
+    }
+
+    fn perform_step(&mut self, min: Int, max: Int) {
+        let mut in_use = HashSet::new();
+
+        let head = self
+            .list
+            .pop_front()
+            .expect("Pop head: List can't be empty");
+        self.list.push_back(head);
+        in_use.insert(head);
+
+        let mut picked = [0; 3];
+
+        (0..3).for_each(|idx| {
+            let val = self.list.pop_front().expect("Picked values");
+            picked[idx] = val;
+            in_use.insert(val);
+        });
+
+        let mut destination = head;
+        while in_use.contains(&destination) {
+            if destination == min {
+                destination = max;
+            } else {
+                destination -= 1;
+            }
+        }
+
+        let index = self
+            .list
+            .iter()
+            .enumerate()
+            .find(|(_, val)| **val == destination)
+            .expect("Value must exist in list")
+            .0;
+        let index = (index + 1) % self.list.len();
+        let mut tail = self.list.split_off(index);
+
+        picked
+            .into_iter()
+            .rev()
+            .for_each(|elem| tail.push_front(elem));
+
+        self.list.append(&mut tail);
+    }
+
+    fn perform(&mut self, steps: usize) {
+        let (min, max) = self.bounds();
+        for _ in 0..steps {
+            self.perform_step(min, max);
         }
     }
 
-    let mut output_ptr = 0usize;
-    let mut output = [0; CUPS_SIZE];
-    let mut input_ptr = 4;
-    while output_ptr < CUPS_SIZE {
-        output[output_ptr] = input[input_ptr];
-
-        let is_dest = input[input_ptr] == dest;
-        output_ptr += 1;
-        input_ptr = (input_ptr + 1) % CUPS_SIZE;
-
-        if is_dest {
-            output[output_ptr] = input[1];
-            output_ptr += 1;
-            output[output_ptr] = input[2];
-            output_ptr += 1;
-            output[output_ptr] = input[3];
-            output_ptr += 1;
-        }
+    fn dbg_vec(&self) -> Vec<Int> {
+        self.list.iter().copied().collect::<Vec<_>>()
     }
-
-    assert!(output.iter().all(|x| *x != 0));
-
-    output
 }
 
 #[cfg(test)]
@@ -146,22 +169,25 @@ mod test {
 
     #[test]
     fn aoc2020_23_simulate_step() {
-        {
-            let input = [3, 8, 9, 1, 2, 5, 4, 6, 7];
-            let output = [2, 8, 9, 1, 5, 4, 6, 7, 3];
-            assert_eq!(output, simulate_step(&input));
-        }
-
-        {
-            let input = [2, 8, 9, 1, 5, 4, 6, 7, 3];
-            let output = [5, 4, 6, 7, 8, 9, 1, 3, 2];
-            assert_eq!(output, simulate_step(&input));
-        }
-
-        {
-            let input = [5, 4, 6, 7, 8, 9, 1, 3, 2];
-            let output = [8, 9, 1, 3, 4, 6, 7, 2, 5];
-            assert_eq!(output, simulate_step(&input));
+        // in - out
+        let data = [
+            (
+                vec![3, 8, 9, 1, 2, 5, 4, 6, 7],
+                vec![2, 8, 9, 1, 5, 4, 6, 7, 3],
+            ),
+            (
+                vec![2, 8, 9, 1, 5, 4, 6, 7, 3],
+                vec![5, 4, 6, 7, 8, 9, 1, 3, 2],
+            ),
+            (
+                vec![5, 4, 6, 7, 8, 9, 1, 3, 2],
+                vec![8, 9, 1, 3, 4, 6, 7, 2, 5],
+            ),
+        ];
+        for (input, output) in data {
+            let mut game = CrabGame::with(&input);
+            game.perform(1);
+            assert_eq!(output, game.dbg_vec());
         }
     }
 }
