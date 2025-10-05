@@ -1,8 +1,10 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::io;
+
+type TileMap = HashMap<HexagonalTile, bool>;
 
 pub struct AoC2020_24 {
     input: Vec2<HexagonalDirection>,
@@ -49,10 +51,8 @@ impl AoC2020_24 {
         }
         result
     }
-}
 
-impl Solution for AoC2020_24 {
-    fn part_one(&self) -> String {
+    fn make_tile_map(&self) -> TileMap {
         let mut tiles: HashMap<HexagonalTile, bool> = HashMap::new();
         for directions in self.input.iter() {
             let tile = directions
@@ -62,16 +62,78 @@ impl Solution for AoC2020_24 {
             let entry = tiles.entry(tile).or_insert(false);
             *entry = !*entry;
         }
+        tiles
+    }
+}
 
-        tiles.values().filter(|x| **x).count().to_string()
+impl Solution for AoC2020_24 {
+    fn part_one(&self) -> String {
+        let map = self.make_tile_map();
+        black_tiles_count(&map)
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut map = self.make_tile_map();
+        for _ in 0..100 {
+            map = simulate_day(&map);
+        }
+        black_tiles_count(&map)
+    }
 
     fn description(&self) -> String {
         "Day 24: Lobby Layout".to_string()
     }
+}
+
+fn simulate_day(map: &TileMap) -> TileMap {
+    let mut candidates = HashSet::new();
+    for (tile, is_black) in map.iter() {
+        if !*is_black {
+            continue;
+        }
+        candidates.insert(*tile);
+        HexagonalDirection::all_cases()
+            .iter()
+            .map(|dir| tile.moved_by(*dir))
+            .for_each(|adj| {
+                candidates.insert(adj);
+            });
+    }
+
+    let mut new_map = TileMap::new();
+    let mut candidates = candidates.into_iter().collect::<Vec<_>>();
+    while let Some(tile) = candidates.pop() {
+        let black_adj = HexagonalDirection::all_cases()
+            .iter()
+            .map(|dir| tile.moved_by(*dir))
+            .fold(0, |acc, adj| {
+                let is_black = map.get(&adj).unwrap_or(&false);
+                if *is_black {
+                    acc + 1
+                } else {
+                    acc
+                }
+            });
+        let is_black = *map.get(&tile).unwrap_or(&false);
+        match (is_black, black_adj) {
+            (true, x) if x == 0 || x > 2 => {
+                new_map.insert(tile, false);
+            }
+            (false, 2) => {
+                new_map.insert(tile, true);
+            }
+            _ => {
+                if is_black {
+                    new_map.insert(tile, is_black);
+                }
+            }
+        };
+    }
+    new_map
+}
+
+fn black_tiles_count(map: &TileMap) -> String {
+    map.values().filter(|x| **x).count().to_string()
 }
 
 type Int = isize;
@@ -86,6 +148,13 @@ enum HexagonalDirection {
     SouthWest,
 }
 
+impl HexagonalDirection {
+    fn all_cases() -> [HexagonalDirection; 6] {
+        use HexagonalDirection::*;
+        [East, West, NorthEast, NorthWest, SouthEast, SouthWest]
+    }
+}
+
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 struct HexagonalTile {
     a: Int,
@@ -94,6 +163,7 @@ struct HexagonalTile {
 }
 
 impl HexagonalTile {
+    // https://en.wikipedia.org/wiki/Hexagonal_Efficient_Coordinate_System
     fn moved_by(&self, direction: HexagonalDirection) -> Self {
         match direction {
             HexagonalDirection::East => self.moved_east(),
@@ -175,7 +245,7 @@ mod test {
     #[test]
     fn aoc2020_24_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "3565");
         Ok(())
     }
 
@@ -185,6 +255,17 @@ mod test {
 
     #[test]
     fn aoc2020_24_case1() {
+        let sol = make_test_solution();
+        assert_eq!(sol.part_one(), "10");
+    }
+
+    #[test]
+    fn aoc2020_24_case2() {
+        let sol = make_test_solution();
+        assert_eq!(sol.part_two(), "2208");
+    }
+
+    fn make_test_solution() -> AoC2020_24 {
         let lines = [
             "sesenwnenenewseeswwswswwnenewsewsw",
             "neeenesenwnwwswnenewnwwsewnenwseswesw",
@@ -207,7 +288,6 @@ mod test {
             "neswnwewnwnwseenwseesewsenwsweewe",
             "wseweeenwnesenwwwswnew",
         ];
-        let sol = AoC2020_24::parse(&lines);
-        assert_eq!(sol.part_one(), "10");
+        AoC2020_24::parse(&lines)
     }
 }
