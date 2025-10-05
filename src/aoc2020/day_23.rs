@@ -1,9 +1,6 @@
 use crate::solution::Solution;
 
-use std::{
-    collections::{HashSet, LinkedList},
-    io,
-};
+use std::io;
 
 type Int = usize;
 type Cups = Vec<Int>;
@@ -34,108 +31,69 @@ impl AoC2020_23 {
 
 impl Solution for AoC2020_23 {
     fn part_one(&self) -> String {
-        let mut game = CrabGame::with(&self.input);
-        game.perform(100);
-        let digits = game.dbg_vec();
-        let start = digits
-            .iter()
-            .enumerate()
-            .find(|(_, x)| **x == 1)
-            .expect("Unreachable: 1 not found")
-            .0;
-        let size = digits.len();
-        (1..size)
-            .map(|idx| digits[(idx + start) % size])
-            .map(|x| x.to_string())
-            .collect::<String>()
+        let result = simulate(&self.input, 100);
+        let mut output = String::new();
+        let mut idx = 1;
+        (0..self.input.len() - 1).for_each(|_| {
+            output.push_str(&result[idx].to_string());
+            idx = result[idx];
+        });
+        output
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut cups = self.input.clone();
+        let max = *cups.iter().max().expect("Cups can't be empty");
+        for x in max + 1..=1000000 {
+            cups.push(x);
+        }
+        let result = simulate(&cups, 10000000);
+        let one = result[1];
+        let two = result[one];
+        (one * two).to_string()
+    }
 
     fn description(&self) -> String {
         "Day 23: Crab Cups".to_string()
     }
 }
 
-struct CrabGame {
-    list: LinkedList<Int>,
-}
+fn simulate(cups: &Cups, steps: usize) -> Cups {
+    let mut next = vec![0; cups.len() + 1];
+    for i in 0..cups.len() - 1 {
+        next[cups[i]] = cups[i + 1];
+    }
+    next[cups[cups.len() - 1]] = cups[0];
 
-impl CrabGame {
-    fn with(input: &Cups) -> Self {
-        let mut list = LinkedList::new();
-        for val in input {
-            list.push_back(*val);
+    let mut current = cups[0];
+    for _ in 0..steps {
+        let mut pickup = Vec::new();
+        let mut tmp = current;
+        for _ in 0..3 {
+            tmp = next[tmp];
+            pickup.push(tmp);
         }
-        Self { list }
-    }
 
-    fn expand(&mut self) {
-        todo!()
-    }
-
-    fn bounds(&self) -> (Int, Int) {
-        let min = *self.list.iter().min().expect("Min should be present");
-        let max = *self.list.iter().max().expect("Max should be present");
-        (min, max)
-    }
-
-    fn perform_step(&mut self, min: Int, max: Int) {
-        let mut in_use = HashSet::new();
-
-        let head = self
-            .list
-            .pop_front()
-            .expect("Pop head: List can't be empty");
-        self.list.push_back(head);
-        in_use.insert(head);
-
-        let mut picked = [0; 3];
-
-        (0..3).for_each(|idx| {
-            let val = self.list.pop_front().expect("Picked values");
-            picked[idx] = val;
-            in_use.insert(val);
-        });
-
-        let mut destination = head;
-        while in_use.contains(&destination) {
-            if destination == min {
-                destination = max;
+        let mut new;
+        let mut i = 1;
+        loop {
+            new = if current > i {
+                current - i
             } else {
-                destination -= 1;
+                cups.len() + current - i
+            };
+            if !pickup.contains(&new) {
+                break;
             }
+            i += 1;
         }
 
-        let index = self
-            .list
-            .iter()
-            .enumerate()
-            .find(|(_, val)| **val == destination)
-            .expect("Value must exist in list")
-            .0;
-        let index = (index + 1) % self.list.len();
-        let mut tail = self.list.split_off(index);
+        next.swap(new, current);
+        next.swap(current, pickup[pickup.len() - 1]);
 
-        picked
-            .into_iter()
-            .rev()
-            .for_each(|elem| tail.push_front(elem));
-
-        self.list.append(&mut tail);
+        current = next[current];
     }
-
-    fn perform(&mut self, steps: usize) {
-        let (min, max) = self.bounds();
-        for _ in 0..steps {
-            self.perform_step(min, max);
-        }
-    }
-
-    fn dbg_vec(&self) -> Vec<Int> {
-        self.list.iter().copied().collect::<Vec<_>>()
-    }
+    next
 }
 
 #[cfg(test)]
@@ -159,35 +117,11 @@ mod test {
     #[test]
     fn aoc2020_23_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "21986479838");
         Ok(())
     }
 
     fn make_solution() -> io::Result<AoC2020_23> {
         AoC2020_23::new()
-    }
-
-    #[test]
-    fn aoc2020_23_simulate_step() {
-        // in - out
-        let data = [
-            (
-                vec![3, 8, 9, 1, 2, 5, 4, 6, 7],
-                vec![2, 8, 9, 1, 5, 4, 6, 7, 3],
-            ),
-            (
-                vec![2, 8, 9, 1, 5, 4, 6, 7, 3],
-                vec![5, 4, 6, 7, 8, 9, 1, 3, 2],
-            ),
-            (
-                vec![5, 4, 6, 7, 8, 9, 1, 3, 2],
-                vec![8, 9, 1, 3, 4, 6, 7, 2, 5],
-            ),
-        ];
-        for (input, output) in data {
-            let mut game = CrabGame::with(&input);
-            game.perform(1);
-            assert_eq!(output, game.dbg_vec());
-        }
     }
 }
