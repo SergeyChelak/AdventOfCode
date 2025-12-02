@@ -37,7 +37,6 @@ fn digits_repeating(x: Int) -> bool {
         let Some(first) = chunks.next() else {
             continue;
         };
-        // println!("chunk = {first:?}, size = {size}");
         if chunks.all(|chunk| chunk == first) {
             return true;
         }
