@@ -32,7 +32,7 @@ impl Range {
 
 fn digits_repeating(x: Int) -> bool {
     let chars = x.to_string().chars().collect::<Vec<_>>();
-    for size in 1..chars.len() {
+    for size in 1..=chars.len() >> 1 {
         let mut chunks = chars.chunks(size);
         let Some(first) = chunks.next() else {
             continue;
