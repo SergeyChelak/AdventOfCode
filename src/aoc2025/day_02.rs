@@ -30,6 +30,28 @@ impl Range {
     }
 }
 
+fn digits_repeating(value: Int) -> bool {
+    let digits = 1 + value.ilog10();
+    'inner: for size in 1..=digits >> 1 {
+        let factor = 10usize.pow(size);
+        let first = value % factor;
+        if first == 0 || first.ilog10() != size - 1 {
+            continue;
+        }
+        let mut x = value / factor;
+        while x > 0 {
+            let next = x % factor;
+            if first != next {
+                continue 'inner;
+            }
+            x /= factor;
+        }
+        return true;
+    }
+    false
+}
+
+/*
 fn digits_repeating(x: Int) -> bool {
     let chars = x.to_string().chars().collect::<Vec<_>>();
     for size in 1..=chars.len() >> 1 {
@@ -43,6 +65,7 @@ fn digits_repeating(x: Int) -> bool {
     }
     false
 }
+ */
 
 fn digits_repeat_twice(x: Int) -> bool {
     let digits = 1 + x.ilog10();
@@ -125,6 +148,7 @@ mod test {
         assert!(digits_repeating(1188511885));
         assert!(digits_repeating(2121212121));
         assert!(digits_repeating(824824824));
+        assert!(!digits_repeating(1001001));
     }
 
     #[test]
@@ -139,6 +163,13 @@ mod test {
         let sol = make_solution()?;
         assert_eq!(sol.part_two(), "36862281418");
         Ok(())
+    }
+
+    #[test]
+    fn aoc2025_02_case_2() {
+        let input = "11-22,95-115,998-1012,1188511880-1188511890,222220-222224,1698522-1698528,446443-446449,38593856-38593862,565653-565659,824824821-824824827,2121212118-2121212124";
+        let puzzle = AoC2025_02::parse(input);
+        assert_eq!(puzzle.part_two(), "4174379265");
     }
 
     fn make_solution() -> io::Result<AoC2025_02> {
