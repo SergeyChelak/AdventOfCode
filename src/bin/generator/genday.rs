@@ -93,15 +93,22 @@ pub struct ${STRUCT_NAME} {
 
 impl ${STRUCT_NAME} {
     pub fn new() -> io::Result<Self> {
-        // let lines = read_file_as_lines("${INPUT_FILENAME}")?;
-        // let input = std::fs::read_to_string("${INPUT_FILENAME}")?;
-        Ok(Self {})
-        // Ok(Self::parse(&lines))
+        let lines = read_file_as_lines("${INPUT_FILENAME}")?;
+        Ok(Self::parse_lines(&lines))
     }
 
-    // fn parse<T: AsRef<str>>(lines: &[T]) -> Self {
-    //     todo!()
-    // }
+    fn parse_lines<T: AsRef<str>>(lines: &[T]) -> Self {
+        todo!()
+    }
+
+    pub fn _new() -> io::Result<Self> {
+        let data = std::fs::read_to_string("${INPUT_FILENAME}")?;
+        Ok(Self::parse_data(&data))
+    }
+
+    fn parse_data(data: &str) -> Self {
+         todo!()
+    }
 }
 
 impl Solution for ${STRUCT_NAME} {

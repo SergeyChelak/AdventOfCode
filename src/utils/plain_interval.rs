@@ -34,4 +34,21 @@ where
             end: self.end.min(other.end),
         })
     }
+
+    pub fn union(&self, other: &Self) -> Option<Self> {
+        let (l, r) = if self.begin < other.begin {
+            (self, other)
+        } else {
+            (other, self)
+        };
+
+        if r.begin > l.end {
+            return None;
+        }
+
+        Some(PlainInterval {
+            begin: self.begin.min(other.begin),
+            end: self.end.max(other.end),
+        })
+    }
 }
