@@ -32,8 +32,8 @@ impl AoC2025_06 {
     }
 
     fn compute(&self, transform: impl Fn(usize) -> Vec<Int>) -> String {
-        let add: &Block = &|a: Int, b: Int| -> Int { a + b };
-        let mul: &Block = &|a: Int, b: Int| -> Int { a * b };
+        let add: Block = |a, b| a + b;
+        let mul: Block = |a, b| a * b;
         let mut result = 0;
         for (idx, column) in self.columns.iter().enumerate() {
             let op = column.last().expect("Column can't be empty").trim();
@@ -49,7 +49,7 @@ impl AoC2025_06 {
     }
 }
 
-type Block = dyn Fn(Int, Int) -> Int;
+type Block = fn(Int, Int) -> Int;
 
 impl Solution for AoC2025_06 {
     fn part_one(&self) -> String {
