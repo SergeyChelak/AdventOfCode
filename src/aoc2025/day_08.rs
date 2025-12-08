@@ -62,10 +62,7 @@ impl AoC2025_08 {
         });
         let mut arr = size_map.values().collect::<Vec<_>>();
         arr.sort();
-        arr = arr.into_iter().rev().collect();
-        assert!(arr.len() > 2);
-
-        (arr[0] * arr[1] * arr[2]).to_string()
+        arr.into_iter().rev().take(3).product::<usize>().to_string()
     }
 }
 
