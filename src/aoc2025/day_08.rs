@@ -100,18 +100,15 @@ impl Solution for AoC2025_08 {
 
 struct Engine {
     chain_mapping: Vec<usize>,
-    id_counter: usize,
     distances: Vec<DistanceData>,
 }
 
 impl Engine {
     fn with(points: &[Point]) -> Self {
-        let count = points.len();
-        let chain_mapping = (0..count).collect::<Vec<_>>();
+        let chain_mapping = (0..points.len()).collect::<Vec<_>>();
         let distances = Self::precalculate_distances(points);
         Self {
             chain_mapping,
-            id_counter: count + 100,
             distances,
         }
     }
@@ -138,17 +135,11 @@ impl Engine {
         // merge chains
         let chain_1 = self.chain_mapping[data.first];
         let chain_2 = self.chain_mapping[data.second];
-        let next_id = self.next_id();
         self.chain_mapping
             .iter_mut()
-            .filter(|x| **x == chain_1 || **x == chain_2)
-            .for_each(|x| *x = next_id);
+            .filter(|x| **x == chain_2)
+            .for_each(|x| *x = chain_1);
         Some(data)
-    }
-
-    fn next_id(&mut self) -> usize {
-        self.id_counter += 1;
-        self.id_counter
     }
 }
 
