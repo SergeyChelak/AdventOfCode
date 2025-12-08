@@ -47,44 +47,87 @@ impl AoC2025_08 {
             .collect::<Vec<_>>();
         Self { input }
     }
+
+    fn part_one_ex(&self, iterations: usize) -> String {
+        let mut engine = Engine::with(&self.input);
+        for _ in 0..iterations {
+            _ = engine.make_connection();
+        }
+
+        // calc chain's sizes
+        let mut size_map = HashMap::new();
+        engine.chain_mapping.iter().for_each(|x| {
+            let entry = size_map.entry(*x).or_insert(0usize);
+            *entry += 1;
+        });
+        let mut arr = size_map.values().collect::<Vec<_>>();
+        arr.sort();
+        arr = arr.into_iter().rev().collect();
+        assert!(arr.len() > 2);
+
+        (arr[0] * arr[1] * arr[2]).to_string()
+    }
 }
 
 impl Solution for AoC2025_08 {
     fn part_one(&self) -> String {
-        compute(&self.input, 1000).to_string()
+        self.part_one_ex(1000)
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut engine = Engine::with(&self.input);
+        let mut result = engine.make_candidate().0;
+        while let Some(value) = engine.make_connection() {
+            result = value;
+            let mut iter = engine.chain_mapping.iter();
+            let first = iter.next().expect("Chain map shouldn't be empty");
+            if iter.all(|val| val == first) {
+                break;
+            }
+        }
+        let p1 = &self.input[result.first];
+        let p2 = &self.input[result.second];
+        (p1.0[0] * p2.0[0]).to_string()
+    }
 
     fn description(&self) -> String {
         "Day 8: Playground".to_string()
     }
 }
 
-fn compute(points: &[Point], connections: usize) -> usize {
-    let count = points.len();
+struct Engine<'l> {
+    points: &'l [Point],
+    chain_mapping: Vec<usize>,
+    pairs: HashSet<IndexPair>,
+    id_counter: usize,
+}
 
-    let mut chain_mapping = (0..count).collect::<Vec<_>>();
-    let mut pairs: HashSet<IndexPair> = HashSet::new();
+impl<'l> Engine<'l> {
+    fn with(points: &'l [Point]) -> Self {
+        let count = points.len();
+        let chain_mapping = (0..count).collect::<Vec<_>>();
 
-    let mut next_id = count + 100;
+        Self {
+            points,
+            chain_mapping,
+            pairs: HashSet::new(),
+            id_counter: count + 100,
+        }
+    }
 
-    for _ in 0..connections {
+    fn make_connection(&mut self) -> Option<IndexPair> {
         // find closest without connection
-        let mut candidate = (IndexPair::new(count + 1, count + 1), usize::MAX);
-        for (i, a) in points.iter().enumerate() {
-            let Some(search_result) = points
+        let mut candidate = self.make_candidate();
+        for (i, a) in self.points.iter().enumerate() {
+            let search_result = self
+                .points
                 .iter()
                 .enumerate()
                 .filter(|(j, _)| *j != i)
                 .map(|(j, val)| (IndexPair::new(i, j), val))
-                .filter(|(pair, _)| !pairs.contains(pair))
+                .filter(|(pair, _)| !self.pairs.contains(pair))
                 .map(|(pair, b)| (pair, b.dist_sqr(a)))
-                .min_by_key(|x| x.1)
-            else {
-                unreachable!("Unexpected case, will think alter...");
-            };
+                .min_by_key(|x| x.1)?;
             if search_result.1 < candidate.1 {
                 candidate = search_result;
             }
@@ -92,29 +135,25 @@ fn compute(points: &[Point], connections: usize) -> usize {
 
         // merge chains
         let pair = candidate.0;
-        pairs.insert(pair);
-        let chain_1 = chain_mapping[pair.first];
-        let chain_2 = chain_mapping[pair.second];
-        chain_mapping
+        self.pairs.insert(pair);
+        let chain_1 = self.chain_mapping[pair.first];
+        let chain_2 = self.chain_mapping[pair.second];
+        let next_id = self.next_id();
+        self.chain_mapping
             .iter_mut()
             .filter(|x| **x == chain_1 || **x == chain_2)
             .for_each(|x| *x = next_id);
-        next_id += 1;
-        // println!("{:?}", chain_mapping);
+        Some(pair)
     }
 
-    // calc chain's sizes
-    let mut size_map = HashMap::new();
-    chain_mapping.iter().for_each(|x| {
-        let entry = size_map.entry(*x).or_insert(0usize);
-        *entry += 1;
-    });
-    let mut arr = size_map.values().collect::<Vec<_>>();
-    arr.sort();
-    arr = arr.into_iter().rev().collect();
-    assert!(arr.len() > 2);
+    fn next_id(&mut self) -> usize {
+        self.id_counter += 1;
+        self.id_counter
+    }
 
-    arr[0] * arr[1] * arr[2]
+    fn make_candidate(&self) -> (IndexPair, usize) {
+        (IndexPair::new(self.id_counter, self.id_counter), usize::MAX)
+    }
 }
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -153,14 +192,20 @@ mod test {
     #[test]
     fn aoc2025_08_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "9003685096");
         Ok(())
     }
 
     #[test]
     fn aoc2025_08_case_1() {
         let sol = make_test_solution();
-        assert_eq!(compute(&sol.input, 10), 40);
+        assert_eq!(sol.part_one_ex(10), "40");
+    }
+
+    #[test]
+    fn aoc2025_08_case_2() {
+        let sol = make_test_solution();
+        assert_eq!(sol.part_two(), "25272");
     }
 
     fn make_test_solution() -> AoC2025_08 {
