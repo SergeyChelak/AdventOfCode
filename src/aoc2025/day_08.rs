@@ -2,7 +2,7 @@ use crate::solution::Solution;
 use crate::utils::hyper_point::HyperPoint;
 use crate::utils::*;
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::io;
 
 type Int = isize;
@@ -76,17 +76,20 @@ impl Solution for AoC2025_08 {
 
     fn part_two(&self) -> String {
         let mut engine = Engine::with(&self.input);
-        let mut result = engine.make_candidate().0;
+        let (mut first, mut second) = (0usize, 0usize);
         while let Some(value) = engine.make_connection() {
-            result = value;
+            first = value.first;
+            second = value.second;
+
             let mut iter = engine.chain_mapping.iter();
             let first = iter.next().expect("Chain map shouldn't be empty");
             if iter.all(|val| val == first) {
                 break;
             }
         }
-        let p1 = &self.input[result.first];
-        let p2 = &self.input[result.second];
+        assert_ne!(first, second);
+        let p1 = &self.input[first];
+        let p2 = &self.input[second];
         (p1.0[0] * p2.0[0]).to_string()
     }
 
@@ -95,80 +98,65 @@ impl Solution for AoC2025_08 {
     }
 }
 
-struct Engine<'l> {
-    points: &'l [Point],
+struct Engine {
     chain_mapping: Vec<usize>,
-    pairs: HashSet<IndexPair>,
     id_counter: usize,
+    distances: Vec<DistanceData>,
 }
 
-impl<'l> Engine<'l> {
-    fn with(points: &'l [Point]) -> Self {
+impl Engine {
+    fn with(points: &[Point]) -> Self {
         let count = points.len();
         let chain_mapping = (0..count).collect::<Vec<_>>();
-
+        let distances = Self::precalculate_distances(points);
         Self {
-            points,
             chain_mapping,
-            pairs: HashSet::new(),
             id_counter: count + 100,
+            distances,
         }
     }
 
-    fn make_connection(&mut self) -> Option<IndexPair> {
-        // find closest without connection
-        let mut candidate = self.make_candidate();
-        for (i, a) in self.points.iter().enumerate() {
-            let search_result = self
-                .points
-                .iter()
-                .enumerate()
-                .filter(|(j, _)| *j != i)
-                .map(|(j, val)| (IndexPair::new(i, j), val))
-                .filter(|(pair, _)| !self.pairs.contains(pair))
-                .map(|(pair, b)| (pair, b.dist_sqr(a)))
-                .min_by_key(|x| x.1)?;
-            if search_result.1 < candidate.1 {
-                candidate = search_result;
+    fn precalculate_distances(points: &[Point]) -> Vec<DistanceData> {
+        let mut array = Vec::new();
+        for (i, first) in points.iter().enumerate() {
+            for (j, second) in points.iter().enumerate().skip(i + 1) {
+                let distance = first.dist_sqr(second);
+                let data = DistanceData {
+                    first: i,
+                    second: j,
+                    distance,
+                };
+                array.push(data);
             }
         }
+        array.sort_by_key(|val| val.distance);
+        array.into_iter().rev().collect()
+    }
 
+    fn make_connection(&mut self) -> Option<DistanceData> {
+        let data = self.distances.pop()?;
         // merge chains
-        let pair = candidate.0;
-        self.pairs.insert(pair);
-        let chain_1 = self.chain_mapping[pair.first];
-        let chain_2 = self.chain_mapping[pair.second];
+        let chain_1 = self.chain_mapping[data.first];
+        let chain_2 = self.chain_mapping[data.second];
         let next_id = self.next_id();
         self.chain_mapping
             .iter_mut()
             .filter(|x| **x == chain_1 || **x == chain_2)
             .for_each(|x| *x = next_id);
-        Some(pair)
+        Some(data)
     }
 
     fn next_id(&mut self) -> usize {
         self.id_counter += 1;
         self.id_counter
     }
-
-    fn make_candidate(&self) -> (IndexPair, usize) {
-        (IndexPair::new(self.id_counter, self.id_counter), usize::MAX)
-    }
 }
 
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
-struct IndexPair {
+#[derive(Debug)]
+struct DistanceData {
     first: usize,
     second: usize,
-}
-
-impl IndexPair {
-    fn new(a: usize, b: usize) -> Self {
-        Self {
-            first: a.min(b),
-            second: a.max(b),
-        }
-    }
+    distance: usize,
 }
 
 #[cfg(test)]
