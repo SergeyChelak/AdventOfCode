@@ -1,27 +1,10 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::collections::HashSet;
 use std::io;
 
 type Int = isize;
 type Point = Point2d<Int>;
-
-impl Point {
-    fn vector(begin: &Point, end: &Point) -> Point {
-        Point::new(end.x - begin.x, end.y - begin.y)
-    }
-
-    fn cross_product(&self, other: &Point) -> Int {
-        self.x * other.y - other.x * self.y
-    }
-}
-
-fn cross_product(prev: &Point, current: &Point, next: &Point) -> Int {
-    let v1 = Point::vector(prev, current);
-    let v2 = Point::vector(current, next);
-    v1.cross_product(&v2)
-}
 
 pub struct AoC2025_09 {
     input: Vec<Point>,
@@ -55,83 +38,60 @@ impl Solution for AoC2025_09 {
     }
 
     fn part_two(&self) -> String {
-        let count = self.input.len();
-        let cross_products = self
+        let len = self.input.len();
+        let intervals = self
             .input
             .iter()
             .enumerate()
-            .map(|(i, p)| {
-                let i_prev = (count + i - 1) % count;
-                let i_next = (i + 1) % count;
-                cross_product(&self.input[i_prev], p, &self.input[i_next])
+            .map(|(i, cur)| {
+                let next = self.input[(i + 1) % len];
+                Interval2d::with(cur, &next)
             })
             .collect::<Vec<_>>();
 
-        let concave_indices = cross_products
-            .iter()
-            .enumerate()
-            .filter(|(_, val)| **val < 0)
-            .map(|(idx, _)| idx)
-            // .inspect(|idx| println!("{:?}", self.input[*idx]))
-            .collect::<HashSet<_>>();
-
-        let mut result = 0usize;
-        let mut rect = Interval2d::with(&Point::zero(), &Point::zero());
+        let mut result = 0;
         for (i, a) in self.input.iter().enumerate() {
-            'j_loop: for (j, b) in self.input.iter().enumerate().skip(i + 1) {
-                let candidate_interval = Interval2d::with(a, b);
-                // don't consider worst options
-                let square = candidate_interval.square();
+            for b in self.input.iter().skip(i + 1) {
+                let diagonal = Interval2d::with(a, b);
+                let square = diagonal.square();
                 if square <= result {
                     continue;
                 }
-                // check if there is no concave vertex inside candidate
-                for k in concave_indices.iter().copied() {
-                    if k == i || k == j {
-                        continue;
-                    }
-                    let v = self.input[k];
-                    let v_next = self.input[(k + 1) % count];
-
-                    let interval = Interval2d::with(&v, &v_next);
-                    let Some(intersection) = candidate_interval.intersection(&interval) else {
+                let mut is_valid = true;
+                for segment in intervals.iter() {
+                    let Some(intersection) = diagonal.intersection(segment) else {
                         continue;
                     };
 
-                    if intersection.is_vertical() {
-                        assert_eq!(intersection.x_interval.begin, intersection.x_interval.end);
-                        if intersection.y_interval.len() == 1 {
-                            continue;
-                        }
-                    } else {
-                        assert_eq!(intersection.y_interval.begin, intersection.y_interval.end);
-                        if intersection.x_interval.len() == 1 {
+                    // edge check
+                    if intersection.x_interval.len() == 1 {
+                        // if vertical
+                        let x = intersection.x_interval.begin;
+                        if diagonal.x_interval.is_edge(x) {
                             continue;
                         }
                     }
-                    continue 'j_loop;
+                    if intersection.y_interval.len() == 1 {
+                        // if horizontal
+                        let y = intersection.y_interval.begin;
+                        if diagonal.y_interval.is_edge(y) {
+                            continue;
+                        }
+                    }
+                    is_valid = false;
+                    break;
                 }
-                // update if all constraints were satisfied
-                result = square;
-                rect = candidate_interval;
+                if is_valid {
+                    result = square;
+                }
             }
         }
-        debug_print_rect(&rect);
         result.to_string()
     }
 
     fn description(&self) -> String {
         "Day 9: Movie Theater".to_string()
     }
-}
-
-fn debug_print_rect(rect: &Interval2d) {
-    let x_int = rect.x_interval;
-    let y_int = rect.y_interval;
-    println!("{},{}", x_int.begin, y_int.begin,);
-    println!("{},{}", x_int.end, y_int.begin,);
-    println!("{},{}", x_int.end, y_int.end);
-    println!("{},{}", x_int.begin, y_int.end,);
 }
 
 struct Interval2d {
@@ -145,10 +105,6 @@ impl Interval2d {
             x_interval: PlainInterval::with_arbitrary(a.x, b.x),
             y_interval: PlainInterval::with_arbitrary(a.y, b.y),
         }
-    }
-
-    fn is_vertical(&self) -> bool {
-        self.x_interval.begin == self.x_interval.end
     }
 
     fn square(&self) -> usize {
@@ -168,6 +124,10 @@ impl Interval2d {
 impl PlainInterval<Int> {
     fn with_arbitrary(a: Int, b: Int) -> Self {
         Self::new(a.min(b), a.max(b))
+    }
+
+    fn is_edge(&self, value: Int) -> bool {
+        value == self.begin || value == self.end
     }
 
     fn len(&self) -> usize {
@@ -196,7 +156,7 @@ mod test {
     #[test]
     fn aoc2025_09_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "1644094530");
         Ok(())
     }
 
