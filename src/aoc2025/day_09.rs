@@ -31,7 +31,8 @@ impl Solution for AoC2025_09 {
         let mut result = 0;
         for (i, a) in self.input.iter().enumerate() {
             for b in self.input.iter().skip(i + 1) {
-                result = result.max((1 + a.x.abs_diff(b.x)) * (1 + a.y.abs_diff(b.y)));
+                let square = Interval2d::with(a, b).square();
+                result = result.max(square);
             }
         }
         result.to_string()
@@ -122,10 +123,6 @@ impl Interval2d {
 }
 
 impl PlainInterval<Int> {
-    fn with_arbitrary(a: Int, b: Int) -> Self {
-        Self::new(a.min(b), a.max(b))
-    }
-
     fn is_edge(&self, value: Int) -> bool {
         value == self.begin || value == self.end
     }

@@ -14,6 +14,12 @@ impl<T> PlainInterval<T>
 where
     T: Copy + Ord,
 {
+    /// creates interval with element in arbitrary order
+    /// function will arrange them in the expected way
+    pub fn with_arbitrary(a: T, b: T) -> Self {
+        Self::new(a.min(b), a.max(b))
+    }
+
     pub fn has_intersection(self, other: &Self) -> bool {
         self.begin.max(other.begin) <= self.end.min(other.end)
     }
