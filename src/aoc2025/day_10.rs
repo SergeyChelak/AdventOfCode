@@ -47,16 +47,12 @@ impl Solution for AoC2025_10 {
     }
 }
 
-fn bitmap_buttons(buttons: &[Vec<usize>]) -> Vec<usize> {
-    buttons.iter().map(|arr| bitmap(arr)).collect()
-}
-
 fn bitmap(arr: &[usize]) -> usize {
     arr.iter().fold(0, |acc, x| acc | (1 << *x))
 }
 
 fn indicator_setup_presses(target: usize, buttons: &[Vec<usize>]) -> Option<usize> {
-    let bitmaps = bitmap_buttons(buttons);
+    let bitmaps = buttons.iter().map(|arr| bitmap(arr)).collect::<Vec<_>>();
     let mut queue = VecDeque::new();
     queue.push_back(0usize);
     let mut count_map = HashMap::<usize, usize>::new();
