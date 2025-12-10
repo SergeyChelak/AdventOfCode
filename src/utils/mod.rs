@@ -39,3 +39,5 @@ pub mod checked_ops;
 pub mod cartesian;
 
 pub mod hyper_point;
+
+pub mod simplex;
