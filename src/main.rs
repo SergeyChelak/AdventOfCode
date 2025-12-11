@@ -61,20 +61,11 @@ fn main() -> io::Result<()> {
 }
 
 fn execute_year_puzzles(factory: &AggregatedFactory, year: usize) {
-    let mut found = false;
     for day in 1..=25 {
-        let Some(puzzle) = factory.puzzle(year, day) else {
+        let Some(puzzle) = factory.puzzle(year, day).and_then(|x| x.ok()) else {
             continue;
         };
-        let Ok(puzzle) = puzzle else {
-            println!("Execution terminated because of failure of creation {year}/{day} puzzle");
-            return;
-        };
-        found = true;
         execute(puzzle.deref());
-    }
-    if !found {
-        println!("Nothing to execute");
     }
 }
 
@@ -99,9 +90,9 @@ fn create_factory() -> AggregatedFactory {
     factory.add_factory(puzzle_factory_2017());
     factory.add_factory(puzzle_factory_2018());
     factory.add_factory(puzzle_factory_2019());
+    factory.add_factory(puzzle_factory_2020());
     factory.add_factory(puzzle_factory_2023());
     factory.add_factory(puzzle_factory_2024());
-    factory.add_factory(puzzle_factory_2020());
     factory.add_factory(puzzle_factory_2025());
     // GENERATOR_MARKER: ADD_FACTORY
     // Do not remove the line above
