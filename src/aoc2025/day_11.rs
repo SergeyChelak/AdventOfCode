@@ -2,7 +2,7 @@ use crate::solution::Solution;
 use crate::utils::*;
 
 use std::collections::HashMap;
-use std::io;
+use std::{io, mem};
 
 type Connections = HashMap<String, Vec<String>>;
 
@@ -40,11 +40,29 @@ impl AoC2025_11 {
 
 impl Solution for AoC2025_11 {
     fn part_one(&self) -> String {
-        paths_count(&self.input, "you", &mut HashMap::new()).to_string()
+        paths_count(&self.input, "you", "out", &mut HashMap::new()).to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut first_device = "fft";
+        let mut second_device = "dac";
+        let intermediate = loop {
+            let value = paths_count(
+                &self.input,
+                first_device,
+                second_device,
+                &mut HashMap::new(),
+            );
+            if value > 0 {
+                break value;
+            }
+            mem::swap(&mut first_device, &mut second_device);
+        };
+        let begin = paths_count(&self.input, "svr", first_device, &mut HashMap::new());
+        let end = paths_count(&self.input, second_device, "out", &mut HashMap::new());
+
+        (begin * intermediate * end).to_string()
+    }
 
     fn description(&self) -> String {
         "Day 11: Reactor".to_string()
@@ -54,19 +72,21 @@ impl Solution for AoC2025_11 {
 fn paths_count(
     connections: &Connections,
     device: &str,
+    destination: &str,
     memo: &mut HashMap<String, usize>,
 ) -> usize {
-    if device == "out" {
+    if device == destination {
         return 1;
     }
     if let Some(count) = memo.get(device) {
         return *count;
     }
-    let count = connections
-        .get(device)
-        .expect("Corrupted input data")
+    let Some(devices) = connections.get(device) else {
+        return 0;
+    };
+    let count = devices
         .iter()
-        .map(|other| paths_count(connections, other, memo))
+        .map(|other| paths_count(connections, other, destination, memo))
         .sum::<usize>();
     memo.insert(device.to_string(), count);
     count
@@ -93,8 +113,29 @@ mod test {
     #[test]
     fn aoc2025_11_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "450854305019580");
         Ok(())
+    }
+
+    #[test]
+    fn aoc2025_11_case_2() {
+        let lines = [
+            "svr: aaa bbb",
+            "aaa: fft",
+            "fft: ccc",
+            "bbb: tty",
+            "tty: ccc",
+            "ccc: ddd eee",
+            "ddd: hub",
+            "hub: fff",
+            "eee: dac",
+            "dac: fff",
+            "fff: ggg hhh",
+            "ggg: out",
+            "hhh: out",
+        ];
+        let sol = AoC2025_11::parse_lines(&lines);
+        assert_eq!(sol.part_two(), "2")
     }
 
     fn make_solution() -> io::Result<AoC2025_11> {
