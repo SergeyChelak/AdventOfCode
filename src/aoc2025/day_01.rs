@@ -82,7 +82,6 @@ impl Solution for AoC2025_01 {
 
             match rot.direction {
                 _ if new_point == 0 => password += 1,
-                _ if new_point == point => password += 1,
                 _ if point == 0 => {}
                 RotateDirection::Left if new_point > point => password += 1,
                 RotateDirection::Right if new_point < point => password += 1,
