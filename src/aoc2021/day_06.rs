@@ -47,14 +47,14 @@ fn calculate(input: &[Int], days: Int) -> Int {
             continue;
         }
         // +1 means including self
-        let amount = calc(*counter, days, &mut cache) + 1;
+        let amount = count(*counter, days, &mut cache) + 1;
         cache.insert(*counter, amount);
         acc += amount;
     }
     acc
 }
 
-fn calc(val: Int, days: Int, memo: &mut HashMap<Int, Int>) -> Int {
+fn count(val: Int, days: Int, memo: &mut HashMap<Int, Int>) -> Int {
     if let Some(cached) = memo.get(&val) {
         return *cached;
     }
@@ -63,7 +63,7 @@ fn calc(val: Int, days: Int, memo: &mut HashMap<Int, Int>) -> Int {
     }
     let mut acc = 0;
     for day in (val + 1..=days).step_by(7) {
-        acc += 1 + calc(day + 8, days, memo);
+        acc += 1 + count(day + 8, days, memo);
     }
     memo.insert(val, acc);
     acc
