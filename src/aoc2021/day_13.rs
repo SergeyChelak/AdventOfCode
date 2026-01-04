@@ -101,35 +101,32 @@ impl Solution for AoC2021_13 {
 
 fn fold(dots: &mut Vec<Dot>, fold: &Fold) {
     match fold {
-        Fold::Left(row) => fold_left(dots, *row),
-        Fold::Up(col) => fold_up(dots, *col),
+        Fold::Left(col) => fold_ex(
+            dots,
+            |dot| dot.x > *col,
+            |dot| Dot::new(2 * col - dot.x, dot.y),
+        ),
+        Fold::Up(row) => fold_ex(
+            dots,
+            |dot| dot.y > *row,
+            |dot| Dot::new(dot.x, 2 * row - dot.y),
+        ),
     }
+}
+
+fn fold_ex(dots: &mut Vec<Dot>, filter: impl Fn(&Dot) -> bool, transform: impl Fn(&Dot) -> Dot) {
+    let mut new_dots = dots
+        .iter()
+        .filter(|dot| filter(dot))
+        .map(|dot| transform(dot))
+        .filter(|dot| !dots.contains(dot))
+        .collect::<Vec<_>>();
+    dots.retain(|dot| !filter(dot));
+    dots.append(&mut new_dots);
 }
 
 fn find_max(dots: &[Dot], transform: impl Fn(&Dot) -> Int) -> Option<usize> {
     dots.iter().map(transform).max()
-}
-
-fn fold_up(dots: &mut Vec<Dot>, row: usize) {
-    let mut new_dots = dots
-        .iter()
-        .filter(|dot| dot.y > row)
-        .map(|dot| Dot::new(dot.x, 2 * row - dot.y))
-        .filter(|dot| !dots.contains(dot))
-        .collect::<Vec<_>>();
-    dots.retain(|dot| dot.y < row);
-    dots.append(&mut new_dots);
-}
-
-fn fold_left(dots: &mut Vec<Dot>, col: usize) {
-    let mut new_dots = dots
-        .iter()
-        .filter(|dot| dot.x > col)
-        .map(|dot| Dot::new(2 * col - dot.x, dot.y))
-        .filter(|dot| !dots.contains(dot))
-        .collect::<Vec<_>>();
-    dots.retain(|dot| dot.x < col);
-    dots.append(&mut new_dots);
 }
 
 #[cfg(test)]
