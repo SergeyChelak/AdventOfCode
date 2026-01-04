@@ -3,7 +3,7 @@ use crate::{
     utils::{not_found, Point2d},
 };
 
-use std::io;
+use std::{collections::HashSet, io};
 
 type Int = usize;
 type Dot = Point2d<Int>;
@@ -64,7 +64,7 @@ impl AoC2021_13 {
 
 impl Solution for AoC2021_13 {
     fn part_one(&self) -> String {
-        let mut dots = self.dots.clone();
+        let mut dots = make_set(&self.dots);
         let Some(first) = self.folds.first() else {
             return not_found();
         };
@@ -73,7 +73,7 @@ impl Solution for AoC2021_13 {
     }
 
     fn part_two(&self) -> String {
-        let mut dots = self.dots.clone();
+        let mut dots = make_set(&self.dots);
         self.folds.iter().for_each(|f| fold(&mut dots, f));
 
         let (Some(max_x), Some(max_y)) =
@@ -85,7 +85,7 @@ impl Solution for AoC2021_13 {
         for row in 0..=max_y {
             for col in 0..=max_x {
                 let dot = Dot::new(col, row);
-                let ch = if dots.contains(&dot) { '#' } else { ' ' };
+                let ch = if dots.contains(&dot) { '❚' } else { ' ' };
                 print!("{ch}");
             }
             println!()
@@ -99,7 +99,7 @@ impl Solution for AoC2021_13 {
     }
 }
 
-fn fold(dots: &mut Vec<Dot>, fold: &Fold) {
+fn fold(dots: &mut HashSet<Dot>, fold: &Fold) {
     match fold {
         Fold::Left(col) => fold_ex(
             dots,
@@ -114,19 +114,26 @@ fn fold(dots: &mut Vec<Dot>, fold: &Fold) {
     }
 }
 
-fn fold_ex(dots: &mut Vec<Dot>, filter: impl Fn(&Dot) -> bool, transform: impl Fn(&Dot) -> Dot) {
-    let mut new_dots = dots
+fn fold_ex(
+    dots: &mut HashSet<Dot>,
+    filter: impl Fn(&Dot) -> bool,
+    transform: impl Fn(&Dot) -> Dot,
+) {
+    let new_dots = dots
         .iter()
         .filter(|dot| filter(dot))
         .map(|dot| transform(dot))
-        .filter(|dot| !dots.contains(dot))
         .collect::<Vec<_>>();
+    dots.extend(new_dots.iter());
     dots.retain(|dot| !filter(dot));
-    dots.append(&mut new_dots);
 }
 
-fn find_max(dots: &[Dot], transform: impl Fn(&Dot) -> Int) -> Option<usize> {
+fn find_max(dots: &HashSet<Dot>, transform: impl Fn(&Dot) -> Int) -> Option<usize> {
     dots.iter().map(transform).max()
+}
+
+fn make_set(dots: &[Dot]) -> HashSet<Dot> {
+    dots.iter().copied().collect::<HashSet<_>>()
 }
 
 #[cfg(test)]
