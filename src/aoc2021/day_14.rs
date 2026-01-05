@@ -75,7 +75,10 @@ impl State {
     fn with(template: &Chars) -> Self {
         let mut frequencies = [0usize; 256];
         template.iter().for_each(|ch| frequencies[ch_idx(*ch)] += 1);
-        let pairs = template.windows(2).map(|w| ([w[0], w[1]], 1)).collect();
+        let mut pairs = HashMap::new();
+        for w in template.windows(2) {
+            *pairs.entry([w[0], w[1]]).or_insert(0) += 1;
+        }
         Self { pairs, frequencies }
     }
 
