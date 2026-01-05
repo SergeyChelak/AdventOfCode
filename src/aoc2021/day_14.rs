@@ -42,53 +42,75 @@ impl AoC2021_14 {
         let out = out.chars().next().expect("Output char not present");
         ([in_1, in_2], out)
     }
+
+    fn calculate(&self, times: usize) -> String {
+        let mut state = State::with(&self.template);
+        for _ in 0..times {
+            state.next(&self.rules);
+        }
+        state.delta().to_string()
+    }
 }
 
 impl Solution for AoC2021_14 {
     fn part_one(&self) -> String {
-        let mut template = self.template.clone();
-        for _ in 0..10 {
-            template = simulate(&template, &self.rules);
-        }
-        let freq = frequencies(&template);
-
-        let max_fr = freq.iter().max().unwrap();
-        let min_fr = freq.iter().filter(|val| **val > 0).min().unwrap();
-
-        (max_fr - min_fr).to_string()
+        self.calculate(10)
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        self.calculate(40)
+    }
 
     fn description(&self) -> String {
         "Day 14: Extended Polymerization".to_string()
     }
 }
 
-fn simulate(template: &Chars, rules: &Rules) -> Chars {
-    let mut buffer = template
-        .iter()
-        .flat_map(|x| [Some(*x), None])
-        .collect::<Vec<_>>();
-
-    for (idx, window) in template.windows(2).enumerate() {
-        let Some(ch) = rules.get(window) else {
-            continue;
-        };
-        buffer[2 * idx + 1] = Some(*ch);
-    }
-
-    buffer.iter().filter_map(|x| *x).collect::<Chars>()
+struct State {
+    frequencies: [usize; 256],
+    pairs: HashMap<[char; 2], usize>,
 }
 
-fn frequencies(chars: &Chars) -> [usize; 256] {
-    let mut frq = [0usize; 256];
-    chars.iter().for_each(|ch| {
-        let idx = *ch as u8 as usize;
-        frq[idx] += 1;
-    });
-    frq
+impl State {
+    fn with(template: &Chars) -> Self {
+        let mut frequencies = [0usize; 256];
+        template.iter().for_each(|ch| frequencies[ch_idx(*ch)] += 1);
+        let pairs = template.windows(2).map(|w| ([w[0], w[1]], 1)).collect();
+        Self { pairs, frequencies }
+    }
+
+    fn delta(&self) -> usize {
+        let max_fr = self.frequencies.iter().max().unwrap();
+        let min_fr = self
+            .frequencies
+            .iter()
+            .filter(|val| **val > 0)
+            .min()
+            .unwrap();
+        max_fr - min_fr
+    }
+
+    fn next(&mut self, rules: &Rules) {
+        let mut next_pairs = HashMap::new();
+
+        for (pair, count) in self.pairs.iter() {
+            assert!(self.frequencies[ch_idx(pair[0])] > 0);
+            assert!(self.frequencies[ch_idx(pair[1])] > 0);
+
+            let Some(ch) = rules.get(pair) else {
+                *next_pairs.entry(*pair).or_default() += count;
+                continue;
+            };
+            *next_pairs.entry([pair[0], *ch]).or_default() += count;
+            *next_pairs.entry([*ch, pair[1]]).or_default() += count;
+            self.frequencies[ch_idx(*ch)] += count;
+        }
+        self.pairs = next_pairs;
+    }
+}
+
+fn ch_idx(ch: char) -> usize {
+    ch as u8 as usize
 }
 
 #[cfg(test)]
@@ -113,45 +135,11 @@ mod test {
     #[test]
     fn aoc2021_14_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "2516901104210");
         Ok(())
-    }
-
-    #[test]
-    fn aoc2021_14_simulate() {
-        let sol = make_test_solution();
-
-        let result = simulate(&sol.template, &sol.rules)
-            .iter()
-            .collect::<String>();
-
-        assert_eq!(result, "NCNBCHB")
     }
 
     fn make_solution() -> io::Result<AoC2021_14> {
         AoC2021_14::new()
-    }
-
-    fn make_test_solution() -> AoC2021_14 {
-        let input = "NNCB
-
-        CH -> B
-        HH -> N
-        CB -> H
-        NH -> C
-        HB -> C
-        HC -> B
-        HN -> C
-        NN -> C
-        BH -> H
-        NC -> B
-        NB -> B
-        BN -> B
-        BB -> N
-        BC -> B
-        CC -> N
-        CN -> C
-";
-        AoC2021_14::parse_data(input)
     }
 }
