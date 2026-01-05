@@ -122,7 +122,7 @@ fn fold_ex(
     let new_dots = dots
         .iter()
         .filter(|dot| filter(dot))
-        .map(|dot| transform(dot))
+        .map(transform)
         .collect::<Vec<_>>();
     dots.extend(new_dots.iter());
     dots.retain(|dot| !filter(dot));
