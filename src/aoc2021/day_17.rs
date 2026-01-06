@@ -51,8 +51,11 @@ impl Solution for AoC2021_17 {
             for vx in 0..=self.x_range.end {
                 let (mut x, mut y) = (0, 0);
 
-                for t in 0..=1000 {
+                for t in 0.. {
                     y += vy - t;
+                    if y < self.y_range.begin {
+                        break;
+                    }
                     if vx > t {
                         x += vx - t;
                     }
