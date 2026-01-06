@@ -57,4 +57,13 @@ where
             end: self.end.max(other.end),
         })
     }
+
+    pub fn custom_contain(&self, value: T, include_begin: bool, include_end: bool) -> bool {
+        ((self.begin < value) || include_begin && (self.begin == value))
+            && ((self.end > value) || include_end && (self.end == value))
+    }
+
+    pub fn close_contain(&self, value: T) -> bool {
+        self.custom_contain(value, true, true)
+    }
 }
