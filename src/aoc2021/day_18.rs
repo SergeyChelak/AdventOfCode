@@ -208,8 +208,19 @@ impl Solution for AoC2021_18 {
         sum.magnitude().to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut max_sum = 0;
+        for (i, first) in self.input.iter().enumerate() {
+            for (j, second) in self.input.iter().enumerate() {
+                if i == j {
+                    continue;
+                }
+                let tmp = first.sum_reduced(second).magnitude();
+                max_sum = max_sum.max(tmp);
+            }
+        }
+        max_sum.to_string()
+    }
 
     fn description(&self) -> String {
         "Day 18: Snailfish".to_string()
@@ -257,7 +268,7 @@ mod test {
     #[test]
     fn aoc2021_18_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "4796");
         Ok(())
     }
 
