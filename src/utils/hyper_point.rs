@@ -1,4 +1,7 @@
-use std::ops::Add;
+use std::{
+    ops::{Add, Sub},
+    str::FromStr,
+};
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct HyperPoint<T>(pub Vec<T>);
@@ -43,5 +46,27 @@ where
 {
     pub fn add(&self, other: &Self) -> Self {
         self.binary_operation(|a, b| a + b, other)
+    }
+}
+
+impl<T> HyperPoint<T>
+where
+    T: Copy + Sub<Output = T>,
+{
+    pub fn sub(&self, other: &Self) -> Self {
+        self.binary_operation(|a, b| a - b, other)
+    }
+}
+
+impl<T> HyperPoint<T>
+where
+    T: FromStr,
+{
+    pub fn from_csv(value: &str) -> Result<Self, T::Err> {
+        let data = value
+            .split(',')
+            .map(|x| x.parse::<T>())
+            .collect::<Result<Vec<T>, _>>()?;
+        Ok(Self(data))
     }
 }
