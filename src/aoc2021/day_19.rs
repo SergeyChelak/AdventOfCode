@@ -44,15 +44,29 @@ impl Scanner {
         true
     }
 
-    fn update_beacons(&mut self, transform: impl Fn(&Point) -> Point) {
-        self.beacons = self.beacons.iter().map(transform).collect::<PointSet>();
-    }
-
-    fn rotate(&mut self, axis: Axis) {
-        match axis {
-            Axis::X => self.update_beacons(|p| HyperPoint(vec![p.x(), -p.z(), p.y()])),
-            Axis::Y => self.update_beacons(|p| HyperPoint(vec![p.z(), p.y(), -p.x()])),
-            Axis::Z => self.update_beacons(|p| HyperPoint(vec![p.y(), -p.x(), p.z()])),
+    fn remapped(&self, mapping: &HyperPoint<AxeMapping>) -> Self {
+        let beacons = self
+            .beacons
+            .iter()
+            .map(|p| {
+                let arr = mapping
+                    .0
+                    .iter()
+                    .map(|am| match am {
+                        AxeMapping::X => p.x(),
+                        AxeMapping::MinusX => -p.x(),
+                        AxeMapping::Y => p.y(),
+                        AxeMapping::MinusY => -p.y(),
+                        AxeMapping::Z => p.z(),
+                        AxeMapping::MinusZ => -p.z(),
+                    })
+                    .collect::<Vec<_>>();
+                HyperPoint(arr)
+            })
+            .collect::<PointSet>();
+        Self {
+            beacons,
+            pole: self.pole.clone(),
         }
     }
 }
@@ -77,13 +91,66 @@ impl Point {
             .map(|(a, b)| a.abs_diff(*b))
             .sum()
     }
+
+    fn rotated_x(&self) -> Self {
+        HyperPoint(vec![self.x(), -self.z(), self.y()])
+    }
+
+    fn rotated_y(&self) -> Self {
+        HyperPoint(vec![self.z(), self.y(), -self.x()])
+    }
+
+    fn rotated_z(&self) -> Self {
+        HyperPoint(vec![self.y(), -self.x(), self.z()])
+    }
+}
+enum AxeMapping {
+    X,
+    MinusX,
+    Y,
+    MinusY,
+    Z,
+    MinusZ,
 }
 
-#[derive(Clone, Copy)]
-enum Axis {
-    X,
-    Y,
-    Z,
+impl AxeMapping {
+    fn all() -> Vec<HyperPoint<Self>> {
+        let mut store = HashSet::new();
+        let mut point = HyperPoint(vec![1, 2, 3]);
+        for _ in 0..4 {
+            for _ in 0..4 {
+                for _ in 0..4 {
+                    store.insert(point.clone());
+                    point = point.rotated_x();
+                }
+                point = point.rotated_y();
+            }
+            point = point.rotated_z();
+        }
+        assert_eq!(24, store.len());
+
+        store
+            .into_iter()
+            .map(|p| {
+                let arr =
+                    p.0.into_iter()
+                        .map(|val| {
+                            use AxeMapping::*;
+                            match val {
+                                1 => X,
+                                -1 => MinusX,
+                                2 => Y,
+                                -2 => MinusY,
+                                3 => Z,
+                                -3 => MinusZ,
+                                _ => unreachable!(),
+                            }
+                        })
+                        .collect::<Vec<_>>();
+                HyperPoint(arr)
+            })
+            .collect::<Vec<_>>()
+    }
 }
 
 fn resolve_scanner_poles(input: &[PointSet]) -> Vec<Scanner> {
@@ -98,23 +165,14 @@ fn resolve_scanner_poles(input: &[PointSet]) -> Vec<Scanner> {
 
     let mut aligned = vec![scanners.pop_back().unwrap()];
 
-    'outer: while let Some(mut candidate) = scanners.pop_back() {
+    let all_remap_cases = AxeMapping::all();
+    'outer: while let Some(candidate) = scanners.pop_back() {
         for scanner in aligned.iter() {
-            for x in 0..2 {
-                for _ in 0..4 {
-                    for _ in 0..4 {
-                        if candidate.update_pole(scanner) {
-                            aligned.push(candidate);
-                            continue 'outer;
-                        }
-                        candidate.rotate(Axis::Y);
-                    }
-                    candidate.rotate(Axis::Z);
-                }
-                if x == 0 {
-                    candidate.rotate(Axis::X);
-                } else {
-                    candidate.update_beacons(|p| HyperPoint(vec![p.x(), -p.y(), -p.z()]));
+            for remap in all_remap_cases.iter() {
+                let mut tmp = candidate.remapped(remap);
+                if tmp.update_pole(scanner) {
+                    aligned.push(tmp);
+                    continue 'outer;
                 }
             }
         }
