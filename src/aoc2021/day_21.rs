@@ -35,8 +35,8 @@ impl Solution for AoC2021_21 {
     fn part_two(&self) -> String {
         let first = PlayerState::new(self.first);
         let second = PlayerState::new(self.second);
-        let outcomes = dice_outcomes();
-        let stats = simulate_21(&outcomes, &first, &second, 0, &mut Memo::new());
+        let frequency_map = make_frequency_map();
+        let stats = simulate_21(&frequency_map, &first, &second, 0, &mut Memo::new());
         stats[0].max(stats[1]).to_string()
     }
 
@@ -83,21 +83,23 @@ impl Key {
 }
 
 type Memo = HashMap<Key, [usize; 2]>;
+type FrequencyMap = HashMap<usize, usize>;
 
-fn dice_outcomes() -> Vec<usize> {
-    let mut outcomes = Vec::new();
+fn make_frequency_map() -> FrequencyMap {
+    let mut f_map = FrequencyMap::new();
     for val1 in [1, 2, 3] {
         for val2 in [1, 2, 3] {
             for val3 in [1, 2, 3] {
-                outcomes.push(val3 + val2 + val1);
+                let key = val3 + val2 + val1;
+                *f_map.entry(key).or_default() += 1;
             }
         }
     }
-    outcomes
+    f_map
 }
 
 fn simulate_21(
-    outcomes: &[usize],
+    frequency_map: &FrequencyMap,
     first: &PlayerState,
     second: &PlayerState,
     idx: usize,
@@ -119,15 +121,15 @@ fn simulate_21(
         return *result;
     }
 
-    for &val in outcomes {
+    for (val, times) in frequency_map {
         let (f, s) = match idx {
-            0 => (&first.moved_by(val), second),
-            1 => (first, &second.moved_by(val)),
+            0 => (&first.moved_by(*val), second),
+            1 => (first, &second.moved_by(*val)),
             _ => unreachable!(),
         };
-        let tmp = simulate_21(outcomes, f, s, opposite_idx, memo);
-        wins[0] += tmp[0];
-        wins[1] += tmp[1];
+        let tmp = simulate_21(frequency_map, f, s, opposite_idx, memo);
+        wins[0] += tmp[0] * times;
+        wins[1] += tmp[1] * times;
     }
     memo.insert(key, wins);
     wins
