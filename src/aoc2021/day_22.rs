@@ -60,24 +60,22 @@ impl PlainInterval<Int> {
 }
 
 #[derive(Debug, Clone)]
-struct Element {
-    is_on: bool,
+struct Cuboid {
     cube: Cube,
+    weight: Int,
 }
 
-impl From<&str> for Element {
+impl From<&str> for Cuboid {
     fn from(value: &str) -> Self {
         let (is_on, interval) = value.split_once(' ').expect("Invalid entry format");
         let cube = Interval3::from(interval);
-        Self {
-            is_on: is_on == "on",
-            cube,
-        }
+        let weight = if is_on == "on" { 1 } else { -1 };
+        Self { weight, cube }
     }
 }
 
 pub struct AoC2021_22 {
-    input: Vec<Element>,
+    input: Vec<Cuboid>,
 }
 
 impl AoC2021_22 {
@@ -90,7 +88,7 @@ impl AoC2021_22 {
         let input = lines
             .iter()
             .map(|x| x.as_ref())
-            .map(Element::from)
+            .map(Cuboid::from)
             .collect::<Vec<_>>();
         Self { input }
     }
@@ -117,36 +115,28 @@ impl Solution for AoC2021_22 {
     }
 }
 
-struct Cuboid {
-    cube: Cube,
-    weight: Int,
-}
-
-fn calculate(input: Vec<Element>) -> Int {
+fn calculate(input: Vec<Cuboid>) -> Int {
     let mut elements = input.into_iter().rev().collect::<Vec<_>>();
-    let mut cuboids = Vec::<Cuboid>::new();
-    while let Some(elem) = elements.pop() {
-        let mut intersections = cuboids
+    let mut aligned = Vec::<Cuboid>::new();
+    while let Some(n) = elements.pop() {
+        let mut intersections = aligned
             .iter()
-            .filter_map(|cuboid| {
-                let inter = cuboid.cube.intersection(&elem.cube)?;
+            .filter_map(|c| {
+                let inter = c.cube.intersection(&n.cube)?;
                 let next = Cuboid {
                     cube: inter,
-                    weight: -cuboid.weight,
+                    weight: -c.weight,
                 };
                 Some(next)
             })
             .collect::<Vec<_>>();
-        if elem.is_on {
-            cuboids.push(Cuboid {
-                cube: elem.cube,
-                weight: 1,
-            });
+        if n.weight > 0 {
+            aligned.push(n);
         }
-        cuboids.append(&mut intersections);
+        aligned.append(&mut intersections);
     }
 
-    cuboids
+    aligned
         .into_iter()
         .map(|val| val.weight * val.cube.square())
         .sum::<Int>()
