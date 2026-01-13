@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 #[derive(Debug, Clone, Copy)]
 pub struct PlainInterval<T> {
     pub begin: T,
@@ -66,4 +68,28 @@ where
     pub fn close_contain(&self, value: T) -> bool {
         self.custom_contain(value, true, true)
     }
+}
+
+impl<T> PlainInterval<T>
+where
+    T: FromStr,
+{
+    pub fn parse(value: &str, delimiter: &str) -> Result<Self, IntervalParseError> {
+        let (l, r) = value
+            .split_once(delimiter)
+            .ok_or(IntervalParseError::WrongFormat)?;
+        let begin = l
+            .parse::<T>()
+            .map_err(|_| IntervalParseError::InvalidValue)?;
+        let end = r
+            .parse::<T>()
+            .map_err(|_| IntervalParseError::InvalidValue)?;
+        Ok(Self::new(begin, end))
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum IntervalParseError {
+    WrongFormat,
+    InvalidValue,
 }
