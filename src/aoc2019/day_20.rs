@@ -158,8 +158,7 @@ impl Maze {
                         .get(name)
                         .expect("Unreachable (2)")
                         .iter()
-                        .filter(|val| **val != pos)
-                        .next_back()
+                        .rfind(|val| **val != pos)
                         .expect("Unreachable (3)");
                     let next_level = level_calculator(next_pos, level);
                     if seen.contains(&(*next_pos, next_level)) {
