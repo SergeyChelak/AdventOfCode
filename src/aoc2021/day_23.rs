@@ -15,12 +15,11 @@ type Point = Point2d<Int>;
 
 type RawState = [(char, Point); 8];
 
-fn min_energy(initial: RawState) -> usize {
+fn min_energy(initial: RawState, all_positions: &[Point]) -> usize {
     let mut costs = HashMap::<RawState, usize>::new();
     costs.insert(initial, 0);
 
     let mut min_cost = usize::MAX;
-    let all_positions = all_positions();
     let mut queue = VecDeque::<RawState>::new();
     queue.push_front(initial);
     while let Some(raw) = queue.pop_back() {
@@ -191,24 +190,42 @@ impl AmphipodState {
     }
 }
 
-fn all_positions() -> Vec<Point> {
-    [
+fn all_positions_small() -> Vec<Point> {
+    let template = [
         "#############",
         "#..-.-.-.-..#",
         "###.#.#.#.###",
         "  #.#.#.#.#  ",
         "  #########  ",
-    ]
-    .iter()
-    .enumerate()
-    .flat_map(|(row, line)| {
-        line.chars()
-            .enumerate()
-            .filter(|(_, ch)| *ch == '.')
-            .map(|(col, _)| Point::new(col, row))
-            .collect::<Vec<_>>()
-    })
-    .collect()
+    ];
+    all_positions(template.as_ref())
+}
+
+fn all_positions_large() -> Vec<Point> {
+    let template = [
+        "#############",
+        "#..-.-.-.-..#",
+        "###.#.#.#.###",
+        "  #.#.#.#.#  ",
+        "  #.#.#.#.#  ",
+        "  #.#.#.#.#  ",
+        "  #########  ",
+    ];
+    all_positions(template.as_ref())
+}
+
+fn all_positions(template: &[&str]) -> Vec<Point> {
+    template
+        .iter()
+        .enumerate()
+        .flat_map(|(row, line)| {
+            line.chars()
+                .enumerate()
+                .filter(|(_, ch)| *ch == '.')
+                .map(|(col, _)| Point::new(col, row))
+                .collect::<Vec<_>>()
+        })
+        .collect()
 }
 
 fn fill_path(array: &mut Vec<Point>, x_rng: PlainInterval<usize>, y_rng: PlainInterval<usize>) {
@@ -247,30 +264,42 @@ impl From<&[&str]> for AmphipodState {
 }
 
 pub struct AoC2021_23 {
-    state: AmphipodState,
+    input: Vec<String>,
 }
 
 impl AoC2021_23 {
     pub fn new() -> io::Result<Self> {
-        let lines = read_file_as_lines("input/aoc2021_23")?;
-        Ok(Self::parse_lines(&lines))
-    }
-
-    fn parse_lines<T: AsRef<str>>(lines: &[T]) -> Self {
-        let data = lines.iter().map(|x| x.as_ref()).collect::<Vec<_>>();
-        Self {
-            state: AmphipodState::from(data.as_ref()),
-        }
+        let input = read_file_as_lines("input/aoc2021_23")?;
+        Ok(Self { input })
     }
 }
 
 impl Solution for AoC2021_23 {
-    fn part_one(&self) -> String {
-        min_energy(self.state.raw).to_string()
-    }
-
-    // fn part_two(&self) -> String {
+    // fn part_one(&self) -> String {
+    //     let initial = AmphipodState::from(
+    //         self.input
+    //             .iter()
+    //             .map(|s| s.as_str())
+    //             .collect::<Vec<_>>()
+    //             .as_ref(),
+    //     );
+    //     min_energy(initial.raw, &all_positions_small()).to_string()
     // }
+
+    fn part_two(&self) -> String {
+        let mut lines = self.input.clone();
+        lines.insert(3, "  #D#C#B#A#".to_string());
+        lines.insert(4, "  #D#B#A#C#".to_string());
+
+        let initial = AmphipodState::from(
+            lines
+                .iter()
+                .map(|s| s.as_str())
+                .collect::<Vec<_>>()
+                .as_ref(),
+        );
+        min_energy(initial.raw, &all_positions_large()).to_string()
+    }
 
     fn description(&self) -> String {
         "Day 23: Amphipod".to_string()
@@ -284,7 +313,7 @@ mod test {
     #[test]
     fn aoc2021_23_input_load_test() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.state.raw.len(), 8);
+        assert!(!sol.input.is_empty());
         Ok(())
     }
 
@@ -352,12 +381,6 @@ mod test {
 
     fn make_solution() -> io::Result<AoC2021_23> {
         AoC2021_23::new()
-    }
-
-    fn make_test_solution() -> AoC2021_23 {
-        AoC2021_23 {
-            state: make_test_state(),
-        }
     }
 
     fn make_test_state() -> AmphipodState {
