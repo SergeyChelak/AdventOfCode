@@ -13,17 +13,17 @@ type Point = Point2d<Int>;
 // 2 ###B#C#B#D###
 // 3   #A#D#C#A#
 
-type RawState = [(char, Point); 8];
+type RawState = Vec<(char, Point)>;
 
 fn min_energy(initial: RawState, all_positions: &[Point]) -> usize {
     let mut costs = HashMap::<RawState, usize>::new();
-    costs.insert(initial, 0);
+    costs.insert(initial.clone(), 0);
 
     let mut min_cost = usize::MAX;
     let mut queue = VecDeque::<RawState>::new();
     queue.push_front(initial);
     while let Some(raw) = queue.pop_back() {
-        let state = AmphipodState::with_raw(raw);
+        let state = AmphipodState::with_raw(raw.clone());
         let cost = *costs.get(&raw).unwrap();
 
         if cost >= min_cost {
@@ -50,7 +50,7 @@ fn min_energy(initial: RawState, all_positions: &[Point]) -> usize {
                 }
                 let stored_cost = *costs.get(&next.raw).unwrap_or(&usize::MAX);
                 if next_cost < stored_cost {
-                    costs.insert(next.raw, next_cost);
+                    costs.insert(next.raw.clone(), next_cost);
                     queue.push_front(next.raw);
                 }
             }
@@ -66,19 +66,7 @@ struct AmphipodState {
 }
 
 impl AmphipodState {
-    fn with_array(array: Vec<(char, Point)>) -> Self {
-        assert_eq!(8, array.len());
-        let mut raw = [('_', Point::zero()); 8];
-        array
-            .iter()
-            .zip(raw.iter_mut())
-            .for_each(|(src, dest)| *dest = *src);
-
-        Self::with_raw(raw)
-    }
-
     fn with_raw(mut raw: RawState) -> Self {
-        // raw.sort_by_key(|x| x.0);
         raw.sort_by(|(ch1, p1), (ch2, p2)| {
             ch1.cmp(ch2).then(p1.y.cmp(&p2.y).then(p1.x.cmp(&p2.x)))
         });
@@ -88,7 +76,7 @@ impl AmphipodState {
             .enumerate()
             .map(|(i, val)| (val.1, i))
             .collect::<HashMap<Point, usize>>();
-        assert_eq!(8, p2i.len());
+        assert_eq!(raw.len(), p2i.len());
         Self { raw, p2i }
     }
 
@@ -113,7 +101,12 @@ impl AmphipodState {
         if is_hallway {
             // is correct slot
             let expected_x = 3 + 2 * (name as u8 - b'A') as usize;
-            let allowed = [Point::new(expected_x, 2), Point::new(expected_x, 3)];
+            let allowed = [
+                Point::new(expected_x, 2),
+                Point::new(expected_x, 3),
+                Point::new(expected_x, 4),
+                Point::new(expected_x, 5),
+            ];
             if !allowed.contains(&to) {
                 return false;
             }
@@ -170,7 +163,7 @@ impl AmphipodState {
 
     fn moved_by(&self, from: Point, to: Point) -> Self {
         let index = self.p2i.get(&from).expect("point must be set");
-        let mut raw = self.raw;
+        let mut raw = self.raw.clone();
         raw[*index].1 = to;
         Self::with_raw(raw)
     }
@@ -180,7 +173,8 @@ impl AmphipodState {
         if self.raw.iter().any(|(_, p)| p.y < 2) {
             return false;
         }
-        for (i, chunk) in self.raw.chunks(2).enumerate() {
+        let chunk_size = self.raw.len() / 4;
+        for (i, chunk) in self.raw.chunks(chunk_size).enumerate() {
             let expected_x = i * 2 + 3;
             if chunk.iter().any(|(_, p)| p.x != expected_x) {
                 return false;
@@ -259,7 +253,7 @@ impl From<&[&str]> for AmphipodState {
                     .collect::<Vec<_>>()
             })
             .collect::<Vec<_>>();
-        Self::with_array(array)
+        Self::with_raw(array)
     }
 }
 
@@ -275,16 +269,16 @@ impl AoC2021_23 {
 }
 
 impl Solution for AoC2021_23 {
-    // fn part_one(&self) -> String {
-    //     let initial = AmphipodState::from(
-    //         self.input
-    //             .iter()
-    //             .map(|s| s.as_str())
-    //             .collect::<Vec<_>>()
-    //             .as_ref(),
-    //     );
-    //     min_energy(initial.raw, &all_positions_small()).to_string()
-    // }
+    fn part_one(&self) -> String {
+        let initial = AmphipodState::from(
+            self.input
+                .iter()
+                .map(|s| s.as_str())
+                .collect::<Vec<_>>()
+                .as_ref(),
+        );
+        min_energy(initial.raw, &all_positions_small()).to_string()
+    }
 
     fn part_two(&self) -> String {
         let mut lines = self.input.clone();
@@ -327,7 +321,7 @@ mod test {
     #[test]
     fn aoc2021_23_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "49803");
         Ok(())
     }
 
