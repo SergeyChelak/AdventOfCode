@@ -28,16 +28,15 @@ impl Solution for AoC2021_25 {
         let mut buffer_1 = self.input.clone();
         let mut buffer_2 = self.input.clone();
 
-        let mut input = &mut buffer_1;
-        let mut output = &mut buffer_2;
+        let input = &mut buffer_1;
+        let output = &mut buffer_2;
 
         for step in 1.. {
-            let east_moved = make_movement(EAST, &input, &mut output);
-            let south_moved = make_movement(SOUTH, &output, &mut input);
+            let east_moved = make_movement(EAST, input, output);
+            let south_moved = make_movement(SOUTH, output, input);
             if !east_moved && !south_moved {
                 return step.to_string();
             }
-            // mem::swap(&mut input, &mut output);
         }
         not_found()
     }
