@@ -73,6 +73,9 @@ use day_23::*;
 mod day_24;
 use day_24::*;
 
+mod day_25;
+use day_25::*;
+
 // GENERATOR_MARKER: DAY_MOD_USE
 
 pub fn puzzle_factory_2021() -> PuzzleFactory {
@@ -101,6 +104,7 @@ pub fn puzzle_factory_2021() -> PuzzleFactory {
         &|| Ok(Box::new(AoC2021_22::new()?)),
         &|| Ok(Box::new(AoC2021_23::new()?)),
         &|| Ok(Box::new(AoC2021_24::new()?)),
+        &|| Ok(Box::new(AoC2021_25::new()?)),
         // GENERATOR_MARKER: FACTORY_DAY
     ];
     PuzzleFactory::new(2021, producers)
