@@ -2,7 +2,7 @@ use crate::solution::Solution;
 use crate::utils::*;
 
 use std::collections::{HashMap, VecDeque};
-use std::{io, usize};
+use std::io;
 
 type Int = usize;
 type Point = Point2d<Int>;
@@ -31,15 +31,8 @@ fn min_energy(initial: RawState) -> usize {
             continue;
         }
 
-        if false {
-            println!("cost: {cost}");
-            debug_print(&raw);
-            println!();
-        }
-
         if state.is_organized() {
             min_cost = cost;
-            println!("min cost: {min_cost}");
             continue;
         }
 
@@ -88,7 +81,7 @@ impl AmphipodState {
     fn with_raw(mut raw: RawState) -> Self {
         // raw.sort_by_key(|x| x.0);
         raw.sort_by(|(ch1, p1), (ch2, p2)| {
-            ch1.cmp(&ch2).then(p1.y.cmp(&p2.y).then(p1.x.cmp(&p2.x)))
+            ch1.cmp(ch2).then(p1.y.cmp(&p2.y).then(p1.x.cmp(&p2.x)))
         });
 
         let p2i = raw
@@ -97,11 +90,7 @@ impl AmphipodState {
             .map(|(i, val)| (val.1, i))
             .collect::<HashMap<Point, usize>>();
         assert_eq!(8, p2i.len());
-        Self {
-            raw,
-            p2i,
-            // all: all_positions(),
-        }
+        Self { raw, p2i }
     }
 
     fn can_move(&self, from: Point, to: Point) -> bool {
@@ -115,7 +104,7 @@ impl AmphipodState {
         };
 
         // don't move to occupied cell
-        if self.p2i.get(&to).is_some() {
+        if self.p2i.contains_key(&to) {
             return false;
         }
 
@@ -167,7 +156,7 @@ impl AmphipodState {
             if p == from {
                 continue;
             }
-            if self.p2i.get(&p).is_some() {
+            if self.p2i.contains_key(&p) {
                 return false;
             }
         }
@@ -182,7 +171,7 @@ impl AmphipodState {
 
     fn moved_by(&self, from: Point, to: Point) -> Self {
         let index = self.p2i.get(&from).expect("point must be set");
-        let mut raw = self.raw.clone();
+        let mut raw = self.raw;
         raw[*index].1 = to;
         Self::with_raw(raw)
     }
@@ -199,28 +188,6 @@ impl AmphipodState {
             }
         }
         true
-    }
-}
-
-fn debug_print(raw: &RawState) {
-    let template = [
-        "#############",
-        "#...........#",
-        "###.#.#.#.###",
-        "  #.#.#.#.#  ",
-        "  #########  ",
-    ];
-
-    for (r, arr) in template.iter().enumerate() {
-        for (c, ch) in arr.chars().enumerate() {
-            let p = Point::new(c, r);
-            if let Some((name, _)) = raw.iter().find(|val| val.1 == p) {
-                print!("{name}");
-            } else {
-                print!("{ch}");
-            }
-        }
-        println!()
     }
 }
 
