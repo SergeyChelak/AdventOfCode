@@ -35,6 +35,9 @@ use crate::aoc2025::puzzle_factory_2025;
 mod aoc2021;
 use crate::aoc2021::puzzle_factory_2021;
 
+mod aoc2022;
+use crate::aoc2022::puzzle_factory_2022;
+
 // GENERATOR_MARKER: MOD_USE
 // Do not remove the line above
 
@@ -98,6 +101,7 @@ fn create_factory() -> AggregatedFactory {
     factory.add_factory(puzzle_factory_2024());
     factory.add_factory(puzzle_factory_2025());
     factory.add_factory(puzzle_factory_2021());
+    factory.add_factory(puzzle_factory_2022());
     // GENERATOR_MARKER: ADD_FACTORY
     // Do not remove the line above
     factory
