@@ -141,8 +141,8 @@ mod test {
             arr,
             vec![Command {
                 count: 1,
-                from: 2,
-                to: 3
+                from: 1,
+                to: 2
             }]
         )
     }
