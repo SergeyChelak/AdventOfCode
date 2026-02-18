@@ -34,8 +34,25 @@ impl Solution for AoC2022_07 {
         acc.to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let fs = make_fs(&self.input);
+        const DISK_SIZE: usize = 70000000;
+        const ENOUGH_SIZE: usize = 30000000;
+
+        let used_size = folder_size(&fs, &Route::root());
+        let free_space = DISK_SIZE - used_size;
+
+        let mut smallest: Option<usize> = None;
+        for route in fs.keys() {
+            let size = folder_size(&fs, route);
+            if free_space + size < ENOUGH_SIZE {
+                continue;
+            }
+            smallest = smallest.map(|x| x.min(size)).or(Some(size));
+        }
+
+        smallest.map(|x| x.to_string()).unwrap_or(not_found())
+    }
 
     fn description(&self) -> String {
         "Day 7: No Space Left On Device".to_string()
@@ -166,7 +183,7 @@ mod test {
     #[test]
     fn aoc2022_07_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "1111607");
         Ok(())
     }
 
@@ -178,6 +195,12 @@ mod test {
     fn aoc2022_07_case_1() {
         let sol = make_test_solution();
         assert_eq!(sol.part_one(), "95437");
+    }
+
+    #[test]
+    fn aoc2022_07_case_2() {
+        let sol = make_test_solution();
+        assert_eq!(sol.part_two(), "24933642");
     }
 
     fn make_test_solution() -> AoC2022_07 {
