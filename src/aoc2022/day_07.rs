@@ -114,7 +114,7 @@ fn make_fs(input: &[String]) -> FileSystem {
                     .expect("cd without argument not allowed");
 
                 match path {
-                    "/" => stack.truncate(1),
+                    "/" => stack = vec![Route::root()],
                     ".." => _ = stack.pop(),
                     _ => {
                         let route = stack.last().unwrap().appending(path);
