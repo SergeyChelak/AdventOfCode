@@ -44,8 +44,16 @@ impl Solution for AoC2022_08 {
         total.to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let mut score = 0;
+        for (y, row) in self.input.iter().enumerate() {
+            for (x, _) in row.iter().enumerate() {
+                let point = Point::new(x, y);
+                score = score.max(scenic_score(&self.input, &point))
+            }
+        }
+        score.to_string()
+    }
 
     fn description(&self) -> String {
         "Day 8: Treetop Tree House".to_string()
@@ -53,12 +61,6 @@ impl Solution for AoC2022_08 {
 }
 
 fn is_visible(map: &Vec2<Int>, point: &Point) -> bool {
-    // edge check
-    if point.x == 0 || point.y == 0 || point.y == map.len() - 1 || point.x == map[point.y].len() - 1
-    {
-        return true;
-    }
-
     let rows = map.len();
     let cols = map[point.y].len();
 
@@ -85,6 +87,30 @@ fn is_visible(map: &Vec2<Int>, point: &Point) -> bool {
     false
 }
 
+fn scenic_score(map: &Vec2<Int>, point: &Point) -> usize {
+    let rows = map.len();
+    let cols = map[point.y].len();
+    let current = map[point.y][point.x];
+    Direction::all()
+        .iter()
+        .map(|dir| {
+            let mut p = *point;
+            let mut steps = 0;
+            while let Some(next) = p.safe_moved_by(dir) {
+                if next.y >= rows || next.x >= cols {
+                    break;
+                }
+                steps += 1;
+                if map[next.y][next.x] >= current {
+                    break;
+                }
+                p = next;
+            }
+            steps
+        })
+        .product::<usize>()
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -103,6 +129,12 @@ mod test {
     }
 
     #[test]
+    fn aoc2022_08_case_2() {
+        let sol = make_test_solution();
+        assert_eq!(sol.part_two(), "8");
+    }
+
+    #[test]
     fn aoc2022_08_correctness_part_1() -> io::Result<()> {
         let sol = make_solution()?;
         assert_eq!(sol.part_one(), "1840");
@@ -112,7 +144,7 @@ mod test {
     #[test]
     fn aoc2022_08_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "405769");
         Ok(())
     }
 
