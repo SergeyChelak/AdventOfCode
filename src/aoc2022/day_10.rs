@@ -1,6 +1,7 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
+use std::collections::HashSet;
 use std::io;
 
 type Int = i32;
@@ -46,11 +47,39 @@ impl AoC2022_10 {
 
 impl Solution for AoC2022_10 {
     fn part_one(&self) -> String {
-        signal_strength(&self.input).iter().sum::<Int>().to_string()
+        let set = [20, 60, 100, 140, 180, 220].iter().collect::<HashSet<_>>();
+        signal_log(&self.input)
+            .into_iter()
+            .enumerate()
+            .map(|(i, x)| (i + 1, x))
+            .filter(|(i, _)| set.contains(i))
+            .map(|(i, x)| i as Int * x)
+            .sum::<Int>()
+            .to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let strength = signal_log(&self.input);
+        const WIDTH: Int = 40;
+        let mut iter = strength.into_iter();
+        for row in 0..6 {
+            for col in 0..WIDTH {
+                let Some(x) = iter.next() else {
+                    panic!("empty signal");
+                };
+                let sprite_center = row * WIDTH + x;
+                let pos = col + row * WIDTH;
+                let ch = if ((sprite_center - 1)..=(sprite_center + 1)).contains(&pos) {
+                    '#'
+                } else {
+                    ' '
+                };
+                print!("{ch}");
+            }
+            println!()
+        }
+        String::new()
+    }
 
     fn description(&self) -> String {
         "Day 10: Cathode-Ray Tube".to_string()
@@ -68,8 +97,7 @@ impl OpData {
     }
 }
 
-fn signal_strength(ops: &[Op]) -> Vec<Int> {
-    let mut cycle_counter = 0;
+fn signal_log(ops: &[Op]) -> Vec<Int> {
     let mut output = Vec::new();
     let mut x: Int = 1;
 
@@ -92,12 +120,7 @@ fn signal_strength(ops: &[Op]) -> Vec<Int> {
             break 'runloop;
         };
 
-        cycle_counter += 1;
-        let strength = x * cycle_counter;
-
-        if [20, 60, 100, 140, 180, 220].contains(&cycle_counter) {
-            output.push(strength);
-        }
+        output.push(x);
 
         if op_data.cycles == 1 {
             match op_data.operation {
