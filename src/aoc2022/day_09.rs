@@ -48,62 +48,52 @@ impl AoC2022_09 {
             .collect::<Vec<_>>();
         Self { input }
     }
+
+    fn simulate(&self, knots: usize) -> usize {
+        assert!(knots > 1);
+        let mut visited = HashSet::<Point>::new();
+        visited.insert(Point::zero());
+        let mut rope = vec![Point::zero(); knots];
+        for movement in self.input.iter() {
+            for _ in 0..movement.count {
+                rope[0] = rope[0].moved_by(&movement.dir);
+                for i in 1..knots {
+                    rope[i] = next_tail_position(&rope[i - 1], &rope[i]);
+                }
+                visited.insert(rope[knots - 1]);
+            }
+        }
+        visited.len()
+    }
 }
 
 impl Solution for AoC2022_09 {
     fn part_one(&self) -> String {
-        let mut visited = HashSet::<Point>::new();
-        let mut head = Point::zero();
-        let mut tail = Point::zero();
-        visited.insert(tail);
-        for movement in self.input.iter() {
-            for _ in 0..movement.count {
-                head = head.moved_by(&movement.dir);
-                let dx = tail.x - head.x;
-                let dy = tail.y - head.y;
-
-                if dx.abs() == 2 {
-                    tail.x += -dx.signum();
-                    if dy.abs() == 1 {
-                        tail.y += -dy.signum();
-                    }
-                }
-                if dy.abs() == 2 {
-                    tail.y += -dy.signum();
-                    if dx.abs() == 1 {
-                        tail.x += -dx.signum();
-                    }
-                }
-                visited.insert(tail);
-            }
-        }
-        visited.len().to_string()
+        self.simulate(2).to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        self.simulate(10).to_string()
+    }
 
     fn description(&self) -> String {
         "Day 9: Rope Bridge".to_string()
     }
 }
 
-fn _debug_print(h: &Point, t: &Point) {
-    for y in -10..10 {
-        for x in -10..10 {
-            let point = Point::new(x, y);
-            if *h == point {
-                print!("H");
-            } else if *t == point {
-                print!("T");
-            } else if point == Point::zero() {
-                print!("s");
-            } else {
-                print!(".")
-            }
-        }
-        println!();
+fn next_tail_position(head: &Point, t: &Point) -> Point {
+    let mut tail = *t;
+    let dx = head.x - tail.x;
+    let dy = head.y - tail.y;
+
+    // If the knot is further than 1 step in any direction
+    if dx.abs() > 1 || dy.abs() > 1 {
+        // Use signum to move 1 step (-1, 0, or 1) in the direction of the leader
+        tail.x += dx.signum();
+        tail.y += dy.signum();
     }
+
+    tail
 }
 
 #[cfg(test)]
@@ -120,7 +110,7 @@ mod test {
     #[test]
     fn aoc2022_09_correctness_part_1() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "5930");
         Ok(())
     }
 
@@ -135,6 +125,14 @@ mod test {
     fn aoc2022_09_case_1() {
         let sol = make_test_solution();
         assert_eq!(sol.part_one(), "13");
+        assert_eq!(sol.part_two(), "1");
+    }
+
+    #[test]
+    fn aoc2022_09_case_2() {
+        let input = ["R 5", "U 8", "L 8", "D 3", "R 17", "D 10", "L 25", "U 20"];
+        let sol = AoC2022_09::parse_lines(&input);
+        assert_eq!(sol.part_two(), "36")
     }
 
     fn make_solution() -> io::Result<AoC2022_09> {
