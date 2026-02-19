@@ -93,8 +93,7 @@ impl Route {
 type FileSystem = HashMap<Route, FolderInfo>;
 
 fn make_fs(input: &[String]) -> FileSystem {
-    let mut stack = Vec::<Route>::new();
-    stack.push(Route::root());
+    let mut stack = vec![Route::root()];
     let mut map = FileSystem::new();
 
     let mut expect_output = false;
