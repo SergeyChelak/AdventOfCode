@@ -11,6 +11,8 @@ type Map = HashMap<Point, char>;
 
 pub struct AoC2022_12 {
     map: Map,
+    start: Point,
+    end: Point,
 }
 
 impl AoC2022_12 {
@@ -20,7 +22,7 @@ impl AoC2022_12 {
     }
 
     fn parse_lines<T: AsRef<str>>(lines: &[T]) -> Self {
-        let map = lines
+        let mut map = lines
             .iter()
             .map(|s| s.as_ref())
             .enumerate()
@@ -31,38 +33,36 @@ impl AoC2022_12 {
                     .collect::<Vec<_>>()
             })
             .collect::<Map>();
-        Self { map }
+
+        let find_point = |map: &Map, ch: char| -> Option<Point> {
+            map.iter().find(|(_, v)| **v == ch).map(|(k, _)| k).cloned()
+        };
+
+        let start = find_point(&map, 'S').expect("Starting point not found");
+        map.insert(start, 'a');
+
+        let end = find_point(&map, 'E').expect("End point not found");
+        map.insert(end, 'z');
+
+        Self { map, start, end }
     }
 }
 
 impl Solution for AoC2022_12 {
     fn part_one(&self) -> String {
-        let Some(start) = self
-            .map
-            .iter()
-            .find(|(_, v)| **v == 'S')
-            .map(|(k, _)| k)
-            .cloned()
-        else {
-            return not_found();
-        };
-        bsf(&self.map, start, 'E')
-            .map(|x| x.to_string())
-            .unwrap_or(not_found())
+        bfs(&self.map, self.start, can_move_forward, |_map, p| {
+            p == self.end
+        })
+        .map(|x| x.to_string())
+        .unwrap_or(not_found())
     }
 
     fn part_two(&self) -> String {
-        // I know this could be more efficient using caching or by pruning paths longer than the current minimum.
-        // However, a 1047ms runtime is acceptable for a value that is only calculated once.
-        // Brute force is sufficient here.
-        let mut min_steps = usize::MAX;
-        for (k, _) in self.map.iter().filter(|(_, v)| **v == 'a' || **v == 'S') {
-            let Some(steps) = bsf(&self.map, *k, 'E') else {
-                continue;
-            };
-            min_steps = min_steps.min(steps);
-        }
-        min_steps.to_string()
+        bfs(&self.map, self.end, can_move_backward, |_map, p| {
+            self.map.get(&p) == Some(&'a')
+        })
+        .map(|x| x.to_string())
+        .unwrap_or(not_found())
     }
 
     fn description(&self) -> String {
@@ -70,7 +70,12 @@ impl Solution for AoC2022_12 {
     }
 }
 
-fn bsf(map: &Map, start: Point, target: char) -> Option<usize> {
+fn bfs(
+    map: &Map,
+    start: Point,
+    can_move: impl Fn(char, char) -> bool,
+    is_target: impl Fn(&Map, Point) -> bool,
+) -> Option<usize> {
     struct Elem {
         point: Point,
         length: usize,
@@ -85,18 +90,15 @@ fn bsf(map: &Map, start: Point, target: char) -> Option<usize> {
     let mut seen = HashSet::<Point>::new();
 
     while let Some(elem) = dequeue.pop_back() {
-        if seen.contains(&elem.point) {
+        if !seen.insert(elem.point) {
             continue;
         }
-        seen.insert(elem.point);
 
-        let Some(value) = map
-            .get(&elem.point)
-            .map(|ch| if *ch == 'S' { &'a' } else { ch })
-        else {
+        let Some(value) = map.get(&elem.point) else {
             unreachable!()
         };
-        if *value == target {
+
+        if is_target(map, elem.point) {
             return Some(elem.length);
         }
 
@@ -105,15 +107,11 @@ fn bsf(map: &Map, start: Point, target: char) -> Option<usize> {
             if seen.contains(&next_point) {
                 continue;
             }
-            let Some(next_value) = map
-                .get(&next_point)
-                .map(|ch| if *ch == 'E' { &'z' } else { ch })
-            else {
+            let Some(next_value) = map.get(&next_point) else {
                 continue;
             };
 
-            if (0..=*value as u8 + 1).contains(&(*next_value as u8)) {
-                //if (*value as u8).abs_diff(*next_value as u8) <= 1 {
+            if can_move(*value, *next_value) {
                 dequeue.push_front(Elem {
                     point: next_point,
                     length: 1 + elem.length,
@@ -122,6 +120,14 @@ fn bsf(map: &Map, start: Point, target: char) -> Option<usize> {
         }
     }
     None
+}
+
+fn can_move_forward(current: char, next: char) -> bool {
+    (0..=current as u8 + 1).contains(&(next as u8))
+}
+
+fn can_move_backward(current: char, next: char) -> bool {
+    can_move_forward(next, current)
 }
 
 #[cfg(test)]
