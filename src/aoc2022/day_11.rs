@@ -180,7 +180,7 @@ impl AoC2022_11 {
     fn simulate(&self, steps: usize, worry_div: Int) -> usize {
         let mut monkeys = self.input.clone();
 
-        // less common divider
+        // less common multiple
         // Not general case!
         // this works only because input values are prime
         let lcm = monkeys.iter().map(|m| m.logic.divider).product::<Int>();
