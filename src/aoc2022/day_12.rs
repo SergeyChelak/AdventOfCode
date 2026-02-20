@@ -58,8 +58,8 @@ impl Solution for AoC2022_12 {
     }
 
     fn part_two(&self) -> String {
-        bfs(&self.map, self.end, can_move_backward, |_map, p| {
-            self.map.get(&p) == Some(&'a')
+        bfs(&self.map, self.end, can_move_backward, |map, p| {
+            map.get(&p) == Some(&'a')
         })
         .map(|x| x.to_string())
         .unwrap_or(not_found())
