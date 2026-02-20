@@ -51,8 +51,19 @@ impl Solution for AoC2022_12 {
             .unwrap_or(not_found())
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        // I know this could be more efficient using caching or by pruning paths longer than the current minimum.
+        // However, a 1047ms runtime is acceptable for a value that is only calculated once.
+        // Brute force is sufficient here.
+        let mut min_steps = usize::MAX;
+        for (k, _) in self.map.iter().filter(|(_, v)| **v == 'a' || **v == 'S') {
+            let Some(steps) = bsf(&self.map, *k, 'E') else {
+                continue;
+            };
+            min_steps = min_steps.min(steps);
+        }
+        min_steps.to_string()
+    }
 
     fn description(&self) -> String {
         "Day 12: Hill Climbing Algorithm".to_string()
