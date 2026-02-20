@@ -4,7 +4,7 @@ use std::fmt::Debug;
 use std::io;
 use std::str::FromStr;
 
-type Int = i32;
+type Int = u64;
 
 #[derive(Debug, Clone)]
 struct Monkey {
@@ -14,12 +14,12 @@ struct Monkey {
 }
 
 impl Monkey {
-    fn throw(&mut self) -> Vec<Throw> {
+    fn throw(&mut self, worry_div: Int) -> Vec<Throw> {
         let result = self
             .items
             .iter()
             .map(|x| self.transform.interpret(*x))
-            .map(|x| x / 3)
+            .map(|x| x / worry_div)
             .map(|value| {
                 let to = self.logic.index(value);
                 Throw { to, value }
@@ -80,7 +80,7 @@ impl Transform {
 
 impl Logic {
     fn index(&self, arg: Int) -> usize {
-        if arg % self.divider == 0 {
+        if arg.is_multiple_of(self.divider) {
             self.true_idx
         } else {
             self.false_idx
@@ -176,33 +176,39 @@ impl AoC2022_11 {
         let input = data.split("\n\n").map(Monkey::from).collect::<Vec<_>>();
         Self { input }
     }
-}
 
-impl Solution for AoC2022_11 {
-    fn part_one(&self) -> String {
+    fn simulate(&self, steps: usize, worry_div: Int) -> usize {
         let mut monkeys = self.input.clone();
+
+        // less common divider
+        // Not general case!
+        // this works only because input values are prime
+        let lcm = monkeys.iter().map(|m| m.logic.divider).product::<Int>();
+
         let mut inspected = vec![0; monkeys.len()];
-        for _ in 0..20 {
+        for _ in 0..steps {
             for i in 0..monkeys.len() {
-                let arr = monkeys[i].throw();
+                let arr = monkeys[i].throw(worry_div);
                 inspected[i] += arr.len();
                 for throw in arr {
-                    monkeys[throw.to].items.push(throw.value);
+                    monkeys[throw.to].items.push(throw.value % lcm);
                 }
             }
         }
 
         inspected.sort();
-        inspected
-            .iter()
-            .rev()
-            .take(2)
-            .product::<usize>()
-            .to_string()
+        inspected.iter().rev().take(2).product::<usize>()
+    }
+}
+
+impl Solution for AoC2022_11 {
+    fn part_one(&self) -> String {
+        self.simulate(20, 3).to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        self.simulate(10000, 1).to_string()
+    }
 
     fn description(&self) -> String {
         "Day 11: Monkey in the Middle".to_string()
@@ -230,7 +236,7 @@ mod test {
     #[test]
     fn aoc2022_11_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "30616425600");
         Ok(())
     }
 
