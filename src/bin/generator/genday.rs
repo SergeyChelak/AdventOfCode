@@ -88,26 +88,21 @@ use crate::utils::*;
 use std::io;
 
 pub struct ${STRUCT_NAME} {
-    // input: ...
+    // input:
 }
 
 impl ${STRUCT_NAME} {
     pub fn new() -> io::Result<Self> {
-        let lines = read_file_as_lines("${INPUT_FILENAME}")?;
-        Ok(Self::parse_lines(&lines))
-    }
-
-    fn parse_lines<T: AsRef<str>>(lines: &[T]) -> Self {
-        todo!()
-    }
-
-    pub fn _new() -> io::Result<Self> {
         let data = std::fs::read_to_string("${INPUT_FILENAME}")?;
         Ok(Self::parse_data(&data))
     }
 
     fn parse_data(data: &str) -> Self {
-         todo!()
+        Self::parse_lines(&data.lines().collect::<Vec<_>>())
+    }
+
+    fn parse_lines<T: AsRef<str>>(lines: &[T]) -> Self {
+        todo!()
     }
 }
 
