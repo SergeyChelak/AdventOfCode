@@ -1,20 +1,13 @@
 use crate::solution::Solution;
 use crate::utils::*;
 
-use std::collections::HashMap;
+use std::collections::HashSet;
 use std::io;
 
 type Int = isize;
 type Point = Point2d<Int>;
 
-#[derive(Debug, Clone)]
-enum Element {
-    Air,
-    Rock,
-    Sand,
-}
-
-type Map = HashMap<Point, Element>;
+type Rocks = HashSet<Point>;
 
 pub struct AoC2022_14 {
     input: Vec2<Point>,
@@ -51,38 +44,32 @@ impl AoC2022_14 {
 
 impl Solution for AoC2022_14 {
     fn part_one(&self) -> String {
-        let mut map = make_map(&self.input);
-        simulate(&mut map).to_string()
+        let rock_map = make_map(&self.input);
+        let bounds = bounds(&rock_map.iter().cloned().collect::<Vec<_>>()).expect("Incorrect map");
+        simulate(|p| rock_map.contains(p), |p| p.y <= bounds.high.y).to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let rock_map = make_map(&self.input);
+        let bounds = bounds(&rock_map.iter().cloned().collect::<Vec<_>>()).expect("Incorrect map");
+        simulate(
+            |p| p.y == bounds.high.y + 2 || rock_map.contains(p),
+            |_| true,
+        )
+        .to_string()
+    }
 
     fn description(&self) -> String {
         "Day 14: Regolith Reservoir".to_string()
     }
 }
 
-fn simulate(map: &mut Map) -> usize {
-    let bounds = bounds(&map.keys().cloned().collect::<Vec<_>>()).expect("Incorrect map");
-    let in_range = |p: &Point| -> bool {
-        // p.x <= bounds.high.x &&
-        p.y <= bounds.high.y
-
-        // (bounds.low.x..=bounds.high.x).contains(&p.x)
-        //     && (bounds.low.y..=bounds.high.y).contains(&p.y)
-    };
-
-    let is_blocked = |map: &Map, p: &Point| -> bool {
-        match map.get(p).unwrap_or(&Element::Air) {
-            Element::Air => false,
-            _ => true,
-        }
-    };
-
+fn simulate(is_rock: impl Fn(&Point) -> bool, in_range: impl Fn(&Point) -> bool) -> usize {
+    let mut sands = HashSet::<Point>::new();
     let mut units = 0;
+    let sand_source = Point::new(500, 0);
     'outer: loop {
-        let mut position = Point::new(500, 0);
+        let mut position = sand_source;
         let mut is_in_range = true;
 
         'movement: loop {
@@ -94,18 +81,19 @@ fn simulate(map: &mut Map) -> usize {
                 if !is_in_range {
                     break;
                 }
-                if !is_blocked(&map, &next) {
+                let is_blocked = is_rock(&next) || sands.contains(&next);
+                if !is_blocked {
                     position = next;
                     is_in_range = in_range(&position);
                     continue 'movement;
                 }
             }
-            map.insert(position, Element::Sand);
-
-            {
-                debug_print(map);
-                println!();
+            if position == sand_source {
+                units += 1;
+                break 'outer;
             }
+
+            sands.insert(position);
 
             if is_in_range {
                 break;
@@ -119,8 +107,8 @@ fn simulate(map: &mut Map) -> usize {
     units
 }
 
-fn make_map(input: &Vec2<Point>) -> Map {
-    let mut map = Map::new();
+fn make_map(input: &Vec2<Point>) -> Rocks {
+    let mut map = Rocks::new();
     for line in input {
         for window in line.windows(2) {
             let (dx, dy, steps) = if window[0].x == window[1].x {
@@ -134,31 +122,13 @@ fn make_map(input: &Vec2<Point>) -> Map {
             };
             let mut p = window[0];
             for _ in 0..=steps {
-                map.insert(p, Element::Rock);
+                map.insert(p);
                 p.x += dx;
                 p.y += dy;
             }
         }
     }
     map
-}
-
-fn debug_print(map: &Map) {
-    let Some(bounds) = bounds(&map.keys().cloned().collect::<Vec<_>>()) else {
-        return;
-    };
-    for y in bounds.low.y - 1..=bounds.high.y + 1 {
-        for x in bounds.low.x - 1..=bounds.high.x + 1 {
-            let p = Point::new(x, y);
-            let ch = match map.get(&p) {
-                None | Some(Element::Air) => '.',
-                Some(Element::Rock) => '#',
-                Some(Element::Sand) => 'o',
-            };
-            print!("{ch}");
-        }
-        println!()
-    }
 }
 
 #[cfg(test)]
@@ -187,11 +157,10 @@ mod test {
     }
 
     #[test]
-    fn aoc2022_14_case_1() {
+    fn aoc2022_14_example() {
         let sol = make_test_solution();
-        let map = make_map(&sol.input);
-        debug_print(&map);
         assert_eq!(sol.part_one(), "24");
+        assert_eq!(sol.part_two(), "93");
     }
 
     fn make_solution() -> io::Result<AoC2022_14> {
