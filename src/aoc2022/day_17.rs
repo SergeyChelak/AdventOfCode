@@ -28,8 +28,10 @@ impl Solution for AoC2022_17 {
         simulate(&shapes, &self.input, 2022).to_string()
     }
 
-    // fn part_two(&self) -> String {
-    // }
+    fn part_two(&self) -> String {
+        let shapes = make_shapes();
+        simulate(&shapes, &self.input, 1000000000000).to_string()
+    }
 
     fn description(&self) -> String {
         "Day 17: Pyroclastic Flow".to_string()
@@ -58,9 +60,9 @@ fn simulate(shapes: &[Shape], jet_pattern: &[char], rocks: usize) -> usize {
         let mut can_move_down = true;
         while can_move_down {
             // push by jet
-            shape = process_jet_movement(
+            process_jet_movement(
                 jet_pattern[jet_idx],
-                &shape,
+                &mut shape,
                 &chamber[height..height + SHAPE_HEIGHT],
             );
             jet_idx = (jet_idx + 1) % jet_pattern.len();
@@ -81,58 +83,29 @@ fn simulate(shapes: &[Shape], jet_pattern: &[char], rocks: usize) -> usize {
         chamber
             .iter_mut()
             .skip(height)
-            // .take(SHAPE_HEIGHT)
             .zip(shape.iter())
             .for_each(|(c, s)| *c |= *s);
 
-        // dbg_print(&chamber);
-
-        // update top position (lazy/rough approach)
-        top = chamber
-            .iter()
-            .enumerate()
-            .rev()
-            .find(|(_, x)| **x > 0)
-            .map(|(i, _)| i + 1)
-            .unwrap_or(0);
+        while chamber[top] > 0 {
+            top += 1;
+        }
     }
 
     top
 }
 
-fn dbg_print(chamber: &[u8]) {
-    for byte in chamber.iter().take(20).rev() {
-        // if *byte == 0 {
-        //     break;
-        // }
-        print!("|");
-        for bit in (0..7).rev() {
-            let ch = if (byte & (1 << bit)) > 0 { '#' } else { '.' };
-            print!("{ch}");
-        }
-        println!("| {byte:b}");
-    }
-    println!("+-------+");
-    println!();
-}
-
-fn process_jet_movement(movement: char, shape: &Shape, chamber: &[u8]) -> Shape {
-    print!("attempt to '{movement}'...");
+fn process_jet_movement(movement: char, shape: &mut Shape, chamber: &[u8]) {
     let mut next = *shape;
     match movement {
         '<' if check_shl_bounds(shape) => next.iter_mut().for_each(|x| *x <<= 1),
         '>' if check_shr_bounds(shape) => next.iter_mut().for_each(|x| *x >>= 1),
         _ => {
-            println!("aborted by bounds");
-            return *shape;
+            return;
         }
     };
     if is_applicable(&next, chamber) {
-        println!("succeed");
-        return next;
+        *shape = next;
     }
-    println!("not applicable");
-    *shape
 }
 
 fn is_applicable(shape: &Shape, chamber: &[u8]) -> bool {
