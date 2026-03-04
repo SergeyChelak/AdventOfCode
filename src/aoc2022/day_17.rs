@@ -1,6 +1,9 @@
 use crate::solution::Solution;
 
-use std::io::{self};
+use std::{
+    collections::HashMap,
+    io::{self},
+};
 
 pub struct AoC2022_17 {
     input: Vec<char>,
@@ -40,58 +43,113 @@ impl Solution for AoC2022_17 {
 
 const SHAPE_HEIGHT: usize = 4;
 const APPEARANCE_OFFSET: usize = 3;
+const SURFACE_SIZE: usize = 30;
 
 type Shape = [u8; SHAPE_HEIGHT];
 
-fn simulate(shapes: &[Shape], jet_pattern: &[char], rocks: usize) -> usize {
-    let capacity = APPEARANCE_OFFSET + SHAPE_HEIGHT * rocks;
-    let mut chamber = vec![0; capacity];
+#[derive(Hash, PartialEq, Eq, Clone)]
+struct State {
+    shape_idx: usize,
+    jet_idx: usize,
+    surface: Vec<u8>,
+}
+
+fn simulate(shapes: &[Shape], jet_pattern: &[char], total_rocks: usize) -> usize {
+    let mut chamber = vec![0u8; 1000]; // Start small, grow as needed
+    let mut cache = HashMap::new();
 
     let mut shape_idx = 0;
     let mut jet_idx = 0;
-
     let mut top = 0;
-    for _ in 0..rocks {
-        // spawn the rock
-        let mut height = top + APPEARANCE_OFFSET;
-        let mut shape = shapes[shape_idx];
+    let mut additional_height_from_cycles = 0;
+    let mut r = 0;
+
+    while r < total_rocks {
+        if top > SURFACE_SIZE {
+            let state = State {
+                shape_idx,
+                jet_idx,
+                // Taking the top rows as a "fingerprint" of the surface
+                surface: chamber[top - SURFACE_SIZE..top].to_vec(),
+            };
+
+            if let Some((prev_r, prev_top)) = cache.get(&state) {
+                let num_rocks_in_cycle = r - prev_r;
+                let height_in_cycle = top - prev_top;
+
+                let remaining_rocks = total_rocks - r;
+                let num_cycles = remaining_rocks / num_rocks_in_cycle;
+
+                additional_height_from_cycles += num_cycles * height_in_cycle;
+                r += num_cycles * num_rocks_in_cycle;
+
+                // Clear cache so we don't trigger this again
+                cache.clear();
+            } else {
+                cache.insert(state, (r, top));
+            }
+        }
+        if top + 10 > chamber.len() {
+            chamber.resize(chamber.len() * 2, 0);
+        }
+
+        simulate_one_rock(
+            shapes[shape_idx],
+            jet_pattern,
+            &mut jet_idx,
+            &mut chamber,
+            &mut top,
+        );
         shape_idx = (shape_idx + 1) % shapes.len();
 
-        let mut can_move_down = true;
-        while can_move_down {
-            // push by jet
-            process_jet_movement(
-                jet_pattern[jet_idx],
-                &mut shape,
-                &chamber[height..height + SHAPE_HEIGHT],
-            );
-            jet_idx = (jet_idx + 1) % jet_pattern.len();
-
-            // move down
-            if height > 0 {
-                let tmp_h = height - 1;
-                can_move_down = is_applicable(&shape, &chamber[tmp_h..tmp_h + SHAPE_HEIGHT])
-            } else {
-                can_move_down = false;
-            }
-
-            if can_move_down {
-                height -= 1;
-            }
-        }
-        // store the rock
-        chamber
-            .iter_mut()
-            .skip(height)
-            .zip(shape.iter())
-            .for_each(|(c, s)| *c |= *s);
-
-        while chamber[top] > 0 {
-            top += 1;
-        }
+        r += 1;
     }
 
-    top
+    top + additional_height_from_cycles
+}
+
+fn simulate_one_rock(
+    mut shape: Shape,
+    jet_pattern: &[char],
+    jet_idx: &mut usize,
+    chamber: &mut [u8],
+    top: &mut usize,
+) {
+    // spawn the rock
+    let mut height = *top + APPEARANCE_OFFSET;
+
+    let mut can_move_down = true;
+    while can_move_down {
+        // push by jet
+        process_jet_movement(
+            jet_pattern[*jet_idx],
+            &mut shape,
+            &chamber[height..height + SHAPE_HEIGHT],
+        );
+        *jet_idx = (*jet_idx + 1) % jet_pattern.len();
+
+        // move down
+        if height > 0 {
+            let tmp_h = height - 1;
+            can_move_down = is_applicable(&shape, &chamber[tmp_h..tmp_h + SHAPE_HEIGHT])
+        } else {
+            can_move_down = false;
+        }
+
+        if can_move_down {
+            height -= 1;
+        }
+    }
+    // store the rock
+    chamber
+        .iter_mut()
+        .skip(height)
+        .zip(shape.iter())
+        .for_each(|(c, s)| *c |= *s);
+
+    while chamber[*top] > 0 {
+        *top += 1;
+    }
 }
 
 fn process_jet_movement(movement: char, shape: &mut Shape, chamber: &[u8]) {
@@ -182,7 +240,7 @@ mod test {
     #[test]
     fn aoc2022_17_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "1568513119571");
         Ok(())
     }
 
