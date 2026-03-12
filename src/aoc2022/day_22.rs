@@ -61,18 +61,94 @@ impl Solution for AoC2022_22 {
                     Direction::Right => next.x = *min_x,
                 }
             }
-            next
+            (next, *dir)
         })
         .to_string()
     }
 
-    // fn part_two(&self) -> String {
-    //     simulate_movement(&self.map_data, &self.route, |point, dir| {
-    //         // ...
-    //         panic!()
-    //     })
-    //     .to_string()
-    // }
+    fn part_two(&self) -> String {
+        simulate_movement(&self.map_data, &self.route, |point, dir| {
+            let mut next = point.moved_by(dir);
+            let mut next_dir = *dir;
+
+            if !self.map_data.map.contains_key(&next) {
+                let x = point.x;
+                let y = point.y;
+                match dir {
+                    Direction::Right => {
+                        if y < 50 {
+                            // Face 2 -> Face 5 (Upside down)
+                            next = Point::new(99, 149 - y);
+                            next_dir = Direction::Left;
+                        } else if y < 100 {
+                            // Face 3 -> Face 2
+                            next = Point::new(100 + (y - 50), 49);
+                            next_dir = Direction::Up;
+                        } else if y < 150 {
+                            // Face 5 -> Face 2 (Upside down)
+                            next = Point::new(149, 149 - y);
+                            next_dir = Direction::Left;
+                        } else {
+                            // Face 6 -> Face 5
+                            next = Point::new(50 + (y - 150), 149);
+                            next_dir = Direction::Up;
+                        }
+                    }
+                    Direction::Left => {
+                        if y < 50 {
+                            // Face 1 -> Face 4 (Upside down)
+                            next = Point::new(0, 149 - y);
+                            next_dir = Direction::Right;
+                        } else if y < 100 {
+                            // Face 3 -> Face 4
+                            next = Point::new(y - 50, 100);
+                            next_dir = Direction::Down;
+                        } else if y < 150 {
+                            // Face 4 -> Face 1 (Upside down)
+                            next = Point::new(50, 149 - y);
+                            next_dir = Direction::Right;
+                        } else {
+                            // Face 6 -> Face 1
+                            next = Point::new(50 + (y - 150), 0);
+                            next_dir = Direction::Down;
+                        }
+                    }
+                    Direction::Up => {
+                        if x < 50 {
+                            // Face 4 -> Face 3
+                            next = Point::new(50, 50 + x);
+                            next_dir = Direction::Right;
+                        } else if x < 100 {
+                            // Face 1 -> Face 6
+                            next = Point::new(0, 150 + (x - 50));
+                            next_dir = Direction::Right;
+                        } else {
+                            // Face 2 -> Face 6
+                            next = Point::new(x - 100, 199);
+                            next_dir = Direction::Up;
+                        }
+                    }
+                    Direction::Down => {
+                        if x < 50 {
+                            // Face 6 -> Face 2
+                            next = Point::new(100 + x, 0);
+                            next_dir = Direction::Down;
+                        } else if x < 100 {
+                            // Face 5 -> Face 6
+                            next = Point::new(49, 150 + (x - 50));
+                            next_dir = Direction::Left;
+                        } else {
+                            // Face 2 -> Face 3
+                            next = Point::new(99, 50 + (x - 100));
+                            next_dir = Direction::Left;
+                        }
+                    }
+                }
+            }
+            (next, next_dir)
+        })
+        .to_string()
+    }
 
     fn description(&self) -> String {
         "Day 22: Monkey Map".to_string()
@@ -82,7 +158,7 @@ impl Solution for AoC2022_22 {
 fn simulate_movement(
     data: &MapData,
     route: &Route,
-    movement: impl Fn(&Point, &Direction) -> Point,
+    movement: impl Fn(&Point, &Direction) -> (Point, Direction),
 ) -> Int {
     let mut point = data.start;
     let mut dir = Direction::Right;
@@ -93,21 +169,28 @@ fn simulate_movement(
             RouteElement::Right => dir = dir.turn_right(),
             RouteElement::Move(times) => {
                 for _ in 0..*times {
-                    let next = movement(&point, &dir);
+                    let (next, next_dir) = movement(&point, &dir);
                     assert!(data.map.contains_key(&next));
-                    if Some(&'#') == data.map.get(&next) {
+                    if Some(&WALL) == data.map.get(&next) {
                         break;
                     }
                     point = next;
+                    dir = next_dir;
                 }
             }
         }
     }
-    password(&point)
+    password(&point, &dir)
 }
 
-fn password(point: &Point) -> Int {
-    (1 + point.y) * 1000 + (1 + point.x) * 4
+fn password(point: &Point, dir: &Direction) -> Int {
+    let dir_val = match dir {
+        Direction::Right => 0,
+        Direction::Down => 1,
+        Direction::Left => 2,
+        Direction::Up => 3,
+    };
+    (1 + point.y) * 1000 + (1 + point.x) * 4 + dir_val
 }
 
 impl From<&str> for MapData {
@@ -204,14 +287,14 @@ mod test {
     #[test]
     fn aoc2022_22_correctness_part_1() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_one(), "");
+        assert_eq!(sol.part_one(), "56372");
         Ok(())
     }
 
     #[test]
     fn aoc2022_22_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "197047");
         Ok(())
     }
 
