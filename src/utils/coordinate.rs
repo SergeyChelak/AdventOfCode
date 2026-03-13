@@ -85,6 +85,14 @@ where
         }
     }
 
+    pub fn moved_with_dirs(&self, directions: &[Direction]) -> Self {
+        let mut cur = *self;
+        for d in directions {
+            cur = cur.moved_by(d);
+        }
+        cur
+    }
+
     pub fn up(&self) -> Self {
         Self::new(self.x, self.y - T::from(1))
     }
