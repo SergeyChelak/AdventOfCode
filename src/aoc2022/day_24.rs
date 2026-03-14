@@ -48,19 +48,45 @@ impl AoC2022_24 {
             .collect::<BlizzardState>();
         Self { input, rows, cols }
     }
+
+    fn route(&self) -> (Point, Point) {
+        let from = Point::new(1, 0);
+        let target = Point::new(self.cols - 2, self.rows - 1);
+        (from, target)
+    }
+
+    fn initial_cache(&self) -> Vec<BlizzardCache> {
+        vec![BlizzardCache::with(self.input.clone())]
+    }
 }
 
 impl Solution for AoC2022_24 {
     fn part_one(&self) -> String {
-        let from = Point::new(1, 0);
-        let to = Point::new(self.cols - 2, self.rows - 1);
-        calc_steps(&self.input, self.rows, self.cols, from, to)
+        let (from, target) = self.route();
+        let mut state_cache = self.initial_cache();
+        calc_steps_ex(
+            self.rows,
+            self.cols,
+            StepState::initial(from),
+            target,
+            &mut state_cache,
+        )
+        .map(|state| state.count)
+        .map(|x| x.to_string())
+        .unwrap_or(not_found())
+    }
+
+    fn part_two(&self) -> String {
+        let (from, target) = self.route();
+        let mut state_cache = self.initial_cache();
+        let mut state = StepState::initial(from);
+        state = calc_steps_ex(self.rows, self.cols, state, target, &mut state_cache).unwrap();
+        state = calc_steps_ex(self.rows, self.cols, state, from, &mut state_cache).unwrap();
+        calc_steps_ex(self.rows, self.cols, state, target, &mut state_cache)
+            .map(|state| state.count)
             .map(|x| x.to_string())
             .unwrap_or(not_found())
     }
-
-    // fn part_two(&self) -> String {
-    // }
 
     fn description(&self) -> String {
         "Day 24: Blizzard Basin".to_string()
@@ -72,6 +98,16 @@ struct StepState {
     count: usize,
     state_id: usize,
     position: Point,
+}
+
+impl StepState {
+    fn initial(position: Point) -> Self {
+        Self {
+            count: 0,
+            state_id: 0,
+            position,
+        }
+    }
 }
 
 struct BlizzardCache {
@@ -86,43 +122,44 @@ impl BlizzardCache {
     }
 }
 
-fn calc_steps(
-    initial: &BlizzardState,
+fn calc_steps_ex(
     rows: Int,
     cols: Int,
-    from: Point,
+    initial_state: StepState,
     target: Point,
-) -> Option<usize> {
-    let mut state_list = vec![BlizzardCache::with(initial.clone())];
-
+    state_cache: &mut Vec<BlizzardCache>,
+) -> Option<StepState> {
     let cycle_len = lcm(rows as usize - 2, cols as usize - 2);
 
     let mut queue = VecDeque::new();
     let mut seen = HashSet::new();
 
-    queue.push_front(StepState {
-        count: 0,
-        state_id: 0,
-        position: from,
-    });
+    let from = initial_state.position;
+
+    queue.push_front(initial_state);
 
     while let Some(step_state) = queue.pop_back() {
         let next_state_id = (step_state.state_id + 1) % cycle_len;
-        if state_list.len() <= next_state_id {
-            let cur_state = &state_list[step_state.state_id];
+        if state_cache.len() <= next_state_id {
+            let cur_state = &state_cache[step_state.state_id];
             let s = calc_next_state(&cur_state.state, rows, cols);
-            state_list.push(BlizzardCache::with(s));
+            state_cache.push(BlizzardCache::with(s));
         }
-        let occupied = &state_list[next_state_id].points;
+        let occupied = &state_cache[next_state_id].points;
 
-        let next_count = step_state.count + 1;
         for point in Direction::all()
             .iter()
             .map(|dir| step_state.position.moved_by(dir))
             .chain([step_state.position])
         {
+            let next = StepState {
+                count: step_state.count + 1,
+                state_id: next_state_id,
+                position: point,
+            };
+
             if point == target {
-                return Some(next_count);
+                return Some(next);
             }
 
             if point != from
@@ -136,11 +173,6 @@ fn calc_steps(
             }
 
             if seen.insert((point, next_state_id)) {
-                let next = StepState {
-                    count: next_count,
-                    state_id: next_state_id,
-                    position: point,
-                };
                 queue.push_front(next);
             }
         }
@@ -206,7 +238,7 @@ mod test {
     #[test]
     fn aoc2022_24_correctness_part_2() -> io::Result<()> {
         let sol = make_solution()?;
-        assert_eq!(sol.part_two(), "");
+        assert_eq!(sol.part_two(), "842");
         Ok(())
     }
 
